@@ -1,0 +1,13 @@
+node_modules/
+
+# Dados brutos do TSE (grandes; não fazem parte do site)
+consulta_cand_2026/
+prestacao_de_contas_eleitorais_candidatos_2026/
+prestacao_de_contas_eleitorais_orgaos_partidarios_2026/
+votacao-2018/
+votacao-2022/
+votacao-2026/
+
+# Scripts temporários de QA
+_*.js
+*.log

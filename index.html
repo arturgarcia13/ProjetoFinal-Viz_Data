@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A cota no papel e na urna — visualização de dados</title>
+<meta name="description" content="Um funil de quatro etapas para investigar se a cota de gênero leva mulheres ao poder ou apenas ao papel. Dados do TSE, 2022 e 2026.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23F4EFE6'/%3E%3Cpath d='M14 48V16h8v32zm14 0V28h8v20zm14 0V20h8v28z' fill='%23B4452F'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="progress"><div id="progress-bar"></div></div>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">Visualização de dados · Eleições 2022–2026</p>
+    <h1>A cota no papel<br><em>e na urna</em></h1>
+    <p class="deck">A cota de gênero garantiu presença nas candidaturas. O que aconteceu depois do registro? Um funil de quatro etapas — papel, dinheiro, urna e sombra — mostra onde a paridade entra e onde ela vaza.</p>
+    <div class="masthead-meta">
+      <span>Dados: TSE · Consulta de candidaturas, votação e prestação de contas</span>
+      <span>2022 (âncora) e 2026 (preliminar)</span>
+      <span>Deputadas/os federais, estaduais e distritais</span>
+    </div>
+  </div>
+</header>
+
+<div class="filterbar" id="filterbar">
+  <div class="wrap filter-inner">
+    <div class="filter-group">
+      <span class="filter-label">Ano</span>
+      <div class="seg" role="group" aria-label="Ano">
+        <button data-year="2022" class="active">2022 <span class="seg-note">âncora</span></button>
+        <button data-year="2026">2026 <span class="seg-note">preliminar</span></button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">Cargo</span>
+      <div class="seg" role="group" aria-label="Cargo">
+        <button data-cargo="dep" class="active">Federal + Estadual</button>
+        <button data-cargo="federal">Federal</button>
+        <button data-cargo="estadual">Estadual</button>
+        <button data-cargo="distrital">Distrital</button>
+      </div>
+    </div>
+    <div class="filter-group threshold-group">
+      <label class="filter-label" for="threshold">Limiar A <output id="threshold-out">10</output></label>
+      <input type="range" id="threshold" min="0" max="100" step="5" value="10" aria-label="Limiar de votação do sinal A">
+    </div>
+    <div class="filter-group filter-actions">
+      <span class="filter-summary" id="filter-summary"></span>
+      <button class="reset-btn" id="reset">Limpar filtros</button>
+    </div>
+  </div>
+  <div class="wrap chips" id="chips"></div>
+</div>
+
+<nav class="rail" aria-label="Etapas da história">
+  <a href="#intro" data-dot="intro"><span>00</span>Pergunta</a>
+  <a href="#ato1" data-dot="ato1"><span>01</span>Papel</a>
+  <a href="#ato2" data-dot="ato2"><span>02</span>Dinheiro</a>
+  <a href="#ato3" data-dot="ato3"><span>03</span>Urna</a>
+  <a href="#ato4" data-dot="ato4"><span>04</span>Sombra</a>
+  <a href="#ato5" data-dot="ato5"><span>05</span>Síntese</a>
+</nav>
+
+<main>
+  <section id="intro" class="intro wrap reveal">
+    <div class="intro-question">
+      <p class="eyebrow">A pergunta</p>
+      <h2>A cota leva mulheres ao poder ou apenas ao papel?</h2>
+      <p class="lead">Uma cota é uma porta de entrada, não uma escada. Para saber se ela funciona, é preciso seguir a mesma geração de candidaturas por quatro degraus: o registro, o dinheiro, o voto e a cadeira.</p>
+      <p>Em cada degrau, a pergunta é a mesma: a proporção de mulheres se mantém? Quando não se mantém, dizemos que a cota <strong>vaza</strong> naquela etapa. Quando os dados não permitem fechar a conta, dizemos isso com todas as letras.</p>
+      <div class="legend-inline">
+        <span><i class="dot women"></i>mulheres</span>
+        <span><i class="dot men"></i>homens</span>
+        <span><i class="dot rule"></i>referência de paridade</span>
+      </div>
+    </div>
+    <figure class="chart-card hero-card">
+      <figcaption>
+        <span class="figlabel">Fig. 1 · O funil em uma imagem</span>
+        <h3>Onde a presença feminina se perde</h3>
+        <p>Participação das mulheres em cada etapa, no recorte selecionado. A linha tracejada marca a presença nas candidaturas: tudo o que fica abaixo dela é vazamento.</p>
+      </figcaption>
+      <div class="chart" id="chart-stage"></div>
+      <p class="chart-note">FEFC = Fundo Especial de Financiamento de Campanha. Em 2026, os votos são finais; as contas ainda são preliminares.</p>
+    </figure>
+  </section>
+
+  <section id="ato1" class="act wrap">
+    <div class="act-head reveal">
+      <span class="act-num">01</span>
+      <div>
+        <p class="eyebrow">No papel</p>
+        <h2>As chapas cumprem a cota — ou apenas o mínimo?</h2>
+        <p class="act-sub">A lei exige pelo menos 30% de candidaturas de cada gênero por chapa. Cumprir o piso é a primeira condição para que a cota exista. Mas um piso pode virar teto.</p>
+      </div>
+    </div>
+    <div class="act-body">
+      <div class="narrative reveal">
+        <p class="lead">Em 2022, 95,6% das chapas com ao menos quatro candidaturas atingiram os 30%. Em 2026, 97,0%. A conformidade é alta — e melhora.</p>
+        <p>O problema está na forma da distribuição. Em 2022, 54,2% das chapas ficaram entre 30% e 33,3% de mulheres: o mínimo legal concentrou a composição. Em 2026, essa faixa caiu para 42,6% e as chapas acima de 40% subiram de 14,0% para 22,0%. O piso continua sendo o destino mais comum, mas deixou de ser o único.</p>
+        <p>O mapa mostra que a conformidade não é uniforme: há UFs com menos mulheres nas candidaturas e UFs onde a presença passa de 38%. Clique em uma UF para levar o filtro para todo o painel.</p>
+        <div class="hypothesis">
+          <strong>H1.</strong> A maioria das chapas cumpre os 30%, mas há acúmulo logo acima do limiar (30%–33%) e poucas passam de 40%.
+        </div>
+        <div class="verdict-stack" id="verdict-1"></div>
+      </div>
+      <aside class="act-side reveal">
+        <div class="side-note">
+          <p class="side-kicker">Como medimos</p>
+          <p>Uma <strong>chapa</strong> é a legenda ou federação em uma UF, em um cargo. Só entram chapas com pelo menos quatro candidaturas, para evitar percentuais instáveis.</p>
+          <p>O denominador exclui gênero “não divulgável” (23 candidaturas em 2022). Os dados de gênero do TSE são binários.</p>
+        </div>
+      </aside>
+    </div>
+    <div class="fig-grid">
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 2 · Distribuição das chapas</span>
+          <h3>O piso de 30% concentra as composições</h3>
+          <p>Cada barra é o número de chapas com aquela porcentagem de mulheres. Alterne para <strong>folga Δ</strong> para ver o excesso inteiro sobre o mínimo legal. Clique em uma barra percentual para filtrar todo o painel.</p>
+        </figcaption>
+        <div class="chart" id="chart-hist"></div>
+        <p class="chart-note">No modo percentual, a faixa destacada vai de 30% a 33,3% e a linha marca o piso. No modo Δ, a linha marca Δ = 0 (mínimo estrito) e a barra destacada é a folga de 0 a 1.</p>
+      </figure>
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 3 · Mapa da presença</span>
+          <h3>Onde as mulheres estão nas candidaturas</h3>
+          <p>Porcentagem de mulheres entre as candidaturas, por UF. Clique em um estado para filtrar todos os gráficos.</p>
+        </figcaption>
+        <div class="chart" id="chart-map-women"></div>
+      </figure>
+    </div>
+  </section>
+
+  <section id="ato2" class="act wrap">
+    <div class="act-head reveal">
+      <span class="act-num">02</span>
+      <div>
+        <p class="eyebrow">No dinheiro</p>
+        <h2>O recurso acompanha a candidatura?</h2>
+        <p class="act-sub">A cota de financiamento manda pelo menos 30% do FEFC para candidaturas femininas. A pergunta é se o dinheiro chega na mesma proporção em que elas existem — e se o dinheiro privado segue a mesma regra.</p>
+      </div>
+    </div>
+    <div class="act-body">
+      <div class="narrative reveal">
+        <p class="lead">Em 2022, as mulheres eram 34,1% das candidaturas e receberam 34,4% do FEFC. A razão de recursos ficou em 1,01×: paridade.</p>
+        <p>A mediana total de receita também ficou em paridade (1,00×). Mas a média esconde uma troca de composição: no dinheiro público (FEFC + Fundo Partidário), a mediana feminina é 1,15× a masculina; no privado, é 0,32×. O FEFC cumpre o papel de piso; as doações privadas não.</p>
+        <p>Em 2026, os números preliminares são 35,6% das candidaturas, 37,4% do FEFC — acima da proporção —, mediana total de 1,00× e razão pública de 1,12×. A prestação ainda está incompleta: leia como retrato parcial.</p>
+        <div class="hypothesis">
+          <strong>H2.</strong> A mediana de receita por candidata é menor que a por candidato, mesmo no mesmo partido, cargo e UF. A diferença é menor no dinheiro público do que no privado.<br><br>
+          <strong>H3.</strong> Em partidos com mais de 30% de candidatas, a razão de recursos fica abaixo de 1: o dinheiro público chega no mínimo legal, mas não proporcionalmente.<br><br>
+          <strong>H4.</strong> Candidatas repassam parte maior do dinheiro a terceiros (partido, outros candidatos, fornecedores compartilhados) do que candidatos. Na rede, só entram fornecedores-hub: ≥ 2 candidaturas do mesmo partido e > 15% da despesa contratada de ao menos uma candidata com baixa votação.
+        </div>
+        <div class="verdict-stack" id="verdict-2"></div>
+      </div>
+      <aside class="act-side reveal">
+        <div class="side-note">
+          <p class="side-kicker">O que os dados são</p>
+          <p><strong>2022 é a âncora.</strong> As prestações estão na versão final. Em 2026, a maior parte ainda é relatório financeiro ou prestação parcial.</p>
+          <p><strong>Incumbência e 2018.</strong> Os arquivos usados não trazem <code>ST_REELEICAO</code>; não é possível filtrar novatos versus reeleição. O painel cobre 2022 e 2026, não 2018.</p>
+          <p>Usamos <strong>despesas contratadas</strong>, não pagas: os arquivos de despesas pagas não trazem o código da candidatura. É um proxy do gasto, não o caixa realizado.</p>
+          <p>Não é possível vincular cada despesa à fonte de receita. O Sankey aloca o gasto contratado proporcionalmente ao FEFC recebido.</p>
+          <p><strong>Repasses entre candidaturas.</strong> <span id="repasses-note">—</span> A fonte FEFC é lida em <code>CD_FONTE_RECEITA = 2</code> na própria receita; a tabela de doador originário (<code>SQ_RECEITA</code>) confirma a cadeia do doador, mas não carrega o código da fonte.</p>
+        </div>
+      </aside>
+    </div>
+    <div class="fig-grid">
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 4 · Mediana por partido</span>
+          <h3>Quanto recebe uma candidatura típica</h3>
+          <p>Mediana de receita total de mulheres e homens em cada legenda/federação. A razão à direita é F/M. Clique em um partido para filtrar.</p>
+        </figcaption>
+        <div class="chart" id="chart-dumbbell"></div>
+        <p class="chart-note">Escala logarítmica. Só partidos com ao menos 10 candidaturas de cada gênero e 30 no total. Ordenado da maior para a menor disparidade (razão F/M).</p>
+      </figure>
+      <figure class="chart-card reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 5 · Composição da receita</span>
+          <h3>Público versus privado</h3>
+          <p>Participação de cada fonte no total recebido. A paridade do FEFC não se repete nas doações privadas.</p>
+        </figcaption>
+        <div class="chart" id="chart-sources"></div>
+      </figure>
+      <figure class="chart-card reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 6 · Razão de recursos</span>
+          <h3>O FEFC segue a presença feminina?</h3>
+          <p>Cada ponto é uma legenda/federação. No eixo horizontal, o % de mulheres nas candidaturas; no vertical, o % do FEFC que chega a elas. A diagonal é a proporcionalidade; a área abaixo dela é subfinanciamento. Clique em uma bolha para abrir a distribuição interna das candidatas.</p>
+        </figcaption>
+        <div class="chart" id="chart-fefc"></div>
+        <p class="chart-note">Tamanho = FEFC total. Cor = razão de recursos (vermelho abaixo de 1, verde acima). Com um único partido selecionado, a curva de Lorenz mostra a concentração interna do FEFC entre as candidatas.</p>
+      </figure>
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 7 · Para onde vai o dinheiro</span>
+          <h3>FEFC, gênero e destino do gasto</h3>
+          <p>O dinheiro público recebido por cada grupo e a composição proporcional das despesas contratadas. Repasses a outros candidatos e ao partido são raros; fornecedores compartilhados são a regra.</p>
+        </figcaption>
+        <div class="chart" id="chart-money-sankey"></div>
+        <p class="chart-note">Alocação proporcional: a despesa não é vinculada à fonte no TSE. “Fornecedor compartilhado” = usado por ao menos 3 candidaturas da mesma legenda.</p>
+      </figure>
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 8 · Rede de fornecedores</span>
+          <h3>Quem atende as campanhas</h3>
+          <p>Candidaturas anônimas (círculos, cor = gênero; anel = < 20 votos) e fornecedores-hub (quadrados), ligados pela despesa contratada. O filtro de hub exige ≥ 2 candidaturas do mesmo partido e > 15% da despesa contratada de ao menos uma candidata com baixa votação.</p>
+        </figcaption>
+        <div class="chart" id="chart-network"></div>
+        <p class="chart-note">O critério usa despesa contratada como proxy da despesa pública: o TSE não vincula cada contrato à fonte de receita. A rede não exibe nomes de candidatas/os nem de fornecedores; fornecedor compartilhado é padrão de mercado e não é, por si só, indício de fraude.</p>
+      </figure>
+    </div>
+  </section>
+
+  <section id="ato3" class="act wrap">
+    <div class="act-head reveal">
+      <span class="act-num">03</span>
+      <div>
+        <p class="eyebrow">Na urna</p>
+        <h2>A candidatura vira voto e cadeira?</h2>
+        <p class="act-sub">É aqui que o funil estreita. A perda não está apenas na distribuição de sobras: ela começa na votação, antes do cálculo das cadeiras.</p>
+      </div>
+    </div>
+    <div class="act-body">
+      <div class="narrative reveal">
+        <p class="lead">Em 2022, as mulheres eram 34,1% das candidaturas, receberam 20,6% dos votos nominais e ficaram com 17,9% das cadeiras. A razão de conversão foi 0,53×.</p>
+        <p>A maior perda ocorre na votação: 13,5 pontos percentuais entre candidaturas e votos. A passagem de votos para cadeiras retira outros 2,7 pontos. Em 2026, a presença feminina sobe em todas as etapas, mas a conversão segue baixa: 0,58×; o gap de votos cai para 10,9 pontos e o de cadeiras sobe para 3,9.</p>
+        <p>O dinheiro não explica o gap. Controlar a receita — e depois o partido, o cargo e a UF — não reduz a desvantagem; em alguns recortes, até a amplia. O resíduo é maior entre mulheres negras: elas ficam abaixo das brancas mesmo com o mesmo ajuste.</p>
+        <div class="hypothesis">
+          <strong>H5.</strong> A razão de conversão é menor que 1: mulheres são mais presentes entre as candidaturas do que entre os eleitos. A maior perda aparece já na votação.<br><br>
+          <strong>H6.</strong> Parte substancial da diferença de votos se explica pela diferença de recursos, mas sobra um resíduo. Para mulheres negras, o resíduo tende a ser maior.
+        </div>
+        <div class="verdict-stack" id="verdict-3"></div>
+      </div>
+      <aside class="act-side reveal">
+        <div class="side-note">
+          <p class="side-kicker">O que não está nos dados</p>
+          <p><strong>Incumbência.</strong> Os arquivos não trazem <code>ST_REELEICAO</code>; não é possível controlar novatos versus reeleição. Isso importa: quem busca reeleição tem vantagem de nome, rede e financiamento.</p>
+          <p><strong>Atos de campanha.</strong> O terceiro elemento da Súmula 73 não é observável. Usamos apenas proxies financeiros e de votação.</p>
+          <p><strong>Voto e cadeira.</strong> “Eleitas” inclui eleição por quociente partidário e por média; suplentes não entram.</p>
+        </div>
+      </aside>
+    </div>
+    <div class="fig-grid">
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 9 · Funil por gênero</span>
+          <h3>Candidaturas, deferimento, voto e cadeira</h3>
+          <p>Cada fluxo é o número de candidaturas que chega à etapa seguinte. A largura dos nós é proporcional ao contingente.</p>
+        </figcaption>
+        <div class="chart" id="chart-funnel"></div>
+        <p class="chart-note">“Votação ≥10% QE” usa o quociente eleitoral estimado (votos nominais da UF/cargo ÷ cadeiras conquistadas). A etapa de deferimento usa a situação de julgamento; em 2026, o campo de situação da candidatura vem vazio e o julgamento é a proxy disponível.</p>
+      </figure>
+      <figure class="chart-card reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 10 · Conversão por partido</span>
+          <h3>Quem transforma candidatura em cadeira</h3>
+          <p>Razão entre a presença feminina nas cadeiras e nas candidaturas. Abaixo de 1, o partido perde mulheres no caminho.</p>
+        </figcaption>
+        <div class="chart" id="chart-conversion"></div>
+      </figure>
+      <figure class="chart-card reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 11 · Retenção por faixa de recursos</span>
+          <h3>Mais dinheiro melhora a conversão — para os dois</h3>
+          <p>Taxa de sucesso por décimo de receita. As mulheres convertem menos em quase todas as faixas; a distância não fecha no topo.</p>
+        </figcaption>
+        <div class="chart" id="chart-funding-line"></div>
+      </figure>
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 12 · Dinheiro e votos</span>
+          <h3>O gap que o dinheiro não fecha</h3>
+          <p>Cada ponto é uma candidatura anônima, colorida por gênero e raça. Arraste para selecionar uma faixa de receita e votos: o filtro vale para o mapa, o funil e os demais gráficos.</p>
+        </figcaption>
+        <div class="chart" id="chart-vote-scatter"></div>
+        <p class="chart-note">Escalas logarítmicas. As retas são regressões OLS log-log por grupo racial/gênero, estimadas em campanhas ativas (receita > R$ 1 mil e votos > 10). Mulheres negras = pretas + pardas.</p>
+      </figure>
+      <figure class="chart-card reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 13 · Decomposição do gap</span>
+          <h3>Controlar o dinheiro não resolve</h3>
+          <p>Diferença média de votos (log-pontos). O gap bruto é grande; controlar a receita e a composição partido × cargo × UF não o elimina.</p>
+        </figcaption>
+        <div class="chart" id="chart-gap"></div>
+      </figure>
+      <figure class="chart-card reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 14 · Recorte racial</span>
+          <h3>A desvantagem racial se soma à de gênero</h3>
+          <p>Mediana de votos por raça e gênero. Entre pessoas negras, o gap de gênero é menor — mas a votação e a taxa de sucesso são mais baixas para todos.</p>
+        </figcaption>
+        <div class="chart" id="chart-race"></div>
+      </figure>
+    </div>
+  </section>
+
+  <section id="ato4" class="act wrap">
+    <div class="act-head reveal">
+      <span class="act-num">04</span>
+      <div>
+        <p class="eyebrow">Na sombra</p>
+        <h2>Quantas candidaturas existem só no papel?</h2>
+        <p class="act-sub">A Súmula 73 do TSE manda observar votação inexpressiva, prestação sem movimento e ausência de atos de campanha. Dois desses sinais são observáveis; o terceiro, não. O painel fala em sinais compatíveis — nunca em fraude.</p>
+      </div>
+    </div>
+    <div class="act-body">
+      <div class="narrative reveal">
+        <p class="lead" id="ato4-lead">Em 2022, 37,7% das candidatas e 39,2% dos candidatos tinham ao menos um dos três sinais. Não há vantagem feminina — pelo contrário.</p>
+        <p id="ato4-detail">O sinal A (votos baixos) atinge 9,2% das mulheres e 8,2% dos homens; o B (conta sem receita e sem despesa, entre quem declarou) fica em 9,6% das mulheres e 10,5% dos homens; o C (mesmo fornecedor, valor e data em três ou mais candidaturas do partido) é mais comum entre homens (24,6% × 24,0%).</p>
+        <p id="ato4-h8">As chapas que “colam” no piso de 30%–33% não concentram mais sinais do que as chapas com 40% ou mais. O problema não parece nascer da cota — ou, ao menos, não é possível encontrá-lo assim.</p>
+        <div class="hypothesis">
+          <strong>H7.</strong> Os sinais A, B e C são mais frequentes entre candidatas do que entre candidatos, com o mesmo limiar para ambos.<br><br>
+          <strong>H8.</strong> Chapas que colam no limiar de 30%–33% concentram mais sinais do que chapas com 40% ou mais.<br><br>
+          <strong>H9.</strong> Em 2026, caem as contas totalmente zeradas, mas aumentam as “mínimas e padronizadas”.
+        </div>
+        <div class="verdict-stack" id="verdict-4"></div>
+      </div>
+      <aside class="act-side reveal">
+        <div class="side-note">
+          <p class="side-kicker">Sinais, não veredictos</p>
+          <p>Votação baixa, conta zerada e padronização têm explicações legítimas: doença, desistência, falta de apoio do partido, prestação pendente, contratação coletiva legal.</p>
+          <p>Por isso o painel é agregado, sem nomes. A comparação com homens é obrigatória: sem ela, qualquer taxa parece alta.</p>
+          <p><strong>Sinal A:</strong> votos ≤ limiar ajustável.<br><strong>Sinal B:</strong> declarou e não movimentou.<br><strong>Sinal C:</strong> mesmo fornecedor + valor + data em ≥ 3 candidaturas do partido (proxy de repasses triangulados); renúncia/indeferimento pós-DRAP não é observável nesta base agregada.</p>
+        </div>
+      </aside>
+    </div>
+    <div class="fig-grid">
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 15 · Sinais por gênero</span>
+          <h3>Quem acumula sinais</h3>
+          <p>Distribuição do número de sinais. Mova o limiar de votos na barra superior para ver o sinal A mudar.</p>
+        </figcaption>
+        <div class="chart" id="chart-signals"></div>
+      </figure>
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 16 · Mapa dos sinais</span>
+          <h3>Onde os sinais se concentram</h3>
+          <p>Porcentagem de candidaturas com <strong>≥ 2 sinais</strong>, por UF. Clique em um estado para filtrar. É o mapa coordenado do boxplot ao lado.</p>
+        </figcaption>
+        <div class="chart" id="chart-map-signal"></div>
+      </figure>
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 17 · Chapas limítrofes</span>
+          <h3>O piso de 30% não concentra sinais</h3>
+          <p>Cada ponto é uma chapa; o eixo vertical é a taxa de candidaturas com <strong>≥ 2 sinais</strong>. As caixas resumem a distribuição por faixa de presença feminina; a faixa de limiar estrito é 30%–33% (Δ≤1).</p>
+        </figcaption>
+        <div class="chart" id="chart-box"></div>
+        <p class="chart-note">Uma chapa precisa ter ao menos quatro candidaturas. O tamanho do ponto é o número de candidaturas. O mapa e o box usam o mesmo critério de ≥ 2 sinais para isolar acúmulo.</p>
+      </figure>
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 18 · 2022 × 2026</span>
+          <h3>A prática se adaptou?</h3>
+          <p>Duas tipologias de anomalia: a <strong>laranja clássica</strong> (R$ 0 e 0 votos) e a <strong>laranja contábil</strong> (kit padronizado em lote). As barras de 2026 estão hachuradas porque a prestação ainda não está finalizada.</p>
+        </figcaption>
+        <div class="chart" id="chart-h9"></div>
+        <p class="chart-note">2022: 95,7% das contas na versão final. 2026: 8,5%. O selo de alerta é parte do dado: qualquer conclusão sobre adaptação é prematura. Kit = ≥ 3 mulheres com < 20 votos no diretório e FEFC/Fundo Partidário idênticos ou mesmo pacote de fornecedor/valor/data.</p>
+      </figure>
+    </div>
+  </section>
+
+  <section id="ato5" class="act wrap">
+    <div class="act-head reveal">
+      <span class="act-num">05</span>
+      <div>
+        <p class="eyebrow">Síntese</p>
+        <h2>Não há um único vazamento</h2>
+        <p class="act-sub">Partidos e UFs perdem em etapas diferentes. O mapa mostra o <strong>argmax(Z)</strong> entre financiamento, urna, institucional e integridade; as coordenadas paralelas comparam cinco dimensões padronizadas.</p>
+      </div>
+    </div>
+    <div class="act-body">
+      <div class="narrative reveal">
+        <p class="lead" id="ato5-lead">Em 2022, o gargalo dominante varia entre as UFs. O mapa ao lado calcula, para cada uma, o maior desvio padronizado entre financiamento, urna, institucional e integridade.</p>
+        <p>O padrão nacional esconde variações: há partidos que perdem na distribuição de recursos, outros na conversão de votos, outros na matemática das cadeiras e outros na integridade do registro. A cota funciona como porta de entrada; o que falta é a escada.</p>
+        <div class="hypothesis">
+          <strong>H10.</strong> A perda de representatividade não tem um único gargalo: a etapa crítica varia entre partidos e UFs — financiamento, urna, institucional ou integridade — e é identificada pelo <code>argmax(Z)</code> das quatro dimensões padronizadas.
+        </div>
+        <div class="verdict-stack" id="verdict-5"></div>
+        <div class="scorecard" id="scorecard"></div>
+      </div>
+      <aside class="act-side reveal">
+        <div class="side-note">
+          <p class="side-kicker">Leitura do painel</p>
+          <p><strong>Funciona nesta etapa</strong> quando a proporção de mulheres se mantém (ou melhora) em relação à candidatura.</p>
+          <p><strong>Vaza nesta etapa</strong> quando a proporção cai de forma material.</p>
+          <p><strong>Inconclusivo</strong> quando a amostra é pequena ou os dados ainda não estão completos — como as contas de 2026.</p>
+        </div>
+      </aside>
+    </div>
+    <div class="fig-grid">
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 19 · Mapa da etapa crítica</span>
+          <h3>Onde cada UF perde mais</h3>
+          <p>Gargalo dominante de cada UF pelo maior Z-score entre quatro dimensões padronizadas: financiamento, urna, institucional e integridade. Clique em uma UF para filtrar.</p>
+        </figcaption>
+        <div class="chart" id="chart-map-stage"></div>
+        <p class="chart-note">UFs com menos de 20 candidaturas ficam em cinza. O Z-score é calculado entre as UFs com amostra; a cor não é a intensidade da perda, mas a dimensão que mais se desvia da média.</p>
+      </figure>
+      <figure class="chart-card wide reveal">
+        <figcaption>
+          <span class="figlabel">Fig. 20 · Coordenadas paralelas</span>
+          <h3>Cada partido vaza em um lugar</h3>
+          <p>Cada linha é uma legenda/federação. Arraste nos eixos para filtrar partidos por faixa de Z; clique em uma linha para selecionar o partido em todo o painel.</p>
+        </figcaption>
+        <div class="chart" id="chart-parallel"></div>
+        <p class="chart-note">Cinco eixos padronizados (Z): inclusão formal, equidade orçamentária (FEFC), integridade (≥ 2 sinais), rendimento nas urnas e sucesso parlamentar. Cor = razão de cadeiras. O filtro de coordenadas também atualiza o mapa.</p>
+      </figure>
+    </div>
+  </section>
+
+  <section class="method wrap" id="metodo">
+    <div class="method-head reveal">
+      <p class="eyebrow">Método e limites</p>
+      <h2>O que este painel pode e não pode dizer</h2>
+    </div>
+    <div class="method-grid reveal">
+      <div>
+        <h3>Fontes e recorte</h3>
+        <p>Consulta de candidaturas, votação por candidato/município e prestação de contas de campanha, do TSE. Recorte: deputadas/os federais e estaduais; distritais aparecem como opção. 2022 é o ano âncora porque as prestações estão finalizadas. 2026 entra como comparação preliminar.</p>
+        <h3>Junções e privacidade</h3>
+        <p>Candidaturas, votos, receitas e despesas são ligados por <code>SQ_CANDIDATO</code> + <code>ANO_ELEICAO</code>. O <code>NR_CPF_CANDIDATO</code> não é usado como chave: o TSE o ocultou nos dados abertos por força da LGPD e da Resolução TSE nº 23.729/2024. Nenhum nome de candidatura aparece no painel.</p>
+        <p>As despesas pagas não trazem o CNPJ/CPF do fornecedor no leiaute oficial. Por isso, a rede de fornecedores e o Sinal C usam estritamente as <strong>despesas contratadas</strong>; estas são um proxy do gasto, não o caixa realizado.</p>
+        <h3>Dinheiro público e repasses</h3>
+        <p>FEFC = <code>CD_FONTE_RECEITA = 2</code>; Fundo Partidário = <code>CD_FONTE_RECEITA = 0</code>. Para repasses entre candidaturas, a fonte é conferida em <code>CD_FONTE_RECEITA = 2</code> na receita e a cadeia do doador é checada na base <code>receitas_candidatos_doador_originario</code>, ligada por <code>SQ_RECEITA</code>. Essa base confirma quem doou, mas não traz o código da fonte; por isso não inferimos FEFC apenas pelo nome do doador.</p>
+        <h3>Chapa</h3>
+        <p>Legenda ou federação × UF × cargo. O piso de 30% é avaliado por chapa, com pelo menos quatro candidaturas. Federações são tratadas como uma unidade, porque a cota se aplica à chapa.</p>
+      </div>
+      <div>
+        <h3>O que não é observável</h3>
+        <ul>
+          <li><strong>Fraude.</strong> Os sinais A–C são compatíveis com candidatura fictícia; não provam fraude.</li>
+          <li><strong>Atos de campanha.</strong> O terceiro elemento da Súmula 73 não está nos arquivos.</li>
+          <li><strong>Incumbência.</strong> Não há marcador de reeleição; é uma variável de confusão em H5 e H6.</li>
+          <li><strong>Contas de 2026.</strong> Ausência de linha não é zero: pode ser prestação pendente. Só 8,5% estão finalizadas.</li>
+          <li><strong>Gênero.</strong> O campo é binário; pessoas não divulgáveis ficam fora dos denominadores de gênero.</li>
+          <li><strong>Repasses.</strong> A base de doador originário cobre apenas parte dos repasses; a classificação FEFC usa o campo da própria receita e pode ser retificada.</li>
+        </ul>
+        <h3>Privacidade</h3>
+        <p>Nenhum nome de candidata ou candidato é exibido. O painel mostra agregados por gênero, raça, partido e UF. A rede de fornecedores é candidata–fornecedor, mas os nós de candidaturas são anônimos e não exibem nome, CPF ou SQ_CANDIDATO.</p>
+      </div>
+    </div>
+    <div class="sources reveal">
+      <p><strong>Arquivos:</strong> <code>consulta_cand_2022/2026</code>, <code>votacao_candidato_munzona_2022/2026</code>, <code>receitas_candidatos</code>, <code>receitas_candidatos_doador_originario</code>, <code>despesas_contratadas_candidatos</code> (TSE). Processamento em Node.js; visualização em D3.</p>
+      <p><strong>Atualização:</strong> 22 de outubro de 2026. Os dados de 2026 são preliminares e podem mudar até a prestação final.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <p>A cota no papel e na urna · visualização de dados eleitorais</p>
+    <p>“Sinais compatíveis com candidatura fictícia” não é sinônimo de fraude. Leia sempre em conjunto com o contexto partidário e local.</p>
+  </div>
+</footer>
+
+<div id="loading" class="loading"><span>Carregando dados do TSE…</span></div>
+<script src="dist/app.js"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 {
   "name": "vd-proj_final-v3",
   "version": "1.0.0",
+  "type": "module",
   "description": "A cota no papel e na urna: visualização interativa da cota de gênero nas eleições brasileiras de 2022 e 2026",
   "main": "index.js",
   "scripts": {
@@ -22,6 +23,7 @@
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",
     "@fontsource-variable/inter": "^5.3.0",
+    "@observablehq/plot": "^0.6.19",
     "d3": "^7.9.0",
     "d3-sankey": "^0.12.3",
     "esbuild": "^0.28.2",

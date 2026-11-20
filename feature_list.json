@@ -56,7 +56,8 @@
       "Verificar denominadores (chapas >=4, APTO vs. registradas, exclusão de gênero não divulgável, fontes FEFC/FP/Privado)",
       "Executar testes automatizados garantindo consistência numérica com a base de 2022"
     ],
-    "passes": false
+    "passes": true,
+    "evidence": ".venv/bin/python -m pytest tests/test_indicators.py -v -> 2 passed (1547 cadeiras APTO + 1 cassado INAPTO = 1548 em 2022; denominadores F/M e chapas n>=4 batem 100% com coverage.json)"
   },
   {
     "id": "F06",
@@ -67,7 +68,8 @@
       "Implementar gráficos H1 (Histograma), H3 (Scatter % candidatas x % fundo público) e H5 (Barras agrupadas 3 etapas)",
       "Validar build e renderização com dados reais de 2022"
     ],
-    "passes": false
+    "passes": true,
+    "evidence": "npm run build -> dist/app.js 293.7kb; Puppeteer smoke test -> 6 SVGs renderizados (H1, H3, H5), troca 2022->2026 operacional, ERRORS: []"
   },
   {
     "id": "F07",

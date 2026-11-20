@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cota de Gênero no Brasil (2022–2026) — Indicadores & Gráficos Base</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f6f2ea'/%3E%3Cpath d='M14 48V18h10v30zm16 0V28h10v20zm16 0V14h10v34z' fill='%23b4452f'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <p class="eyebrow">UFC · Visualização de Dados · Base Validada TSE (2022 vs. 2026)</p>
+      <h1>A Cota de Gênero Leva Mulheres ao Poder ou Apenas ao Papel?</h1>
+      <p class="subtitle">Indicadores auditáveis H1–H5 e os 3 gráficos fundamentais com Observable Plot e D3 (Etapa U3 · 03–09/nov).</p>
+    </div>
+  </header>
+
+  <nav class="filter-bar" aria-label="Filtros globais">
+    <div class="container filter-row">
+      <div class="filter-group" role="group" aria-label="Ano eleitoral">
+        <button class="seg active" data-year="2022">2022 (Baseline)</button>
+        <button class="seg" data-year="2026">2026 (Comparativo)</button>
+      </div>
+      <div class="filter-group" role="group" aria-label="Cargo">
+        <button class="seg active" data-cargo="all">Federal + Estadual</button>
+        <button class="seg" data-cargo="6">Dep. Federal</button>
+        <button class="seg" data-cargo="7">Dep. Estadual</button>
+      </div>
+      <label class="select-wrap">
+        <span>UF</span>
+        <select id="filter-uf"><option value="">Brasil (27 UFs)</option></select>
+      </label>
+      <label class="select-wrap">
+        <span>Partido</span>
+        <select id="filter-party"><option value="">Todos</option></select>
+      </label>
+      <button id="reset-filters" class="btn-reset" type="button">Limpar</button>
+    </div>
+    <div class="container">
+      <p id="scope-summary" class="scope-summary">Carregando base validada...</p>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section aria-labelledby="sec-kpis" class="kpi-section">
+      <h2 id="sec-kpis" class="section-title">Painel Auditável H1–H5</h2>
+      <div class="kpi-grid">
+        <article class="kpi-card">
+          <h3>H1 · Registro na Chapa</h3>
+          <p class="kpi-val" id="kpi-h1">—</p>
+          <p class="kpi-sub" id="kpi-h1-sub"></p>
+          <div id="verdict-h1"></div>
+        </article>
+        <article class="kpi-card">
+          <h3>H2 · Mediana Financeira (F vs. M)</h3>
+          <p class="kpi-val" id="kpi-h2">—</p>
+          <p class="kpi-sub" id="kpi-h2-sub"></p>
+          <div id="verdict-h2"></div>
+        </article>
+        <article class="kpi-card">
+          <h3>H3 · Razão Fundo Público</h3>
+          <p class="kpi-val" id="kpi-h3">—</p>
+          <p class="kpi-sub" id="kpi-h3-sub"></p>
+          <div id="verdict-h3"></div>
+        </article>
+        <article class="kpi-card">
+          <h3>H4 · Fluxo a Partidos/Terceiros</h3>
+          <p class="kpi-val" id="kpi-h4">—</p>
+          <p class="kpi-sub" id="kpi-h4-sub"></p>
+          <div id="verdict-h4"></div>
+        </article>
+        <article class="kpi-card">
+          <h3>H5 · Conversão em 3 Etapas</h3>
+          <p class="kpi-val" id="kpi-h5">—</p>
+          <p class="kpi-sub" id="kpi-h5-sub"></p>
+          <div id="verdict-h5"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="charts-stack">
+      <article class="chart-card">
+        <div class="chart-head">
+          <div>
+            <p class="fig-kicker">Fig. 1 · H1 — No Papel</p>
+            <h2>Distribuição de % de Mulheres por Chapa</h2>
+          </div>
+          <div class="filter-group" role="group" aria-label="Recorte de elegibilidade da chapa">
+            <button class="seg active" data-h1-mode="reg">Registradas</button>
+            <button class="seg" data-h1-mode="apto">Apenas APTO</button>
+          </div>
+        </div>
+        <div id="chart-h1" class="chart-slot"></div>
+        <p id="note-h1" class="chart-note"></p>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-head">
+          <div>
+            <p class="fig-kicker">Fig. 2 · H3 — No Dinheiro</p>
+            <h2>% de Candidatas vs. % do Fundo Público (FEFC + FP) por Partido</h2>
+          </div>
+        </div>
+        <div id="chart-h3" class="chart-slot"></div>
+        <p class="chart-note">Partidos com n ≥ 10 candidaturas APTO. Clique em um partido para filtrar o painel.</p>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-head">
+          <div>
+            <p class="fig-kicker">Fig. 3 · H5 — Na Urna</p>
+            <h2>Conversão em 3 Etapas (% Candidatas → % Votos → % Eleitas)</h2>
+          </div>
+        </div>
+        <div id="chart-h5" class="chart-slot"></div>
+        <p class="chart-note">Top 10 partidos por cadeiras eleitas no recorte selecionado. Linha tracejada marca o piso de 30%.</p>
+      </article>
+    </section>
+  </main>
+
+  <script src="dist/app.js"></script>
+</body>
+</html>

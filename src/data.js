@@ -38,6 +38,37 @@ export function decodeAnalyticalBase(raw) {
     }
     return obj;
   });
+
+  // Pré-computa as métricas legais da chapa completa (Federação/Partido × UF × Cargo × Ano)
+  // para que filtros por partido federado (ex.: PC do B, PSDB) não fragmentem a chapa em H1/H7.
+  const slateMap = new Map();
+  for (const c of candidates) {
+    if (c.g !== 'F' && c.g !== 'M') continue;
+    const key = `${c.y}|${c.uf}|${c.cargo}|${c.chapa}`;
+    let s = slateMap.get(key);
+    if (!s) {
+      s = { key, uf: c.uf, cargo: c.cargo, chapa: c.chapa, nReg: 0, fReg: 0, nApto: 0, fApto: 0 };
+      slateMap.set(key, s);
+    }
+    s.nReg += 1;
+    if (c.g === 'F') s.fReg += 1;
+    if (c.apto) {
+      s.nApto += 1;
+      if (c.g === 'F') s.fApto += 1;
+    }
+  }
+  for (const c of candidates) {
+    const key = `${c.y}|${c.uf}|${c.cargo}|${c.chapa}`;
+    const s = slateMap.get(key);
+    c.slateKey = key;
+    c.slateNReg = s ? s.nReg : 0;
+    c.slateFReg = s ? s.fReg : 0;
+    c.slatePctReg = s && s.nReg > 0 ? s.fReg / s.nReg : 0;
+    c.slateNApto = s ? s.nApto : 0;
+    c.slateFApto = s ? s.fApto : 0;
+    c.slatePctApto = s && s.nApto > 0 ? s.fApto / s.nApto : 0;
+  }
+
   return { meta: raw.meta, candidates };
 }
 

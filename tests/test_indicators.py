@@ -101,6 +101,44 @@ def test_h6_to_h9_indicators_and_inconclusive_states():
     assert out["smallH9"] == "inconclusivo"
 
 
+def test_federation_filter_and_h9_step_ratio():
+    script = """
+    import fs from 'node:fs';
+    import { decodeAnalyticalBase, filterCandidates } from './src/data.js';
+    import { computeH1, computeH5, computeH9AndParallel } from './src/indicators.js';
+
+    const raw = JSON.parse(fs.readFileSync('data/analytical_base.json', 'utf8'));
+    const { candidates } = decodeAnalyticalBase(raw);
+    const rows22 = filterCandidates(candidates, { year: 2022, cargo: 'all' });
+    const pcdob = filterCandidates(candidates, { year: 2022, cargo: 'all', party: 'PC do B' });
+    const h1Pcdob = computeH1(pcdob);
+    const h9All = computeH9AndParallel(rows22);
+    const h5All = computeH5(rows22);
+
+    console.log(JSON.stringify({
+      pcdobMicro: h1Pcdob.microSlatesReg,
+      pcdobSlates: h1Pcdob.totalSlates,
+      h9StageCounts: h9All.stageCounts,
+      h5UrnaRatio: h5All.pctVotosF / h5All.pctCandF,
+      h5CadeiraRatio: h5All.pctEleitasF / h5All.pctVotosF,
+    }));
+    """
+    proc = subprocess.run(
+        ["node", "--input-type=module", "-e", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    out = json.loads(proc.stdout)
+    # PC do B participa da federação FE Brasil (n>=4 na maioria das UFs, sem 31 falsas micro-chapas)
+    assert out["pcdobMicro"] <= 3
+    assert out["pcdobSlates"] >= 20
+    # H9 deve apontar maioria em Urna (Votos) em linha com H5 (perda maior na urna que nas sobras)
+    assert out["h5UrnaRatio"] < out["h5CadeiraRatio"]
+    assert out["h9StageCounts"].get("Urna (Votos)", 0) > out["h9StageCounts"].get("Urna (Cadeiras)", 0)
+
+
 def test_h1_to_h5_2026_comparative_consistency():
     cov = json.loads((ROOT / "data" / "coverage.json").read_text(encoding="utf-8"))["years"]["2026"]
     res = _run_js_indicators(2026)

@@ -66,6 +66,8 @@ def test_network_hubs_integrity_and_lgpd():
             if h["tipo"] == "PF":
                 assert h["label"].startswith("Fornecedor PF ("), f"PF label inseguro: {h['label']}"
                 assert not cpf_re.search(h["label"])
+        pf_count = sum(1 for h in ydata["hubs"] if h["tipo"] == "PF")
+        assert pf_count > 0, f"Nenhum hub PF encontrado em {yr} (possível inversão de CD_TIPO_FORNECEDOR)"
         for link in ydata["links"]:
             assert link["cid"] in cids
             assert link["hid"] in hids

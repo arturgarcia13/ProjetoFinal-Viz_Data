@@ -104,7 +104,8 @@
       "Integrar os 5 atos (Papel, Dinheiro, Urna, A Fraude Oculta, Geografia da Exclusão)",
       "Conectar filtros globais (UF, Ano, Partido, Cargo) e brushing & linking entre visões"
     ],
-    "passes": false
+    "passes": true,
+    "evidence": "SPA Scrollytelling split-screen em index.html/styles.css/src/main.js pelos 5 atos e 9 hipóteses (H1–H9), com filtros globais e brushing & linking; aprovado na revisão adversarial."
   },
   {
     "id": "F10",
@@ -115,6 +116,7 @@
       "Confirmar zero erros de console/JS e presença de todos os SVGs renderizados",
       "Revisar textos para linguagem não acusatória e notas metodológicas completas"
     ],
-    "passes": false
+    "passes": true,
+    "evidence": "./init.sh && .venv/bin/python -m pytest -v -> 15 passed in 9.92s (tests/e2e.mjs percorreu H1–H9, filtros 2026/Cargo/UF=CE/Limpar e mobile 390px sem erros); revisor adversarial: APROVADO SEM GAPS DE CORRETUDE."
   }
 ]

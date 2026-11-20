@@ -48,7 +48,7 @@ function safeDiv(num, den) {
  */
 export function computeH1(candidates) {
   const validGender = candidates.filter((c) => c.g === 'F' || c.g === 'M');
-  const regGroups = groupBy(validGender, (c) => `${c.uf}|${c.cargo}|${c.chapa}`);
+  const regGroups = groupBy(validGender, (c) => c.slateKey || `${c.y}|${c.uf}|${c.cargo}|${c.chapa}`);
 
   const slates = [];
   let microSlatesReg = 0;
@@ -59,15 +59,19 @@ export function computeH1(candidates) {
   let droppedByInapto = 0;
 
   for (const [key, rows] of regGroups.entries()) {
-    const [uf, cargo, chapa] = key.split('|');
-    const nReg = rows.length;
-    const fReg = rows.filter((r) => r.g === 'F').length;
-    const pctReg = fReg / nReg;
+    const sample = rows[0];
+    const hasPrecomputed = Number.isFinite(sample.slateNReg) && sample.slateNReg > 0;
+    const uf = sample.uf;
+    const cargo = sample.cargo;
+    const chapa = sample.chapa;
+    const nReg = hasPrecomputed ? sample.slateNReg : rows.length;
+    const fReg = hasPrecomputed ? sample.slateFReg : rows.filter((r) => r.g === 'F').length;
+    const pctReg = hasPrecomputed ? sample.slatePctReg : fReg / nReg;
 
     const aptoRows = rows.filter((r) => r.apto);
-    const nApto = aptoRows.length;
-    const fApto = aptoRows.filter((r) => r.g === 'F').length;
-    const pctApto = nApto > 0 ? fApto / nApto : 0;
+    const nApto = hasPrecomputed ? sample.slateNApto : aptoRows.length;
+    const fApto = hasPrecomputed ? sample.slateFApto : aptoRows.filter((r) => r.g === 'F').length;
+    const pctApto = hasPrecomputed ? sample.slatePctApto : (nApto > 0 ? fApto / nApto : 0);
 
     if (nReg < 4) {
       microSlatesReg += 1;
@@ -223,9 +227,9 @@ export function computeH2(candidates, coverageYear = null) {
     };
   });
 
-  const finalRate = coverageYear
-    ? safeDiv(coverageYear.tp_prestacao_apto?.FINAL || 0, coverageYear.population?.apto_cands || apto.length)
-    : safeDiv(apto.filter((c) => c.tpConta === 'FINAL').length, apto.length);
+  const finalRate = apto.length > 0
+    ? safeDiv(apto.filter((c) => c.tpConta === 'FINAL').length, apto.length)
+    : (coverageYear ? safeDiv(coverageYear.tp_prestacao_apto?.FINAL || 0, coverageYear.population?.apto_cands || 1) : 0);
 
   const medRatio = safeDiv(medF, medM);
   const privRatio = safeDiv(medPrivF, medPrivM);
@@ -313,9 +317,9 @@ export function computeH3(candidates, coverageYear = null) {
 
   const above30Cand = parties.filter((p) => p.pctCandF >= 0.33);
   const lockedBelow33 = above30Cand.filter((p) => p.pctPubF < p.pctCandF).length;
-  const finalRate = coverageYear
-    ? safeDiv(coverageYear.tp_prestacao_apto?.FINAL || 0, coverageYear.population?.apto_cands || apto.length)
-    : safeDiv(apto.filter((c) => c.tpConta === 'FINAL').length, apto.length);
+  const finalRate = apto.length > 0
+    ? safeDiv(apto.filter((c) => c.tpConta === 'FINAL').length, apto.length)
+    : (coverageYear ? safeDiv(coverageYear.tp_prestacao_apto?.FINAL || 0, coverageYear.population?.apto_cands || 1) : 0);
 
   let verdict;
   if (pubTotal <= 0 || parties.length < 5 || finalRate < 0.7) {
@@ -355,7 +359,9 @@ export function computeH3(candidates, coverageYear = null) {
  * H4 — Fluxo da Verba Pública (Sankey proporcional por fonte pública)
  */
 export function computeH4(candidates) {
-  const apto = candidates.filter((c) => c.apto && (c.g === 'F' || c.g === 'M') && c.e > 0);
+  const aptoAll = candidates.filter((c) => c.apto && (c.g === 'F' || c.g === 'M'));
+  const finalRate = safeDiv(aptoAll.filter((c) => c.tpConta === 'FINAL').length, aptoAll.length);
+  const apto = aptoAll.filter((c) => c.e > 0);
   const byGender = { F: { pubFlow: 0, excl: 0, shared: 0, party: 0, candM: 0, candFOther: 0 }, M: { pubFlow: 0, excl: 0, shared: 0, party: 0, candM: 0, candFOther: 0 } };
 
   for (const c of apto) {
@@ -376,11 +382,11 @@ export function computeH4(candidates) {
   const sharedM = safeDiv(byGender.M.shared, byGender.M.pubFlow);
 
   let verdict;
-  if (byGender.F.pubFlow <= 0 || byGender.M.pubFlow <= 0) {
+  if (byGender.F.pubFlow <= 0 || byGender.M.pubFlow <= 0 || finalRate < 0.7) {
     verdict = {
       status: 'inconclusivo',
       label: 'Inconclusivo',
-      reason: 'Sem volume suficiente de gasto público alocado no recorte.',
+      reason: `Volume ou cobertura FINAL insuficiente para fluxos (${(finalRate * 100).toFixed(1)}%).`,
     };
   } else if ((directDivF - directDivM > 0.02) || (sharedF - sharedM > 0.03)) {
     verdict = {
@@ -531,9 +537,9 @@ export function computeH6(candidates, { voteThreshold = 10, coverageYear = null 
   const pct2PlusM = safeDiv(summary.M.twoPlus, summary.M.n);
   const ratio2Plus = safeDiv(pct2PlusF, pct2PlusM);
 
-  const finalRate = coverageYear
-    ? safeDiv(coverageYear.tp_prestacao_apto?.FINAL || 0, coverageYear.population?.apto_cands || apto.length)
-    : safeDiv(apto.filter((c) => c.tpConta === 'FINAL').length, apto.length);
+  const finalRate = apto.length > 0
+    ? safeDiv(apto.filter((c) => c.tpConta === 'FINAL').length, apto.length)
+    : (coverageYear ? safeDiv(coverageYear.tp_prestacao_apto?.FINAL || 0, coverageYear.population?.apto_cands || 1) : 0);
 
   let verdict;
   if (summary.F.n < 20 || summary.M.n < 20 || finalRate < 0.7) {
@@ -572,7 +578,7 @@ export function computeH6(candidates, { voteThreshold = 10, coverageYear = null 
  */
 export function computeH7(candidates, { voteThreshold = 10, coverageYear = null } = {}) {
   const validGender = candidates.filter((c) => c.g === 'F' || c.g === 'M');
-  const slateMap = groupBy(validGender, (c) => `${c.uf}|${c.cargo}|${c.chapa}`);
+  const slateMap = groupBy(validGender, (c) => c.slateKey || `${c.y}|${c.uf}|${c.cargo}|${c.chapa}`);
 
   const BANDS = [
     { key: '< 30%', test: (p) => p < 0.3 },
@@ -585,22 +591,27 @@ export function computeH7(candidates, { voteThreshold = 10, coverageYear = null 
   const ufMap = new Map();
 
   for (const [key, rows] of slateMap.entries()) {
-    const [uf] = key.split('|');
+    const sample = rows[0];
+    const uf = sample.uf;
+    const hasPrecomputed = Number.isFinite(sample.slateNReg) && sample.slateNReg > 0;
+    const nReg = hasPrecomputed ? sample.slateNReg : rows.length;
+    const pctReg = hasPrecomputed ? sample.slatePctReg : rows.filter((r) => r.g === 'F').length / rows.length;
+
     const aptoF = rows.filter((r) => r.apto && r.g === 'F');
     if (aptoF.length > 0) {
       let u = ufMap.get(uf);
       if (!u) {
-        u = { uf, nF: 0, twoPlusF: 0 };
+        u = { uf, nF: 0, twoPlusF: 0, finalF: 0 };
         ufMap.set(uf, u);
       }
       for (const c of aptoF) {
         u.nF += 1;
+        if (c.tpConta === 'FINAL') u.finalF += 1;
         if (countSignals(c, voteThreshold).total >= 2) u.twoPlusF += 1;
       }
     }
 
-    if (rows.length < 4 || aptoF.length === 0) continue;
-    const pctReg = rows.filter((r) => r.g === 'F').length / rows.length;
+    if (nReg < 4 || aptoF.length === 0) continue;
     const bandObj = BANDS.find((b) => b.test(pctReg));
     const twoPlusCount = aptoF.filter((c) => countSignals(c, voteThreshold).total >= 2).length;
     slatePoints.push({
@@ -628,24 +639,29 @@ export function computeH7(candidates, { voteThreshold = 10, coverageYear = null 
     };
   });
 
-  const byUf = [...ufMap.values()].map((u) => ({
-    ...u,
-    rate: safeDiv(u.twoPlusF, u.nF),
-    inconclusive: u.nF < 10,
-  }));
+  const byUf = [...ufMap.values()].map((u) => {
+    const ufFinalRate = safeDiv(u.finalF, u.nF);
+    return {
+      ...u,
+      finalRate: ufFinalRate,
+      rate: safeDiv(u.twoPlusF, u.nF),
+      inconclusive: u.nF < 10 || ufFinalRate < 0.7,
+    };
+  });
 
   const bandFloor = bandStats.find((b) => b.band === '30%–33,3%');
   const bandHigh = bandStats.find((b) => b.band === '> 40%');
-  const finalRate = coverageYear
-    ? safeDiv(coverageYear.tp_prestacao_apto?.FINAL || 0, coverageYear.population?.apto_cands || 1)
-    : 1;
+  const aptoAll = validGender.filter((c) => c.apto);
+  const finalRate = aptoAll.length > 0
+    ? safeDiv(aptoAll.filter((c) => c.tpConta === 'FINAL').length, aptoAll.length)
+    : (coverageYear ? safeDiv(coverageYear.tp_prestacao_apto?.FINAL || 0, coverageYear.population?.apto_cands || 1) : 0);
 
   let verdict;
   if (slatePoints.length < 10 || finalRate < 0.7) {
     verdict = {
       status: 'inconclusivo',
       label: 'Inconclusivo',
-      reason: `Chapas insuficientes no recorte (${slatePoints.length} chapas n ≥ 4).`,
+      reason: `Amostra ou entrega FINAL insuficiente no recorte (${slatePoints.length} chapas n ≥ 4; FINAL ${(finalRate * 100).toFixed(1)}%).`,
     };
   } else if (bandFloor && bandHigh && bandFloor.aggRate > bandHigh.aggRate * 1.15) {
     verdict = {
@@ -751,28 +767,34 @@ export function computeH9AndParallel(candidates, { voteThreshold = 10 } = {}) {
 
   function scoreGroup(label, rows) {
     const validG = rows.filter((c) => c.g === 'F' || c.g === 'M');
+    const regF = validG.filter((c) => c.g === 'F').length;
+    const pctRegF = safeDiv(regF, validG.length);
+
     const apto = validG.filter((c) => c.apto);
     const nF = apto.filter((c) => c.g === 'F').length;
     const nM = apto.filter((c) => c.g === 'M').length;
     const pctCandF = safeDiv(nF, nF + nM);
+    const finalRate = safeDiv(apto.filter((c) => c.tpConta === 'FINAL').length, apto.length);
 
     const pubF = apto.filter((c) => c.g === 'F').reduce((s, c) => s + c.fefc + c.fp, 0);
     const pubTot = apto.reduce((s, c) => s + c.fefc + c.fp, 0);
-    const eqFefc = pctCandF > 0 && pubTot > 0 ? safeDiv(pubF / pubTot, pctCandF) : null;
+    const eqFefc = pctCandF > 0 && pubTot > 0 && finalRate >= 0.7 ? safeDiv(pubF / pubTot, pctCandF) : null;
 
     const vF = apto.filter((c) => c.g === 'F').reduce((s, c) => s + c.v, 0);
     const vTot = apto.reduce((s, c) => s + c.v, 0);
-    const rendUrna = pctCandF > 0 && vTot > 0 ? safeDiv(vF / vTot, pctCandF) : null;
+    const pctVotosF = safeDiv(vF, vTot);
+    const rendUrna = pctCandF > 0 && vTot > 0 ? safeDiv(pctVotosF, pctCandF) : null;
 
     const elF = apto.filter((c) => c.g === 'F' && c.el).length;
     const elTot = apto.filter((c) => c.el).length;
-    const sucParl = pctCandF > 0 && elTot >= 2 ? safeDiv(elF / elTot, pctCandF) : null;
+    // Razão de passo Votos → Cadeiras (evita dupla contagem da perda já ocorrida na urna)
+    const sucParl = pctVotosF > 0 && elTot >= 2 ? safeDiv(elF / elTot, pctVotosF) : null;
 
     const fWith2 = apto.filter((c) => c.g === 'F' && countSignals(c, voteThreshold).total >= 2).length;
-    const integrity = nF >= 5 ? 1 - fWith2 / nF : null;
+    const integrity = nF >= 5 && finalRate >= 0.7 ? 1 - fWith2 / nF : null;
 
-    // Score relativo de retenção (1.0 = paridade/cumprimento ideal; < 1.0 = perda)
-    const papelRatio = pctCandF / 0.3;
+    // Score relativo de retenção por etapa (1.0 = paridade/cumprimento ideal; < 1.0 = perda)
+    const papelRatio = pctRegF / 0.3;
     const candidatesStages = [
       { stage: 'Papel', val: validG.length >= 10 ? papelRatio : null },
       { stage: 'Dinheiro', val: eqFefc },
@@ -783,7 +805,7 @@ export function computeH9AndParallel(candidates, { voteThreshold = 10 } = {}) {
 
     const available = candidatesStages.filter((s) => s.val !== null);
     let bottleneck = 'Inconclusivo';
-    if (apto.length >= 10 && available.length >= 3) {
+    if (apto.length >= 10 && finalRate >= 0.7 && available.length >= 3) {
       available.sort((a, b) => a.val - b.val);
       bottleneck = available[0].val < 0.95 ? available[0].stage : 'Sem Vazamento Crítico';
     }
@@ -794,7 +816,8 @@ export function computeH9AndParallel(candidates, { voteThreshold = 10 } = {}) {
       nApto: apto.length,
       nF,
       elTot,
-      inclusaoPct: pctCandF * 100,
+      finalRate,
+      inclusaoPct: pctRegF * 100,
       eqFefc: eqFefc ?? 0,
       rendUrna: rendUrna ?? 0,
       sucParl: sucParl ?? 0,

@@ -42,8 +42,8 @@
 | F06 | U3 | 3 gráficos básicos reais (H1, H3, H5) em Observable Plot / D3 | Concluído (`esbuild` 293.7kb + Puppeteer 0 erros) |
 | F07 | U4 | Gráficos de financiamento e sinais H2, H4, H6–H8 + estados Inconclusivo (10–16/nov) | Concluído (`13 passed`; Puppeteer 0 erros) |
 | F08 | U4 | Mapa por UF (H7/H9) e Coordenadas Paralelas (Ato 5) (10–16/nov) | Concluído (27 UFs + brushY testados) |
-| F09 | U5 | SPA Scrollytelling split-screen nos 5 atos + filtros globais + selos (17–23/nov) | Pendente |
-| F10 | U5 | Verificação E2E no navegador (Puppeteer) + revisão metodológica (17–23/nov) | Pendente |
+| F09 | U5 | SPA Scrollytelling split-screen nos 5 atos + filtros globais + selos (17–23/nov) | Concluído (`npm run build` 373.2kb; 5 atos + 9 passos integrados) |
+| F10 | U5 | Verificação E2E no navegador (Puppeteer) + revisão metodológica (17–23/nov) | Concluído (`pytest` 15 passed incl. `tests/e2e.mjs`; revisor adversarial aprovou) |
 
 ---
 
@@ -68,8 +68,12 @@
   - Descoberta empírica relevante em H8: entre 2022 e 2026, contas zeradas declaradas caíram (`5,5% → 4,5%`), enquanto movimentações padronizadas em lote subiram (`35,6% → 39,0%`). Em H7, chapas no piso (`30%–33,3%`) registram `3,4%` de mulheres com ≥2 sinais vs. `0,9%` em chapas `>40%`.
   - Implementadas todas as visualizações especiais (`src/charts/h2Dumbbell.js`, `h4SankeyNetwork.js`, `h6Signals.js`, `h7Boxplot.js`, `h8Temporal.js`, `h9MapAndParallel.js`), mapeando `data/br_uf.json` via `IBGE_TO_UF` (`codarea`).
 
+- **2026-11-20 (U5 — Scrollytelling Split-Screen, E2E e Revisão Adversarial):**
+  - Reestruturada a SPA em [index.html](index.html), [styles.css](styles.css) e [src/main.js](src/main.js) como *Scrollytelling* split-screen (painel de leitura com texto, hipóteses H1–H9 e selo de diagnóstico + área principal fixa à direita com controles contextuais, filtros globais e *brushing & linking*).
+  - Revisão adversarial em contexto frio apontou 5 pontos reais (inversão PF/PJ em `CD_TIPO_FORNECEDOR`, razão cumulativa vs. de passo em H9, fragmentação de federações sob filtro por partido em H1/H7 e denominador `ND` no relatório de cobertura, checagem `FINAL < 0.7` no recorte filtrado e alinhamento `h7` mapa + `h9` Partidos/UFs + notas de 2026). Todos corrigidos, ETL e bundle reconstruídos, e aprovados na reavaliação (`APROVADO SEM GAPS DE CORRETUDE`, `15 passed`).
+
 ## 4. Open Risks & Questions
-- Em 2026, `232` candidaturas `APTO` (1,3%) não estão no arquivo `votacao_2026` de `19/10/2026` (diferença de data para `consulta_cand_2026` de `20/11/2026`), recebendo `0` votos por ausência de linha — explicitar isso na nota metodológica do Ato 4.
+- Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.
 
 ## 5. Next Action
-1. Iniciar **U5 (`F09` + `F10` — Entregável 17–23/nov)**: transformar a SPA em **Scrollytelling split-screen** real (painel narrativo rolável com hipóteses + selos de diagnóstico ao lado da área visual principal fixa) pelos 5 atos, conectar filtros globais e *brushing & linking*, e rodar verificação E2E completa (`tests/e2e.mjs`).
+1. Entrar na janela **24–27/nov** do cronograma: inspeção visual humana no navegador (`npm run serve` → http://localhost:8000), validação cruzada pontual com consultas públicas do DivulgaCandContas/TSE e ajustes finais para publicação (28–30/nov).

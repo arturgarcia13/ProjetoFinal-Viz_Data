@@ -38,6 +38,9 @@ def _render_year_section(cov: dict[str, Any]) -> list[str]:
     san = cov["sanity"]
     dtg = cov["dt_geracao"]
 
+    gen_all_den = pop["gender_all"]["F"] + pop["gender_all"]["M"]
+    gen_apto_den = pop["gender_apto"]["F"] + pop["gender_apto"]["M"]
+
     lines: list[str] = [
         f"## Ano {y} — {role_lbl}",
         "",
@@ -53,8 +56,8 @@ def _render_year_section(cov: dict[str, Any]) -> list[str]:
         "",
         "### 2. Universo Analítico, Elegibilidade e Micro-Chapas",
         f"- **Candidaturas registradas (Cargos 6+7):** **{_fmt_int(pop['total_cands'])}** → **{_fmt_int(pop['apto_cands'])} APTO** ({_pct(pop['apto_cands'], pop['total_cands'])}) e **{_fmt_int(pop['inapto_cands'])} INAPTO** ({_pct(pop['inapto_cands'], pop['total_cands'])}).",
-        f"- **Gênero (Registradas):** Mulheres `{_fmt_int(pop['gender_all']['F'])}` ({_pct(pop['gender_all']['F'], pop['total_cands'])}), Homens `{_fmt_int(pop['gender_all']['M'])}` ({_pct(pop['gender_all']['M'], pop['total_cands'])}), Não divulgável `{_fmt_int(pop['gender_all']['ND'])}` (excluído dos denominadores de gênero).",
-        f"- **Gênero (`APTO`):** Mulheres `{_fmt_int(pop['gender_apto']['F'])}` ({_pct(pop['gender_apto']['F'], pop['apto_cands'])}), Homens `{_fmt_int(pop['gender_apto']['M'])}` ({_pct(pop['gender_apto']['M'], pop['apto_cands'])}), Não divulgável `{_fmt_int(pop['gender_apto']['ND'])}`.",
+        f"- **Gênero (Registradas, sobre F+M = {_fmt_int(gen_all_den)}):** Mulheres `{_fmt_int(pop['gender_all']['F'])}` ({_pct(pop['gender_all']['F'], gen_all_den)}), Homens `{_fmt_int(pop['gender_all']['M'])}` ({_pct(pop['gender_all']['M'], gen_all_den)}), Não divulgável `{_fmt_int(pop['gender_all']['ND'])}` (excluído dos denominadores de gênero).",
+        f"- **Gênero (`APTO`, sobre F+M = {_fmt_int(gen_apto_den)}):** Mulheres `{_fmt_int(pop['gender_apto']['F'])}` ({_pct(pop['gender_apto']['F'], gen_apto_den)}), Homens `{_fmt_int(pop['gender_apto']['M'])}` ({_pct(pop['gender_apto']['M'], gen_apto_den)}), Não divulgável `{_fmt_int(pop['gender_apto']['ND'])}`.",
         f"- **Chapas (Registradas):** `{_fmt_int(pop['chapas_reg']['total'])}` chapas totais; **`{_fmt_int(pop['chapas_reg']['micro_lt4'])}` micro-chapas (`n < 4`)** somando **`{_fmt_int(pop['chapas_reg']['micro_cands'])}` candidaturas** (mantidas nos totais individuais e excluídas da distribuição percentual de H1/H7).",
         f"- **Chapas (`APTO`):** `{_fmt_int(pop['chapas_apto']['total'])}` chapas totais; `{_fmt_int(pop['chapas_apto']['micro_lt4'])}` micro-chapas (`n < 4`, `{_fmt_int(pop['chapas_apto']['micro_cands'])}` candidaturas).",
         "",

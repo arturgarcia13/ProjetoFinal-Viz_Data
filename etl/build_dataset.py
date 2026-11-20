@@ -263,6 +263,7 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
             TRIM(NR_PARTIDO_FORNECEDOR) AS nr_part_forn,
             TRIM(CD_ESFERA_PART_FORNECEDOR) AS cd_esfera_forn,
             TRIM(CD_TIPO_FORNECEDOR) AS cd_tipo_forn,
+            TRIM(DS_TIPO_FORNECEDOR) AS ds_tipo_forn,
             TRIM(NR_CPF_CNPJ_FORNECEDOR) AS doc_forn,
             TRIM(COALESCE(NULLIF(NULLIF(NM_FORNECEDOR_RFB, '#NULO'), '#NULO#'), NM_FORNECEDOR)) AS nm_forn,
             TRIM(DT_DESPESA) AS dt_despesa,
@@ -447,6 +448,7 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
                 d.cand_p AS p,
                 d.doc_forn,
                 ANY_VALUE(d.cd_tipo_forn) AS cd_tipo_forn,
+                ANY_VALUE(d.ds_tipo_forn) AS ds_tipo_forn,
                 ANY_VALUE(d.nm_forn) AS nm_forn,
                 SUM(d.vr) AS val
             FROM desp_clean_{year} d
@@ -473,6 +475,7 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
             SELECT
                 uf, p, doc_forn,
                 ANY_VALUE(cd_tipo_forn) AS cd_tipo_forn,
+                ANY_VALUE(ds_tipo_forn) AS ds_tipo_forn,
                 ANY_VALUE(nm_forn) AS nm_forn,
                 COUNT(DISTINCT cid) AS cands_n,
                 COUNT(DISTINCT CASE WHEN v < 20 THEN cid END) AS low_vote_n,
@@ -483,7 +486,7 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
                AND MAX(CASE WHEN v < 20 AND share > 0.15 THEN 1 ELSE 0 END) = 1
         )
         SELECT
-            h.uf, h.p, h.doc_forn, h.cd_tipo_forn, h.nm_forn,
+            h.uf, h.p, h.doc_forn, h.cd_tipo_forn, h.ds_tipo_forn, h.nm_forn,
             h.cands_n, h.low_vote_n, ROUND(h.total_val, 2) AS hub_total,
             css.cid, css.g, css.chapa, css.cargo, css.v, ROUND(css.e, 2) AS e,
             ROUND(css.val, 2) AS edge_val, ROUND(css.share, 4) AS share
@@ -498,11 +501,12 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
     links: list[dict[str, Any]] = []
 
     for rec in hub_edges:
-        uf, p, doc_forn, cd_tipo, nm_forn, cands_n, low_n, hub_total, cid, g, chapa, cargo, v, e, val, share = rec
+        uf, p, doc_forn, cd_tipo, ds_tipo, nm_forn, cands_n, low_n, hub_total, cid, g, chapa, cargo, v, e, val, share = rec
         hkey = (uf, p, doc_forn)
         if hkey not in hub_map:
             hid = f"H{year}_{len(hub_map) + 1}"
-            is_pj = cd_tipo == "0"
+            # Nos CSVs reais do TSE, CD_TIPO_FORNECEDOR '1' = PESSOA JURÍDICA e '0' = PESSOA FÍSICA
+            is_pj = (cd_tipo == "1") and ("JUR" in (ds_tipo or "").upper())
             label = nm_forn if (is_pj and nm_forn and nm_forn not in ("#NULO", "#NULO#")) else f"Fornecedor PF ({uf}) #{len(hub_map) + 1}"
             hub_map[hkey] = {
                 "hid": hid,

@@ -16,8 +16,8 @@
 
 ### 2. Universo Analítico, Elegibilidade e Micro-Chapas
 - **Candidaturas registradas (Cargos 6+7):** **27.367** → **24.733 APTO** (90,4%) e **2.634 INAPTO** (9,6%).
-- **Gênero (Registradas):** Mulheres `9.320` (34,1%), Homens `18.026` (65,9%), Não divulgável `21` (excluído dos denominadores de gênero).
-- **Gênero (`APTO`):** Mulheres `8.468` (34,2%), Homens `16.261` (65,7%), Não divulgável `4`.
+- **Gênero (Registradas, sobre F+M = 27.346):** Mulheres `9.320` (34,1%), Homens `18.026` (65,9%), Não divulgável `21` (excluído dos denominadores de gênero).
+- **Gênero (`APTO`, sobre F+M = 24.729):** Mulheres `8.468` (34,2%), Homens `16.261` (65,8%), Não divulgável `4`.
 - **Chapas (Registradas):** `1.189` chapas totais; **`129` micro-chapas (`n < 4`)** somando **`244` candidaturas** (mantidas nos totais individuais e excluídas da distribuição percentual de H1/H7).
 - **Chapas (`APTO`):** `1.138` chapas totais; `106` micro-chapas (`n < 4`, `199` candidaturas).
 
@@ -67,8 +67,8 @@
 
 ### 2. Universo Analítico, Elegibilidade e Micro-Chapas
 - **Candidaturas registradas (Cargos 6+7):** **19.098** → **17.712 APTO** (92,7%) e **1.386 INAPTO** (7,3%).
-- **Gênero (Registradas):** Mulheres `6.801` (35,6%), Homens `12.297` (64,4%), Não divulgável `0` (excluído dos denominadores de gênero).
-- **Gênero (`APTO`):** Mulheres `6.366` (35,9%), Homens `11.346` (64,1%), Não divulgável `0`.
+- **Gênero (Registradas, sobre F+M = 19.098):** Mulheres `6.801` (35,6%), Homens `12.297` (64,4%), Não divulgável `0` (excluído dos denominadores de gênero).
+- **Gênero (`APTO`, sobre F+M = 17.712):** Mulheres `6.366` (35,9%), Homens `11.346` (64,1%), Não divulgável `0`.
 - **Chapas (Registradas):** `847` chapas totais; **`91` micro-chapas (`n < 4`)** somando **`204` candidaturas** (mantidas nos totais individuais e excluídas da distribuição percentual de H1/H7).
 - **Chapas (`APTO`):** `823` chapas totais; `86` micro-chapas (`n < 4`, `193` candidaturas).
 

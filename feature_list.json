@@ -32,7 +32,8 @@
       "Gerar base analítica validada de 2022 (e recortes 2018/2026) sem nome, CPF ou e-mail",
       "Executar suíte pytest validando chaves únicas, ausência de multiplicação em joins 1:N e integridade de totais"
     ],
-    "passes": false
+    "passes": true,
+    "evidence": ".venv/bin/python -m etl.build_dataset && .venv/bin/python -m pytest -v -> 10 passed in 0.61s (diferença 0 votos e R$ 0,00 em 2022 e 2026; zero PII)"
   },
   {
     "id": "F04",
@@ -43,7 +44,8 @@
       "Gravar docs/relatorio_cobertura_2022.md e JSON de auditoria automaticamente a partir do ETL",
       "Validar métricas de cobertura em teste pytest"
     ],
-    "passes": false
+    "passes": true,
+    "evidence": "docs/relatorio_cobertura_2022.md e data/coverage.json gerados automaticamente; test_coverage_and_sanity_invariants + test_coverage_markdown_sections PASSED"
   },
   {
     "id": "F05",

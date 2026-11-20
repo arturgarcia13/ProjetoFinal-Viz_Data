@@ -1,0 +1,226 @@
+{
+  "years": {
+    "2022": {
+      "year": 2022,
+      "role": "baseline",
+      "dt_geracao": {
+        "consulta_cand": "22/10/2026",
+        "votacao": "21/10/2026",
+        "receitas": "18/10/2026",
+        "despesas_contratadas": "18/10/2026"
+      },
+      "sources": {
+        "consulta_cand": {
+          "raw_rows": 29322,
+          "cargo_6_7_rows": 27367,
+          "unique_sq": 27367
+        },
+        "votacao": {
+          "raw_rows": 9377845,
+          "cargo_6_7_rows": 9175975,
+          "unique_sq": 25222,
+          "sum_v_nom": 206672548,
+          "sum_v_val": 204070241
+        },
+        "receitas": {
+          "raw_rows": 674944,
+          "cargo_6_7_rows": 259446,
+          "unique_sq": 26875,
+          "sum_r": 5055682690.23,
+          "sum_fefc": 3808225463.27
+        },
+        "doador_originario": {
+          "raw_rows": 199241,
+          "unique_sq_receita": 7384,
+          "matched_cargo_6_7_sq_receita": 6460,
+          "rec_transfer_sq": 109752,
+          "rec_transfer_matched_orig": 6460
+        },
+        "despesas_contratadas": {
+          "raw_rows": 2209835,
+          "cargo_6_7_rows": 1993422,
+          "unique_sq": 26875,
+          "sum_e_efetivo": 4790848454.16,
+          "sum_e_interno_excl": 0.0
+        }
+      },
+      "population": {
+        "total_cands": 27367,
+        "apto_cands": 24733,
+        "inapto_cands": 2634,
+        "gender_all": {
+          "F": 9320,
+          "M": 18026,
+          "ND": 21
+        },
+        "gender_apto": {
+          "F": 8468,
+          "M": 16261,
+          "ND": 4
+        },
+        "chapas_reg": {
+          "total": 1189,
+          "micro_lt4": 129,
+          "micro_cands": 244
+        },
+        "chapas_apto": {
+          "total": 1138,
+          "micro_lt4": 106,
+          "micro_cands": 199
+        }
+      },
+      "matching": {
+        "all": {
+          "votacao": 25222,
+          "receitas": 26875,
+          "despesas_contratadas": 26875,
+          "zero_fin": 2778,
+          "missing_rec": 492
+        },
+        "apto": {
+          "votacao": 24733,
+          "receitas": 24578,
+          "despesas_contratadas": 24578,
+          "zero_fin": 1593,
+          "missing_rec": 155
+        }
+      },
+      "tp_prestacao_all": {
+        "FINAL": 26171,
+        "AUSENTE": 492,
+        "PARCIAL": 314,
+        "REGULARIZAÇÃO DA OMISSÃO": 247,
+        "RELATÓRIO FINANCEIRO": 143
+      },
+      "tp_prestacao_apto": {
+        "FINAL": 24005,
+        "PARCIAL": 251,
+        "REGULARIZAÇÃO DA OMISSÃO": 196,
+        "AUSENTE": 155,
+        "RELATÓRIO FINANCEIRO": 126
+      },
+      "sanity": {
+        "exported_v_val": 204070241,
+        "exported_v_nom": 206672548,
+        "exported_r": 5055682690.23,
+        "exported_fefc": 3808225463.27,
+        "exported_e": 4790848454.16
+      },
+      "hubs_summary": {
+        "hubs_count": 157,
+        "cand_nodes_count": 595,
+        "links_count": 827
+      }
+    },
+    "2026": {
+      "year": 2026,
+      "role": "comparison",
+      "dt_geracao": {
+        "consulta_cand": "20/11/2026",
+        "votacao": "19/10/2026",
+        "receitas": "20/11/2026",
+        "despesas_contratadas": "20/11/2026"
+      },
+      "sources": {
+        "consulta_cand": {
+          "raw_rows": 21017,
+          "cargo_6_7_rows": 19098,
+          "unique_sq": 19098
+        },
+        "votacao": {
+          "raw_rows": 6735370,
+          "cargo_6_7_rows": 6532889,
+          "unique_sq": 17934,
+          "sum_v_nom": 215069877,
+          "sum_v_val": 214087715
+        },
+        "receitas": {
+          "raw_rows": 270339,
+          "cargo_6_7_rows": 223515,
+          "unique_sq": 18729,
+          "sum_r": 5487916504.58,
+          "sum_fefc": 3967207941.49
+        },
+        "doador_originario": {
+          "raw_rows": 317631,
+          "unique_sq_receita": 7381,
+          "matched_cargo_6_7_sq_receita": 6548,
+          "rec_transfer_sq": 87036,
+          "rec_transfer_matched_orig": 6548
+        },
+        "despesas_contratadas": {
+          "raw_rows": 1792750,
+          "cargo_6_7_rows": 1612086,
+          "unique_sq": 18729,
+          "sum_e_efetivo": 5187366557.68,
+          "sum_e_interno_excl": 0.0
+        }
+      },
+      "population": {
+        "total_cands": 19098,
+        "apto_cands": 17712,
+        "inapto_cands": 1386,
+        "gender_all": {
+          "F": 6801,
+          "M": 12297,
+          "ND": 0
+        },
+        "gender_apto": {
+          "F": 6366,
+          "M": 11346,
+          "ND": 0
+        },
+        "chapas_reg": {
+          "total": 847,
+          "micro_lt4": 91,
+          "micro_cands": 204
+        },
+        "chapas_apto": {
+          "total": 823,
+          "micro_lt4": 86,
+          "micro_cands": 193
+        }
+      },
+      "matching": {
+        "all": {
+          "votacao": 17934,
+          "receitas": 18729,
+          "despesas_contratadas": 18729,
+          "zero_fin": 1654,
+          "missing_rec": 369
+        },
+        "apto": {
+          "votacao": 17480,
+          "receitas": 17529,
+          "despesas_contratadas": 17529,
+          "zero_fin": 972,
+          "missing_rec": 183
+        }
+      },
+      "tp_prestacao_all": {
+        "FINAL": 18488,
+        "AUSENTE": 369,
+        "PARCIAL": 164,
+        "RELATÓRIO FINANCEIRO": 77
+      },
+      "tp_prestacao_apto": {
+        "FINAL": 17341,
+        "AUSENTE": 183,
+        "PARCIAL": 117,
+        "RELATÓRIO FINANCEIRO": 71
+      },
+      "sanity": {
+        "exported_v_val": 214087715,
+        "exported_v_nom": 215069877,
+        "exported_r": 5487916504.58,
+        "exported_fefc": 3967207941.49,
+        "exported_e": 5187366557.68
+      },
+      "hubs_summary": {
+        "hubs_count": 60,
+        "cand_nodes_count": 358,
+        "links_count": 528
+      }
+    }
+  }
+}

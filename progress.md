@@ -52,10 +52,10 @@
   - Protótipo anterior salvo na branch `archive/prototipo-v1` (commit `99b0446`, tag `prototipo-v1`).
   - `master` limpa dos arquivos do protótipo antigo, mantendo `Proposta do Projeto Final.md`, `package.json`, `assets/` e `data/br_uf.json`.
   - Decisões fechadas com o usuário: Federal + Estadual apenas (sem Distrital); Observable Plot + D3.js; Coordenadas Paralelas no Ato 5; tratamento de `APTO` vs. `INAPTO` por etapa; corte `n >= 4` apenas em H1/H7 mantendo todas as 244 candidaturas de micro-chapas nos totais individuais.
-- **2026-11-20 (U1):**
-  - Criado `docs/plano_de_dados.md` com especificação completa das fontes 2018/2022/2026, regras de limpeza, chaves, sentinelas, classificação de receitas/despesas e comparações condicionais.
-  - Verificadas empiricamente as bases de 2022/2026 (DuckDB + `leiame.pdf`): `0` sobreposições de `TP_PRESTACAO_CONTAS` em `receitas_2022` (`26.875` prestadores), `4.171` recibos com múltiplos itens em `SQ_RECEITA`, `2.902` linhas com `CD_FONTE_RECEITA = -1` tendo `VR_RECEITA = 0,00`, `despesas_pagas` sem `SQ_CANDIDATO`, e `receitas_2026` com apenas `9.346` de `160.564` linhas `FINAL`.
-  - Instalado `duckdb==2.0.0` na `.venv` para processamento rápido dos CSVs multi-GB.
+- **2026-11-20 (U1 — refinamento de recorte):**
+  - Usuário definiu **2022** como baseline principal, **2026** como comparativo direto (mesmo regime de federações) e **2018** apenas como referência auxiliar opcional.
+  - Descoberto byte `0x88` (`cp1252`) na linha 152.967 de `despesas_contratadas_candidatos_2026_BRASIL.csv`; Plano de Dados atualizado para leitura `cp1252`.
+  - Verificado pelo calendário TSE 2026 que prazos finais de prestação de contas encerraram em 03/11 (1º turno) e 16/11 (2º turno); extração atual no repo é de 21/10/2026 (5,8% `FINAL` em receitas).
 
 ## 4. Open Risks & Questions
 - Conferir na U2 se `receitas_2018` ou `despesas_2018/2022` possuem sobreposição de `TP_PRESTACAO_CONTAS` por candidato e medir a taxa exata de casamento entre `receitas` e `doador_originario`.

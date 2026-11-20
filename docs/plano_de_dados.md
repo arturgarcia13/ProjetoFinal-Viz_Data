@@ -8,9 +8,9 @@ Este documento define o contrato de entrada, limpeza, padronização, cruzamento
 
 | Dimensão | Regra Fechada | Justificativa & Comparabilidade |
 | :--- | :--- | :--- |
-| **Ano âncora** | `ANO_ELEICAO = 2022` | Prestações de contas consolidadas (predomínio de entrega `FINAL`) e regras vigentes de federação partidária. |
-| **Controle histórico (condicional)** | `ANO_ELEICAO = 2018` | Último pleito proporcional geral com **coligações partidárias** (antes da extinção das coligações proporcionais e adoção de federações). |
-| **Comparação preliminar (condicional)** | `ANO_ELEICAO = 2026` | Dados extraídos em out/2026: votação nominal disponível, mas contas majoritariamente em `RELATÓRIO FINANCEIRO` / `PARCIAL` e `CD_SITUACAO_CANDIDATURA = -3 (#NE)`. |
+| **Ano baseline (principal)** | `ANO_ELEICAO = 2022` | Prestações de contas consolidadas (predomínio de entrega `FINAL`) e regime vigente de federações partidárias. |
+| **Comparativo direto** | `ANO_ELEICAO = 2026` | Mesmo regime jurídico de federações (comparação direta com 2022, inclusive H8). A elegibilidade final dos eixos financeiros/integridade depende da taxa de entregas `FINAL` apurada no Relatório de Cobertura (caso baixa, marcar *Inconclusivo*). |
+| **Referência auxiliar (opcional)** | `ANO_ELEICAO = 2018` | Controle histórico pré-federações (coligações proporcionais); mantido apenas como apoio metodológico/ETL quando necessário, fora da comparação direta principal. |
 | **Cargos incluídos** | `CD_CARGO IN ('6', '7')` (`DEPUTADO FEDERAL`, `DEPUTADO ESTADUAL`) | Exclui **Deputado Distrital (`CD_CARGO = '8'`)** por existir apenas no DF, além de cargos majoritários (`1–5`, `9–10`). |
 | **Abrangência territorial** | Todas as **27 UFs** (`SG_UF` de `AC` a `TO`, incluindo `DF` para Deputado Federal) | Leitura exclusivamente dos arquivos consolidados `*_BRASIL.csv` para evitar dupla contagem entre UFs e `BR`/`BRASIL`. |
 
@@ -36,7 +36,7 @@ Todas as leituras usam **apenas os arquivos `*_BRASIL.csv`** de cada fonte (nunc
 
 Conforme os dicionários oficiais (`leiame.pdf` de `consulta_cand`, `votacao` e `prestacao_de_contas`):
 
-1. **Codificação e delimitador:** arquivos CSV com encoding **`Latin-1` (`ISO-8859-1`)**, campos entre aspas duplas e separador **`;`**.
+1. **Codificação e delimitador:** arquivos CSV com encoding **`cp1252` (Windows-1252 / superset de Latin-1)**, campos entre aspas duplas e separador **`;`** (verificado empiricamente em `despesas_contratadas_candidatos_2026_BRASIL.csv`, linha 152.967, byte `0x88`, que falha em leitores `latin-1` estritos).
 2. **Valores monetários:** `VR_RECEITA` e `VR_DESPESA_CONTRATADA` vêm no padrão brasileiro com vírgula decimal (ex.: `"8000,00"`). Converter trocando `,` por `.` e fazendo cast para decimal/float64 (`DECIMAL(14,2)` na soma).
 3. **Sentinelas do TSE:**
    - Texto `"#NULO"` / `"#NULO#"` e numérico `"-1"` → **ausência/em branco** (`NULL` analítico).

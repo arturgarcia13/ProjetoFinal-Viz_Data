@@ -4,8 +4,9 @@
 Construir do zero uma aplicação Web interativa (SPA em *Scrollytelling*) acompanhada de pipeline de dados Python auditável e reprodutível para investigar, ao longo de 5 atos (Papel, Dinheiro, Urna, Fraude Oculta e Geografia da Exclusão), onde a cota de gênero de 30% funciona, onde vaza e onde os dados são inconclusivos.
 
 ## 2. Escopo e Recortes Fechados
-- **Ano âncora:** **2022** (prestações de contas finais e situação de candidatura consolidada).
-- **Anos de comparação condicional:** **2018** (controle histórico pré-federações, com coligações proporcionais) e **2026** (dados preliminares de out/2026; limitações explicitadas e hipóteses afetadas marcadas como *Inconclusivo* quando a cobertura for insuficiente).
+- **Ano baseline (principal):** **2022** (prestações de contas finais e situação de candidatura consolidada).
+- **Comparativo direto:** **2026** (mesmo regime jurídico de federações partidárias; sujeito à cobertura de entrega `FINAL` medida no Relatório de Cobertura — hipóteses financeiras/integridade exibem *Inconclusivo* automaticamente se a cobertura final for insuficiente).
+- **Ano auxiliar opcional:** **2018** (controle histórico pré-federações, com coligações proporcionais; mantido apenas como referência auxiliar no ETL/notas metodológicas, sem disputar o foco principal da narrativa).
 - **Cargos:** exclusivamente **Deputado Federal (`CD_CARGO = 6`)** e **Deputado Estadual (`CD_CARGO = 7`)** nas **27 UFs**. **Deputado Distrital (`CD_CARGO = 8`) fica excluído** do projeto.
 - **Unidade legal de chapa:**
   - **2018:** Coligação proporcional (`SQ_COLIGACAO`) por `(UF, Cargo)`.

@@ -35,7 +35,7 @@
 | ID | Unidade | Entregável | Status |
 | :--- | :--- | :--- | :--- |
 | F01 | U0 | Harness, preservação `archive/prototipo-v1` e `./init.sh` | Concluído (`./init.sh` -> 3 passed, 0.07s) |
-| F02 | U1 | `docs/plano_de_dados.md` (22–26/out) | Pendente |
+| F02 | U1 | `docs/plano_de_dados.md` (22–26/out) | Concluído (`pytest` 5 passed; colunas 2022 validadas) |
 | F03 | U2 | Pipeline ETL Python + Base validada 2022 (27/out–02/nov) | Pendente |
 | F04 | U2 | Relatório de cobertura por fonte (`docs/relatorio_cobertura_2022.md`) | Pendente |
 | F05 | U3 | Indicadores auditáveis H1–H5 + testes unitários (03–09/nov) | Pendente |
@@ -50,14 +50,15 @@
 ## 3. Current State & Decisions Log
 - **2026-11-20 (U0):**
   - Protótipo anterior salvo na branch `archive/prototipo-v1` (commit `99b0446`, tag `prototipo-v1`).
-  - `master` limpa dos arquivos do protótipo antigo (`index.html`, `styles.css`, `src/`, `dist/app.js`, `data/dashboard.json`, `data/hubs_network.json`), mantendo `Proposta do Projeto Final.md`, `package.json`, `assets/` e `data/br_uf.json`.
+  - `master` limpa dos arquivos do protótipo antigo, mantendo `Proposta do Projeto Final.md`, `package.json`, `assets/` e `data/br_uf.json`.
   - Decisões fechadas com o usuário: Federal + Estadual apenas (sem Distrital); Observable Plot + D3.js; Coordenadas Paralelas no Ato 5; tratamento de `APTO` vs. `INAPTO` por etapa; corte `n >= 4` apenas em H1/H7 mantendo todas as 244 candidaturas de micro-chapas nos totais individuais.
-  - Descoberta preliminar nos CSVs brutos: em `consulta_cand_2026_BRASIL.csv`, `CD_SITUACAO_CANDIDATURA` está preenchido com `-3` (`#NE`) em todos os 19.098 registros de Federal/Estadual, enquanto `CD_SIT_TOT_TURNO` está preenchido (`928` com `#NULO`). Isso exigirá regra condicional explícita no Plano de Dados.
+- **2026-11-20 (U1):**
+  - Criado `docs/plano_de_dados.md` com especificação completa das fontes 2018/2022/2026, regras de limpeza, chaves, sentinelas, classificação de receitas/despesas e comparações condicionais.
+  - Verificadas empiricamente as bases de 2022/2026 (DuckDB + `leiame.pdf`): `0` sobreposições de `TP_PRESTACAO_CONTAS` em `receitas_2022` (`26.875` prestadores), `4.171` recibos com múltiplos itens em `SQ_RECEITA`, `2.902` linhas com `CD_FONTE_RECEITA = -1` tendo `VR_RECEITA = 0,00`, `despesas_pagas` sem `SQ_CANDIDATO`, e `receitas_2026` com apenas `9.346` de `160.564` linhas `FINAL`.
+  - Instalado `duckdb==2.0.0` na `.venv` para processamento rápido dos CSVs multi-GB.
 
 ## 4. Open Risks & Questions
-- Verificar em U1 se `receitas_candidatos_2022_BRASIL.csv` contém registros sobrepostos entre `TP_PRESTACAO_CONTAS` (`FINAL`, `PARCIAL`, `REGULARIZAÇÃO DA OMISSÃO`, `RELATÓRIO FINANCEIRO`) e qual o significado das 2.902 linhas com `CD_FONTE_RECEITA = -1`.
-- Confirmar se `votacao_candidato_munzona_2022/` possui apenas arquivos estaduais ou também `BRASIL` (há 29 CSVs: 27 UFs + possivelmente `BR`/`BRASIL` ou `ZZ`).
+- Conferir na U2 se `receitas_2018` ou `despesas_2018/2022` possuem sobreposição de `TP_PRESTACAO_CONTAS` por candidato e medir a taxa exata de casamento entre `receitas` e `doador_originario`.
 
 ## 5. Next Action
-1. Finalizar verificação de U0 (`./init.sh`) e registrar recibo `receipts/2026-11-20-u0-harness.md` + commit na `master`.
-2. Executar **U1**: inspecionar dicionários (`leiame.pdf`) e cabeçalhos/valores especiais de todas as fontes de 2018, 2022 e 2026 e redigir `docs/plano_de_dados.md`.
+1. Iniciar **U2 (F03 + F04 — Entregável 27/out–02/nov)**: implementar pipeline ETL em `etl/` com DuckDB gerando a base analítica validada de 2022 (e recortes condicionais 2018/2026) + `docs/relatorio_cobertura_2022.md` + testes `pytest` de integridade e não-duplicação.

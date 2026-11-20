@@ -20,7 +20,8 @@
       "Documentar chaves de cruzamento, encoding, duplicatas/retificações, classificação de fontes, APTO/INAPTO, micro-chapas (<4) e comparações condicionais (2018/2026)",
       "Validar documento contra colunas reais das fontes"
     ],
-    "passes": false
+    "passes": true,
+    "evidence": ".venv/bin/python -m pytest -v -> 5 passed in 0.08s (tests/test_data_plan.py valida colunas reais de 2022 e seções obrigatórias de docs/plano_de_dados.md)"
   },
   {
     "id": "F03",

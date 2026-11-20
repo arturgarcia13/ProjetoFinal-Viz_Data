@@ -1,0 +1,113 @@
+[
+  {
+    "id": "F01",
+    "category": "harness",
+    "description": "Protótipo v1 preservado em archive/prototipo-v1 e ambiente harness (SPEC.md, progress.md, init.sh, pytest) operacional",
+    "steps": [
+      "Verificar branch/tag archive/prototipo-v1 no git",
+      "Executar ./init.sh e confirmar código de saída 0",
+      "Confirmar testes base em tests/test_harness.py passando"
+    ],
+    "passes": true,
+    "evidence": "./init.sh -> exit 0 (3 passed in 0.07s); archive/prototipo-v1 @ 99b0446"
+  },
+  {
+    "id": "F02",
+    "category": "data-plan",
+    "description": "Plano de dados e regras de limpeza documentados em docs/plano_de_dados.md (entregável 22–26/out)",
+    "steps": [
+      "Inspecionar leiame.pdf e cabeçalhos/valores especiais de consulta_cand, votacao e prestacao_de_contas (2018, 2022, 2026)",
+      "Documentar chaves de cruzamento, encoding, duplicatas/retificações, classificação de fontes, APTO/INAPTO, micro-chapas (<4) e comparações condicionais (2018/2026)",
+      "Validar documento contra colunas reais das fontes"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F03",
+    "category": "etl",
+    "description": "Pipeline ETL Python reprodutível gerando base analítica validada de 2022 e recortes condicionais 2018/2026 sem PII (entregável 27/out–02/nov)",
+    "steps": [
+      "Implementar scripts em etl/ lendo exclusivamente os CSVs oficiais definidos no Plano de Dados",
+      "Gerar base analítica validada de 2022 (e recortes 2018/2026) sem nome, CPF ou e-mail",
+      "Executar suíte pytest validando chaves únicas, ausência de multiplicação em joins 1:N e integridade de totais"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F04",
+    "category": "coverage",
+    "description": "Relatório de cobertura por fonte gerado automaticamente pelo ETL em docs/relatorio_cobertura_2022.md (entregável 27/out–02/nov)",
+    "steps": [
+      "Calcular contagens brutas vs. filtradas, taxas de match entre fontes, status de prestação de contas e impacto de INAPTO e micro-chapas",
+      "Gravar docs/relatorio_cobertura_2022.md e JSON de auditoria automaticamente a partir do ETL",
+      "Validar métricas de cobertura em teste pytest"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F05",
+    "category": "indicators",
+    "description": "Indicadores auditáveis e conferência de denominadores de H1–H5 com testes unitários (entregável 03–09/nov)",
+    "steps": [
+      "Implementar módulo de cálculo de indicadores H1–H5 e regras de veredicto",
+      "Verificar denominadores (chapas >=4, APTO vs. registradas, exclusão de gênero não divulgável, fontes FEFC/FP/Privado)",
+      "Executar testes automatizados garantindo consistência numérica com a base de 2022"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F06",
+    "category": "charts-basic",
+    "description": "3 gráficos básicos funcionais com dados reais: Histograma (H1), Dispersão FEFC (H3) e Barras de conversão 3 etapas (H5) (entregável 03–09/nov)",
+    "steps": [
+      "Instalar e configurar @observablehq/plot junto com d3 no bundle esbuild",
+      "Implementar gráficos H1 (Histograma), H3 (Scatter % candidatas x % fundo público) e H5 (Barras agrupadas 3 etapas)",
+      "Validar build e renderização com dados reais de 2022"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F07",
+    "category": "charts-special",
+    "description": "Visualizações de financiamento e sinais (H2, H4 Sankey/Rede bipartida, H6–H8) com estados Inconclusivo explicitados (entregável 10–16/nov)",
+    "steps": [
+      "Implementar H2 (Dumbbell + barras empilhadas) e H4 (Sankey + Rede bipartida anônima)",
+      "Implementar H6 (sinais acumulados), H7 (Boxplot) e H8 (comparativo 2022 vs. 2026)",
+      "Garantir explicitamente estado Inconclusivo quando cobertura/amostra for insuficiente (ex.: 2026)"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F08",
+    "category": "charts-geo-parallel",
+    "description": "Mapa por UF (H7/H9 etapa crítica de vazamento) e Coordenadas Paralelas (Ato 5) funcionais e interativos (entregável 10–16/nov)",
+    "steps": [
+      "Implementar Mapa por UF usando data/br_uf.json e D3.js (H7 e H9)",
+      "Implementar Coordenadas Paralelas pelos 5 eixos (inclusão, equidade FEFC, rendimento urna, sucesso parlamentar, integridade)",
+      "Validar interação de seleção/brushing nos eixos e no mapa"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F09",
+    "category": "scrollytelling",
+    "description": "SPA Scrollytelling split-screen pelos 5 atos com painel narrativo, selos de diagnóstico, filtros globais e brushing & linking (entregável 17–23/nov)",
+    "steps": [
+      "Construir layout em duas áreas integradas: painel de leitura rolável (texto + hipóteses + selo de diagnóstico) e área visual principal fixa",
+      "Integrar os 5 atos (Papel, Dinheiro, Urna, A Fraude Oculta, Geografia da Exclusão)",
+      "Conectar filtros globais (UF, Ano, Partido, Cargo) e brushing & linking entre visões"
+    ],
+    "passes": false
+  },
+  {
+    "id": "F10",
+    "category": "e2e",
+    "description": "Verificação end-to-end em navegador real (Puppeteer) e revisão de linguagem não acusatória e acessibilidade",
+    "steps": [
+      "Executar script E2E com Puppeteer percorrendo os 5 atos e acionando filtros de Ano, UF e Partido",
+      "Confirmar zero erros de console/JS e presença de todos os SVGs renderizados",
+      "Revisar textos para linguagem não acusatória e notas metodológicas completas"
+    ],
+    "passes": false
+  }
+]

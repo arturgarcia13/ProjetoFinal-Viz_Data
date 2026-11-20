@@ -11,13 +11,21 @@ export function renderH8Temporal(container, h8Data, { width = 700 } = {}) {
     return;
   }
 
-  const metrics = [...new Set(rows.map((r) => r.metric))];
+  const labelShort = {
+    'Conta zerada (Sinal B)': 'Zerada (B)',
+    'Mov. padronizada em lote (Sinal C)': 'Padronizada (C)',
+  };
+  const compactRows = rows.map((r) => ({
+    ...r,
+    shortMetric: labelShort[r.metric] || r.metric.replace('Zerada + ', 'Zer.+').replace('Padronizada + ', 'Pad.+'),
+  }));
+  const metrics = [...new Set(compactRows.map((r) => r.shortMetric))];
 
   const chart = Plot.plot({
     width,
     height: 310,
     marginTop: 24,
-    marginRight: 20,
+    marginRight: 28,
     marginBottom: 46,
     marginLeft: 52,
     style: { background: 'transparent', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px' },
@@ -26,8 +34,8 @@ export function renderH8Temporal(container, h8Data, { width = 700 } = {}) {
     y: { label: '↑ % das candidatas APTO', tickFormat: (d) => `${d}%`, grid: true },
     color: { domain: ['2022', '2026'], range: ['#9c8f7d', '#b4452f'], legend: true },
     marks: [
-      Plot.barY(rows, {
-        fx: 'metric',
+      Plot.barY(compactRows, {
+        fx: 'shortMetric',
         x: 'year',
         y: 'pct',
         fill: 'year',

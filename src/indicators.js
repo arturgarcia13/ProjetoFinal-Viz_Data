@@ -360,6 +360,8 @@ export function computeH3(candidates, coverageYear = null) {
  */
 export function computeH4(candidates) {
   const aptoAll = candidates.filter((c) => c.apto && (c.g === 'F' || c.g === 'M'));
+  const nF = aptoAll.filter((c) => c.g === 'F').length;
+  const nM = aptoAll.filter((c) => c.g === 'M').length;
   const finalRate = safeDiv(aptoAll.filter((c) => c.tpConta === 'FINAL').length, aptoAll.length);
   const apto = aptoAll.filter((c) => c.e > 0);
   const byGender = { F: { pubFlow: 0, excl: 0, shared: 0, party: 0, candM: 0, candFOther: 0 }, M: { pubFlow: 0, excl: 0, shared: 0, party: 0, candM: 0, candFOther: 0 } };
@@ -382,11 +384,11 @@ export function computeH4(candidates) {
   const sharedM = safeDiv(byGender.M.shared, byGender.M.pubFlow);
 
   let verdict;
-  if (byGender.F.pubFlow <= 0 || byGender.M.pubFlow <= 0 || finalRate < 0.7) {
+  if (nF < 20 || nM < 20 || byGender.F.pubFlow <= 0 || byGender.M.pubFlow <= 0 || finalRate < 0.7) {
     verdict = {
       status: 'inconclusivo',
       label: 'Inconclusivo',
-      reason: `Volume ou cobertura FINAL insuficiente para fluxos (${(finalRate * 100).toFixed(1)}%).`,
+      reason: `Amostra ou cobertura FINAL insuficiente para fluxos (F=${nF}, M=${nM}, FINAL=${(finalRate * 100).toFixed(1)}%).`,
     };
   } else if ((directDivF - directDivM > 0.02) || (sharedF - sharedM > 0.03)) {
     verdict = {

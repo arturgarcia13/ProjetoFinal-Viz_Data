@@ -18,16 +18,17 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
   width = 520,
   mode = 'h9',
   selectedUF = '',
+  allowedUFs = null,
   onSelectUF = null,
 } = {}) {
   container.innerHTML = '';
-  const height = 420;
+  const height = 340;
   const svg = d3.select(container).append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', width)
     .attr('height', height);
 
-  const projection = d3.geoMercator().fitExtent([[16, 16], [width - 16, height - 48]], brUfGeo);
+  const projection = d3.geoMercator().fitExtent([[16, 10], [width - 16, height - 56]], brUfGeo);
   const path = d3.geoPath(projection);
 
   const h9ByUf = new Map(h9Data.ufRows.map((u) => [u.key, u]));
@@ -49,6 +50,11 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
       const u = h9ByUf.get(uf);
       return STAGE_COLOR[u?.bottleneck || 'Inconclusivo'] || STAGE_COLOR['Inconclusivo'];
     })
+    .attr('fill-opacity', (d) => {
+      if (!allowedUFs || allowedUFs.size === 0) return 1;
+      const uf = IBGE_TO_UF[String(d.properties.codarea)];
+      return allowedUFs.has(uf) ? 1 : 0.2;
+    })
     .attr('stroke', (d) => {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
       return selectedUF === uf ? '#1b1a17' : '#fffdf9';
@@ -68,7 +74,7 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
       const name = UF_NAMES[uf] || uf;
       if (mode === 'h7') {
         const u = h7ByUf.get(uf);
-        if (!u || u.inconclusive) return `${uf} — ${name}: Inconclusivo (n < 10)`;
+        if (!u || u.inconclusive) return `${uf} — ${name}: Inconclusivo (n < 10 ou FINAL < 70%)`;
         return `${uf} — ${name}: ${(u.rate * 100).toFixed(1)}% com ≥2 sinais (${u.twoPlusF}/${u.nF})`;
       }
       const u = h9ByUf.get(uf);
@@ -76,7 +82,7 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
       return `${uf} — ${name}\nEtapa crítica: ${u.bottleneck}\nInclusão: ${u.inclusaoPct.toFixed(1)}% · Eq. FEFC: ${u.eqFefc.toFixed(2)}× · Urna: ${u.rendUrna.toFixed(2)}× · Cadeiras: ${u.sucParl.toFixed(2)}×`;
     });
 
-  // Legenda compacta
+  // Legenda com quebra automática de linha para evitar recorte lateral em telas estreitas
   const legendItems = mode === 'h7'
     ? [
         ['0% sinais', h7Scale(0)],
@@ -86,23 +92,38 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
       ]
     : Object.entries(STAGE_COLOR).filter(([k]) => h9Data.stageCounts[k] || k === 'Inconclusivo');
 
-  const leg = svg.append('g').attr('transform', `translate(14, ${height - 34})`);
+  const leg = svg.append('g').attr('transform', `translate(12, ${height - 46})`);
   let xOff = 0;
+  let yOff = 0;
   legendItems.forEach(([label, color]) => {
-    const g = leg.append('g').attr('transform', `translate(${xOff}, 0)`);
+    const itemW = label.length * 6.5 + 24;
+    if (xOff > 0 && xOff + itemW > width - 20) {
+      xOff = 0;
+      yOff += 18;
+    }
+    const g = leg.append('g').attr('transform', `translate(${xOff}, ${yOff})`);
     g.append('rect').attr('width', 11).attr('height', 11).attr('rx', 2).attr('fill', color);
     g.append('text').attr('x', 15).attr('y', 9.5).attr('font-size', 10.5).attr('fill', '#1b1a17').text(label);
-    xOff += label.length * 6.4 + 26;
+    xOff += itemW + 8;
   });
 }
 
+function axisDomain(rows, key, [baseLo, baseHi], pad) {
+  const vals = rows.map((r) => r[key]).filter(Number.isFinite);
+  if (vals.length === 0) return [baseLo, baseHi];
+  const lo = Math.min(baseLo, Math.floor((Math.min(...vals) - pad) * 10) / 10);
+  const hi = Math.max(baseHi, Math.ceil((Math.max(...vals) + pad) * 10) / 10);
+  return [lo, hi];
+}
+
 /**
- * Ato 5 — Coordenadas Paralelas Interativas (5 eixos + brushing vertical nos eixos)
+ * Ato 5 — Coordenadas Paralelas Interativas (5 eixos sem clamping + restauração de brush)
  */
 export function renderParallelCoordinates(container, h9Data, {
   width = 700,
   unit = 'party',
-  selectedParty = '',
+  selectedEntity = '',
+  initialRanges = null,
   onSelectEntity = null,
   onBrushFilter = null,
 } = {}) {
@@ -115,15 +136,15 @@ export function renderParallelCoordinates(container, h9Data, {
   }
 
   const axes = [
-    { key: 'inclusaoPct', label: 'Inclusão (%)', domain: [20, 50] },
-    { key: 'eqFefc', label: 'Eq. FEFC (×)', domain: [0.4, 1.5] },
-    { key: 'rendUrna', label: 'Rend. Urna (×)', domain: [0.2, 1.4] },
-    { key: 'sucParl', label: 'Suc. Cadeiras (×)', domain: [0, 1.6] },
-    { key: 'integridadePct', label: 'Integridade (%)', domain: [80, 100] },
+    { key: 'inclusaoPct', label: 'Inclusão (%)', domain: axisDomain(rows, 'inclusaoPct', [20, 45], 2) },
+    { key: 'eqFefc', label: 'Eq. FEFC (×)', domain: axisDomain(rows, 'eqFefc', [0.4, 1.5], 0.05) },
+    { key: 'rendUrna', label: 'Rend. Urna (×)', domain: axisDomain(rows, 'rendUrna', [0.2, 1.4], 0.05) },
+    { key: 'sucParl', label: 'Suc. Cadeiras (×)', domain: axisDomain(rows, 'sucParl', [0, 1.6], 0.05) },
+    { key: 'integridadePct', label: 'Integridade (%)', domain: [Math.min(80, ...rows.map((r) => Math.floor(r.integridadePct))), 100] },
   ];
 
-  const height = 320;
-  const margin = { top: 34, right: 34, bottom: 26, left: 34 };
+  const height = 235;
+  const margin = { top: 30, right: 56, bottom: 22, left: 40 };
   const svg = d3.select(container).append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', width)
@@ -136,7 +157,7 @@ export function renderParallelCoordinates(container, h9Data, {
   const y = new Map(
     axes.map((a) => [
       a.key,
-      d3.scaleLinear().domain(a.domain).clamp(true).range([height - margin.bottom, margin.top]),
+      d3.scaleLinear().domain(a.domain).range([height - margin.bottom, margin.top]),
     ]),
   );
 
@@ -144,7 +165,7 @@ export function renderParallelCoordinates(container, h9Data, {
     .x((d) => x(d.key))
     .y((d) => y.get(d.key)(d.val));
 
-  const activeRanges = new Map();
+  const activeRanges = initialRanges instanceof Map ? new Map(initialRanges) : new Map();
 
   const paths = svg.append('g')
     .attr('fill', 'none')
@@ -153,8 +174,8 @@ export function renderParallelCoordinates(container, h9Data, {
     .join('path')
     .attr('d', (d) => line(axes.map((a) => ({ key: a.key, val: d[a.key] }))))
     .attr('stroke', (d) => STAGE_COLOR[d.bottleneck] || '#555')
-    .attr('stroke-width', (d) => (selectedParty === d.key ? 3 : 1.6))
-    .attr('stroke-opacity', (d) => (selectedParty && selectedParty !== d.key ? 0.2 : 0.72))
+    .attr('stroke-width', (d) => (selectedEntity === d.key ? 3 : 1.6))
+    .attr('stroke-opacity', (d) => (selectedEntity && selectedEntity !== d.key ? 0.2 : 0.72))
     .style('cursor', 'pointer')
     .on('click', (_, d) => {
       if (onSelectEntity) onSelectEntity(d.key, unit);
@@ -163,7 +184,7 @@ export function renderParallelCoordinates(container, h9Data, {
   paths.append('title')
     .text((d) => `${d.key} (${d.bottleneck})\nInclusão: ${d.inclusaoPct.toFixed(1)}% · Eq. FEFC: ${d.eqFefc.toFixed(2)}× · Urna: ${d.rendUrna.toFixed(2)}× · Cadeiras: ${d.sucParl.toFixed(2)}× · Integridade: ${d.integridadePct.toFixed(1)}%`);
 
-  function applyBrushStyles() {
+  function applyBrushStyles(notify = true) {
     const allowed = new Set();
     paths.each(function (d) {
       let ok = true;
@@ -176,10 +197,12 @@ export function renderParallelCoordinates(container, h9Data, {
       }
       if (ok) allowed.add(d.key);
       d3.select(this)
-        .attr('stroke-opacity', ok ? 0.85 : 0.08)
-        .attr('stroke-width', ok ? 2.1 : 1);
+        .attr('stroke-opacity', ok ? (selectedEntity && selectedEntity !== d.key ? 0.3 : 0.85) : 0.08)
+        .attr('stroke-width', ok ? (selectedEntity === d.key ? 3 : 2.1) : 1);
     });
-    if (onBrushFilter) onBrushFilter(activeRanges.size > 0 ? allowed : null);
+    if (notify && onBrushFilter) {
+      onBrushFilter(activeRanges.size > 0 ? allowed : null, new Map(activeRanges));
+    }
   }
 
   const axisG = svg.selectAll('.pc-axis')
@@ -195,27 +218,43 @@ export function renderParallelCoordinates(container, h9Data, {
   axisG.append('text')
     .attr('y', margin.top - 12)
     .attr('text-anchor', 'middle')
-    .attr('font-size', 11)
+    .attr('font-size', 10.5)
     .attr('font-weight', '600')
     .attr('fill', '#1b1a17')
     .text((d) => d.label);
 
-  // Brush vertical em cada eixo
+  let restoring = false;
   axisG.each(function (a) {
+    const scale = y.get(a.key);
     const brush = d3.brushY()
       .extent([[-12, margin.top], [12, height - margin.bottom]])
       .on('brush end', (ev) => {
+        if (restoring) return;
         if (!ev.selection) {
           activeRanges.delete(a.key);
         } else {
           const [py0, py1] = ev.selection;
-          const scale = y.get(a.key);
           const vHi = scale.invert(py0);
           const vLo = scale.invert(py1);
           activeRanges.set(a.key, [vLo, vHi]);
         }
-        applyBrushStyles();
+        applyBrushStyles(true);
       });
-    d3.select(this).append('g').attr('class', 'pc-brush').call(brush);
+    const bg = d3.select(this).append('g').attr('class', 'pc-brush').call(brush);
+    const saved = activeRanges.get(a.key);
+    if (saved) {
+      const [vLo, vHi] = saved;
+      const py0 = Math.max(margin.top, Math.min(height - margin.bottom, scale(vHi)));
+      const py1 = Math.max(margin.top, Math.min(height - margin.bottom, scale(vLo)));
+      if (py1 > py0) {
+        restoring = true;
+        bg.call(brush.move, [py0, py1]);
+        restoring = false;
+      }
+    }
   });
+
+  if (activeRanges.size > 0) {
+    applyBrushStyles(false);
+  }
 }

@@ -14,8 +14,8 @@ export function renderH7Boxplot(container, h7Data, { width = 700 } = {}) {
 
   const chart = Plot.plot({
     width,
-    height: 300,
-    marginTop: 24,
+    height: 235,
+    marginTop: 20,
     marginRight: 24,
     marginBottom: 42,
     marginLeft: 52,

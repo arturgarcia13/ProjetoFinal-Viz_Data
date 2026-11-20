@@ -50,10 +50,12 @@ export function renderH2Dumbbell(container, h2Data, { width = 700, onSelectParty
   });
 
   if (onSelectParty) {
-    dumbbell.style.cursor = 'pointer';
-    dumbbell.addEventListener('click', (ev) => {
-      const t = ev.target?.querySelector?.('title')?.textContent;
-      if (t) onSelectParty(t.split(' · ')[0]);
+    dumbbell.querySelectorAll('g[aria-label="dot"] circle').forEach((el) => {
+      const datum = dumbbellRows[el.__data__];
+      if (!datum) return;
+      el.style.cursor = 'pointer';
+      el.dataset.party = datum.party;
+      el.addEventListener('click', () => onSelectParty(datum.party));
     });
   }
 

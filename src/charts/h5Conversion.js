@@ -56,12 +56,14 @@ export function renderH5Conversion(container, h5Data, { width = 700, onSelectPar
   });
 
   if (onSelectParty) {
-    chart.style.cursor = 'pointer';
-    chart.addEventListener('click', (ev) => {
-      const titleEl = ev.target?.querySelector?.('title');
-      if (!titleEl) return;
-      const party = titleEl.textContent.split(' · ')[0];
-      if (party) onSelectParty(party);
+    chart.querySelectorAll('g[aria-label="bar"] > g').forEach((facetG, idx) => {
+      const party = topParties[idx]?.party;
+      if (!party) return;
+      facetG.style.cursor = 'pointer';
+      facetG.querySelectorAll('rect').forEach((rect) => {
+        rect.dataset.party = party;
+        rect.addEventListener('click', () => onSelectParty(party));
+      });
     });
   }
 

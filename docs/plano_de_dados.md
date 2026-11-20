@@ -105,7 +105,7 @@ Conforme os dicionários oficiais (`leiame.pdf` de `consulta_cand`, `votacao` e 
 - **Sinal A (Votação inexpressiva):** `votos_validos <= limiar_A` (padrão: `10` votos; ajustável na interface para análise de sensibilidade).
 - **Sinal B (Movimentação financeira zerada):** candidato apresentou prestação de contas com `receita_total == 0` e `despesa_contratada_total == 0` (distinguido explicitamente de ausência de prestação em 2026!).
 - **Sinal C (Pacote padronizado / compartilhamento suspeito em lote):** mesma legenda/federação, mesmo `NR_CPF_CNPJ_FORNECEDOR`, mesmo valor unitário e mesma `DT_DESPESA` (ou mesmo valor exato de FEFC/FP em lote) em `>= 3` candidaturas.
-- **Limitação explícita (Súmula 73 do TSE):** o terceiro critério jurisprudencial (*ausência efetiva de atos de campanha*) não consta nos microdados do TSE; portanto, a aplicação reporta **sinais estatísticos compatíveis com candidatura fictícia**, nunca acusação de fraude.
+- **Limitação explícita (Súmula 73 do TSE):** o terceiro critério jurisprudencial (*ausência efetiva de atos de campanha*) não consta nos microdados do TSE; além disso, **Sinal B** (`r=0` e `e=0`) e **Sinal C** (`vr > 0` ou `fefc/fp > 0`) são mutuamente exclusivos por construção contábil (máximo observável simultâneo = 2 sinais: `A+B` ou `A+C`). A aplicação reporta **sinais estatísticos compatíveis com candidatura fictícia**, nunca acusação de fraude.
 
 ---
 

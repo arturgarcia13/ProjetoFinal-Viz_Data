@@ -68,9 +68,9 @@
   - Descoberta empírica relevante em H8: entre 2022 e 2026, contas zeradas declaradas caíram (`5,5% → 4,5%`), enquanto movimentações padronizadas em lote subiram (`35,6% → 39,0%`). Em H7, chapas no piso (`30%–33,3%`) registram `3,4%` de mulheres com ≥2 sinais vs. `0,9%` em chapas `>40%`.
   - Implementadas todas as visualizações especiais (`src/charts/h2Dumbbell.js`, `h4SankeyNetwork.js`, `h6Signals.js`, `h7Boxplot.js`, `h8Temporal.js`, `h9MapAndParallel.js`), mapeando `data/br_uf.json` via `IBGE_TO_UF` (`codarea`).
 
-- **2026-11-20 (U5 — Scrollytelling Split-Screen, E2E e Revisão Adversarial):**
-  - Reestruturada a SPA em [index.html](index.html), [styles.css](styles.css) e [src/main.js](src/main.js) como *Scrollytelling* split-screen (painel de leitura com texto, hipóteses H1–H9 e selo de diagnóstico + área principal fixa à direita com controles contextuais, filtros globais e *brushing & linking*).
-  - Revisão adversarial em contexto frio apontou 5 pontos reais (inversão PF/PJ em `CD_TIPO_FORNECEDOR`, razão cumulativa vs. de passo em H9, fragmentação de federações sob filtro por partido em H1/H7 e denominador `ND` no relatório de cobertura, checagem `FINAL < 0.7` no recorte filtrado e alinhamento `h7` mapa + `h9` Partidos/UFs + notas de 2026). Todos corrigidos, ETL e bundle reconstruídos, e aprovados na reavaliação (`APROVADO SEM GAPS DE CORRETUDE`, `15 passed`).
+- **2026-11-20 (U5 — Auditoria Independente Final em Contexto Frio):**
+  - Subagente auditor sem contexto (`955d51f8`) analisou todo o repositório, identificou 7 defeitos iniciais (CPFs de MEI em 7 hubs de `network_hubs.json`, click-to-filter quebrado em H2/H3/H5, partidos de 2026 ausentes no dropdown, brush H9, amostra mínima H4, colisão mobile e label H6) e depois 1 pendência de sobreposição sticky desktop em H9 + 3px em H6 mobile.
+  - Todos os pontos foram corrigidos, `tests/e2e.mjs` e `tests/test_etl.py` reforçados, e o auditor concluiu **`APROVADO SEM ERROS`** (`./init.sh` → `15 passed`, `ERRORS: []` em `1280×820` e `390×844`, observando apenas `-4px` cosmético em `REPUBLICANOS` no eixo Y de H2 a `390px`).
 
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.

@@ -65,7 +65,7 @@ def test_h6_to_h9_indicators_and_inconclusive_states():
     script = """
     import fs from 'node:fs';
     import { decodeAnalyticalBase, filterCandidates } from './src/data.js';
-    import { computeH6, computeH7, computeH8, computeH9AndParallel } from './src/indicators.js';
+    import { computeH4, computeH6, computeH7, computeH8, computeH9AndParallel } from './src/indicators.js';
 
     const raw = JSON.parse(fs.readFileSync('data/analytical_base.json', 'utf8'));
     const cov = JSON.parse(fs.readFileSync('data/coverage.json', 'utf8')).years;
@@ -78,6 +78,7 @@ def test_h6_to_h9_indicators_and_inconclusive_states():
       h7: { bands: computeH7(rows22, { coverageYear: cov['2022'] }).bandStats, verdict: computeH7(rows22, { coverageYear: cov['2022'] }).verdict },
       h8: computeH8(candidates),
       h9: { ufLen: computeH9AndParallel(rows22).ufRows.length, stageCounts: computeH9AndParallel(rows22).stageCounts, partyLen: computeH9AndParallel(rows22).partyRows.length },
+      smallH4: computeH4(rowsSmall).verdict.status,
       smallH6: computeH6(rowsSmall).verdict.status,
       smallH9: computeH9AndParallel(rowsSmall).verdict.status,
     }));
@@ -97,6 +98,7 @@ def test_h6_to_h9_indicators_and_inconclusive_states():
     assert out["h8"]["byYear"]["2026"]["n"] == 6366
     assert out["h9"]["ufLen"] == 27
     assert out["h9"]["partyLen"] >= 10
+    assert out["smallH4"] == "inconclusivo"
     assert out["smallH6"] == "inconclusivo"
     assert out["smallH9"] == "inconclusivo"
 

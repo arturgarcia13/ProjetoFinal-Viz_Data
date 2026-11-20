@@ -86,11 +86,16 @@ export function renderH3Scatter(container, h3Data, { width = 700, onSelectParty 
     ],
   });
 
+  chart.querySelectorAll('g[aria-label="text"] text').forEach((el) => {
+    el.style.pointerEvents = 'none';
+  });
+
   if (onSelectParty) {
-    chart.querySelectorAll('circle').forEach((el, idx) => {
-      const datum = parties[idx];
+    chart.querySelectorAll('g[aria-label="dot"] circle').forEach((el) => {
+      const datum = parties[el.__data__];
       if (!datum) return;
       el.style.cursor = 'pointer';
+      el.dataset.party = datum.party;
       el.addEventListener('click', () => onSelectParty(datum.party));
     });
   }

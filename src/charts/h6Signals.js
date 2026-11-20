@@ -14,13 +14,14 @@ export function renderH6Signals(container, h6Data, { width = 700 } = {}) {
   const rows = [];
   for (const [gKey, label] of [['F', 'Mulheres'], ['M', 'Homens']]) {
     const s = summary[gKey];
-    for (let k = 0; k <= 3; k += 1) {
-      const pct = s.n > 0 ? (s.bins[k] / s.n) * 100 : 0;
+    for (let k = 0; k <= 2; k += 1) {
+      const count = k === 2 ? s.twoPlus : s.bins[k];
+      const pct = s.n > 0 ? (count / s.n) * 100 : 0;
       rows.push({
-        sinais: k === 3 ? '3 sinais' : `${k} sinal${k === 1 ? '' : 'is'}`,
+        sinais: k === 2 ? '2 sinais (A+B/C)' : `${k} sinal${k === 1 ? '' : 'is'}`,
         genero: label,
         pct,
-        count: s.bins[k],
+        count,
         n: s.n,
       });
     }
@@ -30,11 +31,11 @@ export function renderH6Signals(container, h6Data, { width = 700 } = {}) {
     width,
     height: 300,
     marginTop: 24,
-    marginRight: 20,
+    marginRight: 32,
     marginBottom: 44,
     marginLeft: 50,
     style: { background: 'transparent', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px' },
-    fx: { label: 'Volume de sinais acumulados', domain: ['0 sinais', '1 sinal', '2 sinais', '3 sinais'], padding: 0.2 },
+    fx: { label: 'Volume de sinais observáveis (máximo = 2)', domain: ['0 sinais', '1 sinal', '2 sinais (A+B/C)'], padding: 0.2 },
     x: { domain: ['Mulheres', 'Homens'], axis: null },
     y: { label: '↑ % das candidaturas APTO', tickFormat: (d) => `${d}%`, grid: true },
     color: { domain: ['Mulheres', 'Homens'], range: ['#b4452f', '#3d5a80'], legend: true },

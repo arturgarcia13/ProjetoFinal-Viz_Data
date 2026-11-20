@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -505,9 +506,16 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
         hkey = (uf, p, doc_forn)
         if hkey not in hub_map:
             hid = f"H{year}_{len(hub_map) + 1}"
-            # Nos CSVs reais do TSE, CD_TIPO_FORNECEDOR '1' = PESSOA JURÍDICA e '0' = PESSOA FÍSICA
+            # Nos CSVs reais do TSE, CD_TIPO_FORNECEDOR '1' = PESSOA JURÍDICA e '0' = PESSOA FÍSICA.
+            # Sanitiza também MEIs cujo nome empresarial da RFB embute o CPF de 11 dígitos do titular.
             is_pj = (cd_tipo == "1") and ("JUR" in (ds_tipo or "").upper())
-            label = nm_forn if (is_pj and nm_forn and nm_forn not in ("#NULO", "#NULO#")) else f"Fornecedor PF ({uf}) #{len(hub_map) + 1}"
+            has_embedded_cpf = bool(nm_forn and re.search(r"\b\d{11}\b", nm_forn))
+            if is_pj and nm_forn and nm_forn not in ("#NULO", "#NULO#") and not has_embedded_cpf:
+                label = nm_forn
+            elif is_pj and has_embedded_cpf:
+                label = f"Fornecedor MEI ({uf}) #{len(hub_map) + 1}"
+            else:
+                label = f"Fornecedor PF ({uf}) #{len(hub_map) + 1}"
             hub_map[hkey] = {
                 "hid": hid,
                 "y": year,

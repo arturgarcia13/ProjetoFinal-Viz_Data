@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cota de Gênero no Brasil (2022–2026) — Indicadores & Gráficos Base</title>
+  <title>Cota de Gênero no Brasil (2022–2026) — Todas as Visualizações (U4)</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f6f2ea'/%3E%3Cpath d='M14 48V18h10v30zm16 0V28h10v20zm16 0V14h10v34z' fill='%23b4452f'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -12,7 +12,7 @@
     <div class="container">
       <p class="eyebrow">UFC · Visualização de Dados · Base Validada TSE (2022 vs. 2026)</p>
       <h1>A Cota de Gênero Leva Mulheres ao Poder ou Apenas ao Papel?</h1>
-      <p class="subtitle">Indicadores auditáveis H1–H5 e os 3 gráficos fundamentais com Observable Plot e D3 (Etapa U3 · 03–09/nov).</p>
+      <p class="subtitle">Indicadores H1–H9, visualizações em Observable Plot + D3.js e estados inconclusivos explicitados (Etapa U4 · 10–16/nov).</p>
     </div>
   </header>
 
@@ -35,6 +35,10 @@
         <span>Partido</span>
         <select id="filter-party"><option value="">Todos</option></select>
       </label>
+      <label class="range-wrap">
+        <span>Limiar A ≤ <strong id="threshold-out">10</strong> votos</span>
+        <input id="filter-threshold" type="range" min="0" max="50" step="5" value="10">
+      </label>
       <button id="reset-filters" class="btn-reset" type="button">Limpar</button>
     </div>
     <div class="container">
@@ -44,48 +48,24 @@
 
   <main class="container">
     <section aria-labelledby="sec-kpis" class="kpi-section">
-      <h2 id="sec-kpis" class="section-title">Painel Auditável H1–H5</h2>
+      <h2 id="sec-kpis" class="section-title">Diagnóstico H1–H9</h2>
       <div class="kpi-grid">
-        <article class="kpi-card">
-          <h3>H1 · Registro na Chapa</h3>
-          <p class="kpi-val" id="kpi-h1">—</p>
-          <p class="kpi-sub" id="kpi-h1-sub"></p>
-          <div id="verdict-h1"></div>
-        </article>
-        <article class="kpi-card">
-          <h3>H2 · Mediana Financeira (F vs. M)</h3>
-          <p class="kpi-val" id="kpi-h2">—</p>
-          <p class="kpi-sub" id="kpi-h2-sub"></p>
-          <div id="verdict-h2"></div>
-        </article>
-        <article class="kpi-card">
-          <h3>H3 · Razão Fundo Público</h3>
-          <p class="kpi-val" id="kpi-h3">—</p>
-          <p class="kpi-sub" id="kpi-h3-sub"></p>
-          <div id="verdict-h3"></div>
-        </article>
-        <article class="kpi-card">
-          <h3>H4 · Fluxo a Partidos/Terceiros</h3>
-          <p class="kpi-val" id="kpi-h4">—</p>
-          <p class="kpi-sub" id="kpi-h4-sub"></p>
-          <div id="verdict-h4"></div>
-        </article>
-        <article class="kpi-card">
-          <h3>H5 · Conversão em 3 Etapas</h3>
-          <p class="kpi-val" id="kpi-h5">—</p>
-          <p class="kpi-sub" id="kpi-h5-sub"></p>
-          <div id="verdict-h5"></div>
-        </article>
+        <article class="kpi-card"><h3>H1 · Registro</h3><p class="kpi-val" id="kpi-h1">—</p><p class="kpi-sub" id="kpi-h1-sub"></p><div id="verdict-h1"></div></article>
+        <article class="kpi-card"><h3>H2 · Mediana Financeira</h3><p class="kpi-val" id="kpi-h2">—</p><p class="kpi-sub" id="kpi-h2-sub"></p><div id="verdict-h2"></div></article>
+        <article class="kpi-card"><h3>H3 · Equidade FEFC/FP</h3><p class="kpi-val" id="kpi-h3">—</p><p class="kpi-sub" id="kpi-h3-sub"></p><div id="verdict-h3"></div></article>
+        <article class="kpi-card"><h3>H4 · Fluxo Verba Pública</h3><p class="kpi-val" id="kpi-h4">—</p><p class="kpi-sub" id="kpi-h4-sub"></p><div id="verdict-h4"></div></article>
+        <article class="kpi-card"><h3>H5 · Conversão Urna</h3><p class="kpi-val" id="kpi-h5">—</p><p class="kpi-sub" id="kpi-h5-sub"></p><div id="verdict-h5"></div></article>
+        <article class="kpi-card"><h3>H6 · Sinais Acumulados</h3><p class="kpi-val" id="kpi-h6">—</p><p class="kpi-sub" id="kpi-h6-sub"></p><div id="verdict-h6"></div></article>
+        <article class="kpi-card"><h3>H7 · Densidade no Piso</h3><p class="kpi-val" id="kpi-h7">—</p><p class="kpi-sub" id="kpi-h7-sub"></p><div id="verdict-h7"></div></article>
+        <article class="kpi-card"><h3>H8 · Adaptação 22→26</h3><p class="kpi-val" id="kpi-h8">—</p><p class="kpi-sub" id="kpi-h8-sub"></p><div id="verdict-h8"></div></article>
+        <article class="kpi-card"><h3>H9 · Geografia (UFs)</h3><p class="kpi-val" id="kpi-h9">—</p><p class="kpi-sub" id="kpi-h9-sub"></p><div id="verdict-h9"></div></article>
       </div>
     </section>
 
     <section class="charts-stack">
       <article class="chart-card">
         <div class="chart-head">
-          <div>
-            <p class="fig-kicker">Fig. 1 · H1 — No Papel</p>
-            <h2>Distribuição de % de Mulheres por Chapa</h2>
-          </div>
+          <div><p class="fig-kicker">Ato 1 · H1 — No Papel</p><h2>Distribuição de % de Mulheres por Chapa</h2></div>
           <div class="filter-group" role="group" aria-label="Recorte de elegibilidade da chapa">
             <button class="seg active" data-h1-mode="reg">Registradas</button>
             <button class="seg" data-h1-mode="apto">Apenas APTO</button>
@@ -96,25 +76,57 @@
       </article>
 
       <article class="chart-card">
-        <div class="chart-head">
-          <div>
-            <p class="fig-kicker">Fig. 2 · H3 — No Dinheiro</p>
-            <h2>% de Candidatas vs. % do Fundo Público (FEFC + FP) por Partido</h2>
-          </div>
-        </div>
+        <div class="chart-head"><div><p class="fig-kicker">Ato 2 · H2 — No Dinheiro</p><h2>Mediana por Partido (Dumbbell) e Fontes de Recurso</h2></div></div>
+        <div id="chart-h2" class="chart-slot"></div>
+        <p class="chart-note">Dumbbell compara receitas totais medianas (F vs. M) nos maiores partidos; barras inferiores mostram composição por fonte.</p>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-head"><div><p class="fig-kicker">Ato 2 · H3 — No Dinheiro</p><h2>% de Candidatas vs. % do Fundo Público (FEFC + FP)</h2></div></div>
         <div id="chart-h3" class="chart-slot"></div>
-        <p class="chart-note">Partidos com n ≥ 10 candidaturas APTO. Clique em um partido para filtrar o painel.</p>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-head"><div><p class="fig-kicker">Ato 2 · H4 — Fluxo e Rede</p><h2>Sankey do Fundo Público e Rede Bipartida de Fornecedores-Hub</h2></div></div>
+        <div class="two-col-charts">
+          <div id="chart-h4-sankey" class="chart-slot"></div>
+          <div id="chart-h4-network" class="chart-slot"></div>
+        </div>
+        <p class="chart-note">Sankey aloca despesas contratadas proporcionalmente à parcela pública da receita. Rede mostra até 22 hubs principais no recorte.</p>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-head"><div><p class="fig-kicker">Ato 3 · H5 — Na Urna</p><h2>Conversão em 3 Etapas (% Candidatas → % Votos → % Eleitas)</h2></div></div>
+        <div id="chart-h5" class="chart-slot"></div>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-head"><div><p class="fig-kicker">Ato 4 · H6 — Sinais de Alerta</p><h2>Sinais Acumulados por Gênero (Voto Baixo, Conta Zerada, Pacote Padronizado)</h2></div></div>
+        <div id="chart-h6" class="chart-slot"></div>
+        <p class="chart-note">Limitação Súmula 73: ausência de atos de campanha não consta nos dados do TSE; sinais são indicadores estatísticos, não prova de fraude.</p>
+      </article>
+
+      <article class="chart-card">
+        <div class="chart-head"><div><p class="fig-kicker">Ato 4 · H7 & H8 — Concentração e Adaptação</p><h2>Taxa de Sinais por Faixa de Chapa (Boxplot) e Comparativo 2022 vs. 2026</h2></div></div>
+        <div class="two-col-charts">
+          <div id="chart-h7" class="chart-slot"></div>
+          <div id="chart-h8" class="chart-slot"></div>
+        </div>
       </article>
 
       <article class="chart-card">
         <div class="chart-head">
-          <div>
-            <p class="fig-kicker">Fig. 3 · H5 — Na Urna</p>
-            <h2>Conversão em 3 Etapas (% Candidatas → % Votos → % Eleitas)</h2>
+          <div><p class="fig-kicker">Ato 5 · H9 & Síntese — Geografia da Exclusão</p><h2>Mapa Crítico por UF e Coordenadas Paralelas (5 Eixos)</h2></div>
+          <div class="filter-group" role="group" aria-label="Modo do mapa">
+            <button class="seg active" data-map-mode="h9">Etapa Crítica (H9)</button>
+            <button class="seg" data-map-mode="h7">Taxa de Sinais (H7)</button>
           </div>
         </div>
-        <div id="chart-h5" class="chart-slot"></div>
-        <p class="chart-note">Top 10 partidos por cadeiras eleitas no recorte selecionado. Linha tracejada marca o piso de 30%.</p>
+        <div class="two-col-charts">
+          <div id="chart-map" class="chart-slot"></div>
+          <div id="chart-parallel" class="chart-slot"></div>
+        </div>
+        <p id="note-h9" class="chart-note">Clique em uma UF no mapa para filtrar o painel; arraste verticalmente nos eixos das Coordenadas Paralelas para filtrar partidos.</p>
       </article>
     </section>
   </main>

@@ -40,8 +40,8 @@
 | F04 | U2 | Relatório de cobertura por fonte (`docs/relatorio_cobertura_2022.md`) | Concluído (`97,1%` FINAL em 2022; `97,9%` FINAL em 2026 atualizado) |
 | F05 | U3 | Indicadores auditáveis H1–H5 + testes unitários (03–09/nov) | Concluído (`test_indicators.py` 2 passed; 12 total passed) |
 | F06 | U3 | 3 gráficos básicos reais (H1, H3, H5) em Observable Plot / D3 | Concluído (`esbuild` 293.7kb + Puppeteer 0 erros) |
-| F07 | U4 | Gráficos de financiamento e sinais H2, H4, H6–H8 + estados Inconclusivo (10–16/nov) | Pendente |
-| F08 | U4 | Mapa por UF (H7/H9) e Coordenadas Paralelas (Ato 5) (10–16/nov) | Pendente |
+| F07 | U4 | Gráficos de financiamento e sinais H2, H4, H6–H8 + estados Inconclusivo (10–16/nov) | Concluído (`13 passed`; Puppeteer 0 erros) |
+| F08 | U4 | Mapa por UF (H7/H9) e Coordenadas Paralelas (Ato 5) (10–16/nov) | Concluído (27 UFs + brushY testados) |
 | F09 | U5 | SPA Scrollytelling split-screen nos 5 atos + filtros globais + selos (17–23/nov) | Pendente |
 | F10 | U5 | Verificação E2E no navegador (Puppeteer) + revisão metodológica (17–23/nov) | Pendente |
 
@@ -63,13 +63,13 @@
   - Cobertura `FINAL` entre candidaturas `APTO`: **97,1%** em 2022 (`24.005` de `24.733`) e **97,9%** em 2026 (`17.341` de `17.712`), tornando **2026 comparável diretamente com 2022** em todos os eixos (com ressalva de que contas 2026 aguardam julgamento judicial e `votacao_2026` é de 19/10/2026, com match de 98,7% sobre `APTO`).
   - Sanidade verificada em `pytest` (`10 passed in 0.61s`): diferença `0` em votos e `R$ 0,00` em receita total, FEFC e despesa efetiva para 2022 e 2026; zero PII exportada.
 
-- **2026-11-20 (U3 — Indicadores H1–H5 e 3 Gráficos Básicos):**
-  - Criado `src/data.js` e `src/indicators.js` (H1–H5 auditáveis sem dependência de DOM, testáveis em Node e no navegador).
-  - Auditoria numérica em 2022/2026 revelou dois pontos importantes incorporados aos veredictos: (a) em H2, no Fundo Público a mediana feminina supera a masculina (`R$ 41.958` vs. `R$ 29.500` em 2022), mas no recurso privado/próprio cai para `R$ 22` vs. `R$ 2.128` e nos maiores partidos (PL, UNIÃO, MDB, REPUBLICANOS) mulheres ficam abaixo; (b) em H4, no agregado nacional repasses diretos a partidos/homens e fornecedores compartilhados não superam o padrão masculino, concentrando-se os sinais em hubs específicos; (c) em H5, há `1.547` eleitos `APTO` + `1` eleito marcado `INAPTO` pós-eleição (`cid 15007`, total `1.548`).
-  - Instalado `@observablehq/plot` e implementados os 3 gráficos básicos (`src/charts/h1Histogram.js`, `src/charts/h3Scatter.js`, `src/charts/h5Conversion.js`) com filtros de Ano, Cargo, UF e Partido em `index.html` + `src/main.js`.
+- **2026-11-20 (U4 — Visões Especiais, Sinais H6–H8, Mapa UF e Coordenadas Paralelas):**
+  - Implementados indicadores `computeH6`, `computeH7`, `computeH8`, `computeH9AndParallel` em `src/indicators.js` com estado `Inconclusivo` explícito para amostras insuficientes.
+  - Descoberta empírica relevante em H8: entre 2022 e 2026, contas zeradas declaradas caíram (`5,5% → 4,5%`), enquanto movimentações padronizadas em lote subiram (`35,6% → 39,0%`). Em H7, chapas no piso (`30%–33,3%`) registram `3,4%` de mulheres com ≥2 sinais vs. `0,9%` em chapas `>40%`.
+  - Implementadas todas as visualizações especiais (`src/charts/h2Dumbbell.js`, `h4SankeyNetwork.js`, `h6Signals.js`, `h7Boxplot.js`, `h8Temporal.js`, `h9MapAndParallel.js`), mapeando `data/br_uf.json` via `IBGE_TO_UF` (`codarea`).
 
 ## 4. Open Risks & Questions
-- Em 2026, `232` candidaturas `APTO` (1,3%) não estão no arquivo `votacao_2026` de `19/10/2026` (diferença de data para `consulta_cand_2026` de `20/11/2026`), recebendo `0` votos por ausência de linha — explicitar isso na regra de Sinal A / comparativo de 2026.
+- Em 2026, `232` candidaturas `APTO` (1,3%) não estão no arquivo `votacao_2026` de `19/10/2026` (diferença de data para `consulta_cand_2026` de `20/11/2026`), recebendo `0` votos por ausência de linha — explicitar isso na nota metodológica do Ato 4.
 
 ## 5. Next Action
-1. Iniciar **U4 (`F07` + `F08` — Entregável 10–16/nov)**: implementar indicadores H6–H9, gráficos especiais (Dumbbell + Barras empilhadas H2, Sankey + Rede bipartida H4, Sinais H6, Boxplot H7, Comparativo 2022/2026 H8, Mapa por UF H7/H9 e Coordenadas Paralelas Ato 5) com estados `Inconclusivo` explicitados.
+1. Iniciar **U5 (`F09` + `F10` — Entregável 17–23/nov)**: transformar a SPA em **Scrollytelling split-screen** real (painel narrativo rolável com hipóteses + selos de diagnóstico ao lado da área visual principal fixa) pelos 5 atos, conectar filtros globais e *brushing & linking*, e rodar verificação E2E completa (`tests/e2e.mjs`).

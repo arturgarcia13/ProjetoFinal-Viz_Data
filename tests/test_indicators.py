@@ -61,6 +61,46 @@ def test_h1_to_h5_denominators_match_2022_coverage():
     assert res["h5"]["verdict"]["status"] == "vaza"
 
 
+def test_h6_to_h9_indicators_and_inconclusive_states():
+    script = """
+    import fs from 'node:fs';
+    import { decodeAnalyticalBase, filterCandidates } from './src/data.js';
+    import { computeH6, computeH7, computeH8, computeH9AndParallel } from './src/indicators.js';
+
+    const raw = JSON.parse(fs.readFileSync('data/analytical_base.json', 'utf8'));
+    const cov = JSON.parse(fs.readFileSync('data/coverage.json', 'utf8')).years;
+    const { candidates } = decodeAnalyticalBase(raw);
+    const rows22 = filterCandidates(candidates, { year: 2022, cargo: 'all' });
+    const rowsSmall = rows22.filter(c => c.uf === 'RR' && c.p === 'NOVO');
+
+    console.log(JSON.stringify({
+      h6: computeH6(rows22, { coverageYear: cov['2022'] }),
+      h7: { bands: computeH7(rows22, { coverageYear: cov['2022'] }).bandStats, verdict: computeH7(rows22, { coverageYear: cov['2022'] }).verdict },
+      h8: computeH8(candidates),
+      h9: { ufLen: computeH9AndParallel(rows22).ufRows.length, stageCounts: computeH9AndParallel(rows22).stageCounts, partyLen: computeH9AndParallel(rows22).partyRows.length },
+      smallH6: computeH6(rowsSmall).verdict.status,
+      smallH9: computeH9AndParallel(rowsSmall).verdict.status,
+    }));
+    """
+    proc = subprocess.run(
+        ["node", "--input-type=module", "-e", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    out = json.loads(proc.stdout)
+    assert out["h6"]["summary"]["F"]["n"] == 8468
+    assert out["h6"]["verdict"]["status"] in ("vaza", "funcionou")
+    assert len(out["h7"]["bands"]) == 4
+    assert out["h8"]["byYear"]["2022"]["n"] == 8468
+    assert out["h8"]["byYear"]["2026"]["n"] == 6366
+    assert out["h9"]["ufLen"] == 27
+    assert out["h9"]["partyLen"] >= 10
+    assert out["smallH6"] == "inconclusivo"
+    assert out["smallH9"] == "inconclusivo"
+
+
 def test_h1_to_h5_2026_comparative_consistency():
     cov = json.loads((ROOT / "data" / "coverage.json").read_text(encoding="utf-8"))["years"]["2026"]
     res = _run_js_indicators(2026)

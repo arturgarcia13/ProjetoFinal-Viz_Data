@@ -80,7 +80,8 @@
       "Implementar H6 (sinais acumulados), H7 (Boxplot) e H8 (comparativo 2022 vs. 2026)",
       "Garantir explicitamente estado Inconclusivo quando cobertura/amostra for insuficiente (ex.: 2026)"
     ],
-    "passes": false
+    "passes": true,
+    "evidence": "pytest 13 passed (incl. test_h6_to_h9_indicators_and_inconclusive_states); Puppeteer renderizou todos os slots (H2, H4 Sankey/Rede, H6, H7, H8) com ERRORS: []"
   },
   {
     "id": "F08",
@@ -91,7 +92,8 @@
       "Implementar Coordenadas Paralelas pelos 5 eixos (inclusão, equidade FEFC, rendimento urna, sucesso parlamentar, integridade)",
       "Validar interação de seleção/brushing nos eixos e no mapa"
     ],
-    "passes": false
+    "passes": true,
+    "evidence": "Mapa com 27 UFs (IBGE_TO_UF), modos H9 e H7, e Coordenadas Paralelas com brushY renderizados e testados em Puppeteer (UF=CE -> 987 candidaturas, ERRORS: [])"
   },
   {
     "id": "F09",

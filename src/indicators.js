@@ -491,3 +491,350 @@ export function computeH5(candidates) {
     verdict,
   };
 }
+
+export function countSignals(c, voteThreshold = 10) {
+  const sigA = c.v <= voteThreshold;
+  const sigB = Boolean(c.zeroFin);
+  const sigC = Boolean(c.stdPkg);
+  return {
+    sigA,
+    sigB,
+    sigC,
+    total: (sigA ? 1 : 0) + (sigB ? 1 : 0) + (sigC ? 1 : 0),
+  };
+}
+
+/**
+ * H6 — Sinais acumulados (Sinal A: voto baixo, Sinal B: conta zerada, Sinal C: pacote padronizado)
+ * Nota: 3º critério da Súmula 73 (ausência de atos de campanha) não está nos arquivos do TSE.
+ */
+export function computeH6(candidates, { voteThreshold = 10, coverageYear = null } = {}) {
+  const apto = candidates.filter((c) => c.apto && (c.g === 'F' || c.g === 'M'));
+  const summary = {
+    F: { n: 0, bins: [0, 0, 0, 0], twoPlus: 0, three: 0, sigA: 0, sigB: 0, sigC: 0 },
+    M: { n: 0, bins: [0, 0, 0, 0], twoPlus: 0, three: 0, sigA: 0, sigB: 0, sigC: 0 },
+  };
+
+  for (const c of apto) {
+    const s = countSignals(c, voteThreshold);
+    const acc = summary[c.g];
+    acc.n += 1;
+    acc.bins[s.total] += 1;
+    if (s.total >= 2) acc.twoPlus += 1;
+    if (s.total === 3) acc.three += 1;
+    if (s.sigA) acc.sigA += 1;
+    if (s.sigB) acc.sigB += 1;
+    if (s.sigC) acc.sigC += 1;
+  }
+
+  const pct2PlusF = safeDiv(summary.F.twoPlus, summary.F.n);
+  const pct2PlusM = safeDiv(summary.M.twoPlus, summary.M.n);
+  const ratio2Plus = safeDiv(pct2PlusF, pct2PlusM);
+
+  const finalRate = coverageYear
+    ? safeDiv(coverageYear.tp_prestacao_apto?.FINAL || 0, coverageYear.population?.apto_cands || apto.length)
+    : safeDiv(apto.filter((c) => c.tpConta === 'FINAL').length, apto.length);
+
+  let verdict;
+  if (summary.F.n < 20 || summary.M.n < 20 || finalRate < 0.7) {
+    verdict = {
+      status: 'inconclusivo',
+      label: 'Inconclusivo',
+      reason: `Amostra ou cobertura insuficiente para sinais contábeis (FINAL: ${(finalRate * 100).toFixed(1)}%).`,
+    };
+  } else if (pct2PlusF > pct2PlusM * 1.25 && pct2PlusF - pct2PlusM > 0.01) {
+    verdict = {
+      status: 'vaza',
+      label: 'Vaza nesta Etapa',
+      reason: `${(pct2PlusF * 100).toFixed(1)}% das candidatas têm ≥2 sinais de alerta vs. ${(pct2PlusM * 100).toFixed(1)}% dos homens (${ratio2Plus.toFixed(2)}×; limiar A ≤ ${voteThreshold} votos).`,
+    };
+  } else {
+    verdict = {
+      status: 'funcionou',
+      label: 'A Cota Funciona',
+      reason: `Taxa de ≥2 sinais entre mulheres (${(pct2PlusF * 100).toFixed(1)}%) não excede significativamente a masculina (${(pct2PlusM * 100).toFixed(1)}%).`,
+    };
+  }
+
+  return {
+    voteThreshold,
+    summary,
+    pct2PlusF,
+    pct2PlusM,
+    ratio2Plus,
+    finalRate,
+    verdict,
+  };
+}
+
+/**
+ * H7 — Faixas de % de mulheres na chapa × taxa de sinais de alerta (Boxplot) + Mapa por UF
+ */
+export function computeH7(candidates, { voteThreshold = 10, coverageYear = null } = {}) {
+  const validGender = candidates.filter((c) => c.g === 'F' || c.g === 'M');
+  const slateMap = groupBy(validGender, (c) => `${c.uf}|${c.cargo}|${c.chapa}`);
+
+  const BANDS = [
+    { key: '< 30%', test: (p) => p < 0.3 },
+    { key: '30%–33,3%', test: (p) => p >= 0.3 && p <= 0.3334 },
+    { key: '33,3%–40%', test: (p) => p > 0.3334 && p <= 0.4 },
+    { key: '> 40%', test: (p) => p > 0.4 },
+  ];
+
+  const slatePoints = [];
+  const ufMap = new Map();
+
+  for (const [key, rows] of slateMap.entries()) {
+    const [uf] = key.split('|');
+    const aptoF = rows.filter((r) => r.apto && r.g === 'F');
+    if (aptoF.length > 0) {
+      let u = ufMap.get(uf);
+      if (!u) {
+        u = { uf, nF: 0, twoPlusF: 0 };
+        ufMap.set(uf, u);
+      }
+      for (const c of aptoF) {
+        u.nF += 1;
+        if (countSignals(c, voteThreshold).total >= 2) u.twoPlusF += 1;
+      }
+    }
+
+    if (rows.length < 4 || aptoF.length === 0) continue;
+    const pctReg = rows.filter((r) => r.g === 'F').length / rows.length;
+    const bandObj = BANDS.find((b) => b.test(pctReg));
+    const twoPlusCount = aptoF.filter((c) => countSignals(c, voteThreshold).total >= 2).length;
+    slatePoints.push({
+      key,
+      uf,
+      band: bandObj.key,
+      pctReg,
+      nF: aptoF.length,
+      twoPlusCount,
+      rate: twoPlusCount / aptoF.length,
+    });
+  }
+
+  const bandStats = BANDS.map((b) => {
+    const pts = slatePoints.filter((p) => p.band === b.key);
+    const totalF = pts.reduce((s, p) => s + p.nF, 0);
+    const total2 = pts.reduce((s, p) => s + p.twoPlusCount, 0);
+    return {
+      band: b.key,
+      slatesCount: pts.length,
+      nF: totalF,
+      twoPlusCount: total2,
+      aggRate: safeDiv(total2, totalF),
+      medianRate: median(pts.map((p) => p.rate)),
+    };
+  });
+
+  const byUf = [...ufMap.values()].map((u) => ({
+    ...u,
+    rate: safeDiv(u.twoPlusF, u.nF),
+    inconclusive: u.nF < 10,
+  }));
+
+  const bandFloor = bandStats.find((b) => b.band === '30%–33,3%');
+  const bandHigh = bandStats.find((b) => b.band === '> 40%');
+  const finalRate = coverageYear
+    ? safeDiv(coverageYear.tp_prestacao_apto?.FINAL || 0, coverageYear.population?.apto_cands || 1)
+    : 1;
+
+  let verdict;
+  if (slatePoints.length < 10 || finalRate < 0.7) {
+    verdict = {
+      status: 'inconclusivo',
+      label: 'Inconclusivo',
+      reason: `Chapas insuficientes no recorte (${slatePoints.length} chapas n ≥ 4).`,
+    };
+  } else if (bandFloor && bandHigh && bandFloor.aggRate > bandHigh.aggRate * 1.15) {
+    verdict = {
+      status: 'vaza',
+      label: 'Vaza nesta Etapa',
+      reason: `Chapas no piso (30%–33,3%) registram ${(bandFloor.aggRate * 100).toFixed(1)}% das mulheres com ≥2 sinais vs. ${(bandHigh.aggRate * 100).toFixed(1)}% nas chapas >40%.`,
+    };
+  } else {
+    verdict = {
+      status: 'funcionou',
+      label: 'A Cota Funciona',
+      reason: `Taxa de sinais nas chapas 30%–33,3% (${((bandFloor?.aggRate || 0) * 100).toFixed(1)}%) não supera chapas >40% (${((bandHigh?.aggRate || 0) * 100).toFixed(1)}%).`,
+    };
+  }
+
+  return {
+    bandOrder: BANDS.map((b) => b.key),
+    slatePoints,
+    bandStats,
+    byUf,
+    verdict,
+  };
+}
+
+/**
+ * H8 — Comparativo Temporal 2022 vs. 2026 (Contas zeradas brutas vs. Movimentações padronizadas em lote)
+ */
+export function computeH8(allCandidates, { cargo = 'all', uf = null, party = null, voteThreshold = 10 } = {}) {
+  const rows = [];
+  const byYear = {};
+
+  for (const yr of [2022, 2026]) {
+    const subset = allCandidates.filter((c) => {
+      if (c.y !== yr) return false;
+      if (cargo && cargo !== 'all' && c.cargo !== cargo) return false;
+      if (uf && c.uf !== uf) return false;
+      if (party && c.p !== party) return false;
+      return c.apto && c.g === 'F';
+    });
+
+    const n = subset.length;
+    const zeroCount = subset.filter((c) => c.zeroFin).length;
+    const stdCount = subset.filter((c) => c.stdPkg).length;
+    const classicCount = subset.filter((c) => c.zeroFin && c.v <= voteThreshold).length;
+    const adaptedCount = subset.filter((c) => c.stdPkg && c.v <= voteThreshold).length;
+    const finalCount = subset.filter((c) => c.tpConta === 'FINAL').length;
+
+    byYear[yr] = {
+      year: yr,
+      n,
+      finalRate: safeDiv(finalCount, n),
+      pctZero: safeDiv(zeroCount, n),
+      pctStd: safeDiv(stdCount, n),
+      pctClassic: safeDiv(classicCount, n),
+      pctAdapted: safeDiv(adaptedCount, n),
+    };
+
+    rows.push(
+      { year: String(yr), metric: 'Conta zerada (Sinal B)', pct: safeDiv(zeroCount, n) * 100, count: zeroCount, n },
+      { year: String(yr), metric: 'Mov. padronizada em lote (Sinal C)', pct: safeDiv(stdCount, n) * 100, count: stdCount, n },
+      { year: String(yr), metric: `Zerada + ≤${voteThreshold} votos`, pct: safeDiv(classicCount, n) * 100, count: classicCount, n },
+      { year: String(yr), metric: `Padronizada + ≤${voteThreshold} votos`, pct: safeDiv(adaptedCount, n) * 100, count: adaptedCount, n },
+    );
+  }
+
+  const y22 = byYear[2022];
+  const y26 = byYear[2026];
+  let verdict;
+  if (y22.n < 20 || y26.n < 20 || y26.finalRate < 0.7) {
+    verdict = {
+      status: 'inconclusivo',
+      label: 'Inconclusivo',
+      reason: `Amostra ou entrega FINAL insuficiente para comparar 2022 (n=${y22.n}) vs. 2026 (n=${y26.n}, FINAL=${(y26.finalRate * 100).toFixed(1)}%).`,
+    };
+  } else if (y26.pctZero < y22.pctZero && y26.pctStd > y22.pctStd) {
+    verdict = {
+      status: 'vaza',
+      label: 'Vaza nesta Etapa',
+      reason: `Contas zeradas caíram (${(y22.pctZero * 100).toFixed(1)}% → ${(y26.pctZero * 100).toFixed(1)}%), mas movimentações padronizadas em lote subiram (${(y22.pctStd * 100).toFixed(1)}% → ${(y26.pctStd * 100).toFixed(1)}%).`,
+    };
+  } else if (y26.pctStd > 0.05 || y26.pctZero > 0.05) {
+    verdict = {
+      status: 'vaza',
+      label: 'Vaza nesta Etapa',
+      reason: `Em 2026 permanecem ${(y26.pctZero * 100).toFixed(1)}% zeradas e ${(y26.pctStd * 100).toFixed(1)}% com pacote padronizado (2022: ${(y22.pctZero * 100).toFixed(1)}% e ${(y22.pctStd * 100).toFixed(1)}%).`,
+    };
+  } else {
+    verdict = {
+      status: 'funcionou',
+      label: 'A Cota Funciona',
+      reason: `Redução simultânea de contas zeradas e padronizadas entre 2022 e 2026.`,
+    };
+  }
+
+  return { byYear, rows, verdict };
+}
+
+/**
+ * H9 & Coordenadas Paralelas — Diagnóstico da Etapa Crítica por UF e 5 eixos por Partido/UF
+ */
+export function computeH9AndParallel(candidates, { voteThreshold = 10 } = {}) {
+  const STAGES = ['Papel', 'Dinheiro', 'Urna (Votos)', 'Urna (Cadeiras)', 'Integridade'];
+
+  function scoreGroup(label, rows) {
+    const validG = rows.filter((c) => c.g === 'F' || c.g === 'M');
+    const apto = validG.filter((c) => c.apto);
+    const nF = apto.filter((c) => c.g === 'F').length;
+    const nM = apto.filter((c) => c.g === 'M').length;
+    const pctCandF = safeDiv(nF, nF + nM);
+
+    const pubF = apto.filter((c) => c.g === 'F').reduce((s, c) => s + c.fefc + c.fp, 0);
+    const pubTot = apto.reduce((s, c) => s + c.fefc + c.fp, 0);
+    const eqFefc = pctCandF > 0 && pubTot > 0 ? safeDiv(pubF / pubTot, pctCandF) : null;
+
+    const vF = apto.filter((c) => c.g === 'F').reduce((s, c) => s + c.v, 0);
+    const vTot = apto.reduce((s, c) => s + c.v, 0);
+    const rendUrna = pctCandF > 0 && vTot > 0 ? safeDiv(vF / vTot, pctCandF) : null;
+
+    const elF = apto.filter((c) => c.g === 'F' && c.el).length;
+    const elTot = apto.filter((c) => c.el).length;
+    const sucParl = pctCandF > 0 && elTot >= 2 ? safeDiv(elF / elTot, pctCandF) : null;
+
+    const fWith2 = apto.filter((c) => c.g === 'F' && countSignals(c, voteThreshold).total >= 2).length;
+    const integrity = nF >= 5 ? 1 - fWith2 / nF : null;
+
+    // Score relativo de retenção (1.0 = paridade/cumprimento ideal; < 1.0 = perda)
+    const papelRatio = pctCandF / 0.3;
+    const candidatesStages = [
+      { stage: 'Papel', val: validG.length >= 10 ? papelRatio : null },
+      { stage: 'Dinheiro', val: eqFefc },
+      { stage: 'Urna (Votos)', val: rendUrna },
+      { stage: 'Urna (Cadeiras)', val: sucParl },
+      { stage: 'Integridade', val: integrity },
+    ];
+
+    const available = candidatesStages.filter((s) => s.val !== null);
+    let bottleneck = 'Inconclusivo';
+    if (apto.length >= 10 && available.length >= 3) {
+      available.sort((a, b) => a.val - b.val);
+      bottleneck = available[0].val < 0.95 ? available[0].stage : 'Sem Vazamento Crítico';
+    }
+
+    return {
+      key: label,
+      nTotal: validG.length,
+      nApto: apto.length,
+      nF,
+      elTot,
+      inclusaoPct: pctCandF * 100,
+      eqFefc: eqFefc ?? 0,
+      rendUrna: rendUrna ?? 0,
+      sucParl: sucParl ?? 0,
+      integridadePct: (integrity ?? 0) * 100,
+      bottleneck,
+      inconclusive: bottleneck === 'Inconclusivo',
+    };
+  }
+
+  const byUfMap = groupBy(candidates, (c) => c.uf);
+  const ufRows = [...byUfMap.entries()].map(([uf, rows]) => scoreGroup(uf, rows));
+
+  const byPartyMap = groupBy(candidates, (c) => c.p);
+  const partyRows = [...byPartyMap.entries()]
+    .filter(([, rows]) => rows.length >= 25)
+    .map(([party, rows]) => scoreGroup(party, rows))
+    .sort((a, b) => b.nApto - a.nApto)
+    .slice(0, 20);
+
+  const stageCounts = {};
+  for (const u of ufRows) {
+    stageCounts[u.bottleneck] = (stageCounts[u.bottleneck] || 0) + 1;
+  }
+
+  const validUfs = ufRows.filter((u) => !u.inconclusive);
+  const distinctBottlenecks = new Set(validUfs.map((u) => u.bottleneck)).size;
+
+  const verdict = validUfs.length < 5
+    ? { status: 'inconclusivo', label: 'Inconclusivo', reason: `Poucas UFs com amostra suficiente (${validUfs.length}).` }
+    : {
+        status: 'vaza',
+        label: distinctBottlenecks > 1 ? 'Vaza por Etapas Distintas' : 'Vaza nesta Etapa',
+        reason: `Entre ${validUfs.length} UFs analisadas, o gargalo crítico varia regionalmente (${Object.entries(stageCounts).map(([k, v]) => `${k}: ${v}`).join(' · ')}).`,
+      };
+
+  return {
+    stages: STAGES,
+    ufRows,
+    partyRows,
+    stageCounts,
+    verdict,
+  };
+}

@@ -17,7 +17,6 @@ CSV_ENCODING = "windows-1252"
 
 NULL_SENTINELS = ("-1", "-3", "-4", "#NULO", "#NULO#", "#NE", "")
 INTERNAL_DRD_EXCLUDE = ("20330000", "20340000")
-DONATION_DRD_CODES = ("20240000", "20320000", "30020000")
 
 
 def source_paths(year: int) -> dict[str, Path]:

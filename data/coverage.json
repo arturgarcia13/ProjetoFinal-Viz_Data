@@ -7,7 +7,8 @@
         "consulta_cand": "22/10/2026",
         "votacao": "21/10/2026",
         "receitas": "18/10/2026",
-        "despesas_contratadas": "18/10/2026"
+        "despesas_contratadas": "18/10/2026",
+        "doador_originario": "18/10/2026"
       },
       "sources": {
         "consulta_cand": {
@@ -48,6 +49,14 @@
         "total_cands": 27367,
         "apto_cands": 24733,
         "inapto_cands": 2634,
+        "inapto_impact": {
+          "v_val": 346133,
+          "v_nom": 1661530,
+          "r": 60514556.58,
+          "fefc": 44243917.06,
+          "e": 52692037.13,
+          "elected": 1
+        },
         "gender_all": {
           "F": 9320,
           "M": 18026,
@@ -119,7 +128,8 @@
         "consulta_cand": "20/11/2026",
         "votacao": "19/10/2026",
         "receitas": "20/11/2026",
-        "despesas_contratadas": "20/11/2026"
+        "despesas_contratadas": "20/11/2026",
+        "doador_originario": "20/11/2026"
       },
       "sources": {
         "consulta_cand": {
@@ -160,6 +170,14 @@
         "total_cands": 19098,
         "apto_cands": 17712,
         "inapto_cands": 1386,
+        "inapto_impact": {
+          "v_val": 246302,
+          "v_nom": 1228464,
+          "r": 43825821.17,
+          "fefc": 29488227.18,
+          "e": 40458112.52,
+          "elected": 4
+        },
         "gender_all": {
           "F": 6801,
           "M": 12297,

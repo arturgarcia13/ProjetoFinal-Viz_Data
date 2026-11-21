@@ -1,3 +1,4 @@
+import csv
 import json
 import re
 from pathlib import Path
@@ -47,6 +48,9 @@ def test_coverage_and_sanity_invariants():
 
     for yr in ("2022", "2026"):
         c = cov[yr]
+        assert c["dt_geracao"].get("doador_originario"), f"DT_GERACAO de doador_originario ausente em {yr}"
+        inapto = c["population"]["inapto_impact"]
+        assert inapto["v_val"] >= 0 and inapto["r"] >= 0 and inapto["e"] >= 0
         assert c["sanity"]["exported_v_val"] == c["sources"]["votacao"]["sum_v_val"]
         assert c["sanity"]["exported_v_nom"] == c["sources"]["votacao"]["sum_v_nom"]
         assert abs(c["sanity"]["exported_r"] - c["sources"]["receitas"]["sum_r"]) < 5.0
@@ -57,15 +61,25 @@ def test_coverage_and_sanity_invariants():
 def test_network_hubs_integrity_and_lgpd():
     net = json.loads((DATA / "network_hubs.json").read_text(encoding="utf-8"))["years"]
     cpf_re = re.compile(r"\b\d{11}\b")
+    mei_cnpj_re = re.compile(r"^\d{2}\.\d{3}\.\d{3}\s+")
     for yr in ("2022", "2026"):
         ydata = net[yr]
         cids = {c["cid"] for c in ydata["candidates"]}
         hids = {h["hid"] for h in ydata["hubs"]}
         assert len(hids) > 0
+
+        cand_csv = ROOT / f"consulta_cand_{yr}" / f"consulta_cand_{yr}_BRASIL.csv"
+        with cand_csv.open(encoding="cp1252") as f:
+            reader = csv.DictReader(f, delimiter=";")
+            cand_names = {" ".join((row["NM_CANDIDATO"] or "").upper().split()) for row in reader if row.get("NM_CANDIDATO")}
+
         for h in ydata["hubs"]:
-            assert not cpf_re.search(h["label"]), f"CPF exposto no label do hub ({h['tipo']}): {h['label']}"
+            lbl = h["label"]
+            assert not cpf_re.search(lbl), f"CPF exposto no label do hub ({h['tipo']}): {lbl}"
+            assert not mei_cnpj_re.match(lbl.strip()), f"MEI pós-2022 com nome civil exposto ({h['tipo']}): {lbl}"
+            assert " ".join(lbl.upper().split()) not in cand_names, f"Nome de candidato exposto como hub em {yr}: {lbl}"
             if h["tipo"] == "PF":
-                assert h["label"].startswith("Fornecedor PF ("), f"PF label inseguro: {h['label']}"
+                assert lbl.startswith("Fornecedor PF ("), f"PF label inseguro: {lbl}"
         pf_count = sum(1 for h in ydata["hubs"] if h["tipo"] == "PF")
         assert pf_count > 0, f"Nenhum hub PF encontrado em {yr} (possível inversão de CD_TIPO_FORNECEDOR)"
         for link in ydata["links"]:
@@ -78,4 +92,5 @@ def test_coverage_markdown_sections():
     md = (ROOT / "docs" / "relatorio_cobertura_2022.md").read_text(encoding="utf-8")
     assert "## Ano 2022 — Baseline Principal" in md
     assert "## Ano 2026 — Comparativo Direto" in md
+    assert "Impacto das candidaturas `INAPTO`" in md
     assert "Checagens de Sanidade" in md

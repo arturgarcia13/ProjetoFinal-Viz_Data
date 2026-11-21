@@ -4,10 +4,10 @@
 - **Commit inicial:** `dbd5ae0`
 
 ## O que mudou
-- Criado pipeline ETL reprodutível em passada única com DuckDB: [etl/__init__.py](etl/__init__.py), [etl/config.py](etl/config.py), [etl/build_dataset.py](etl/build_dataset.py), [etl/report_coverage.py](etl/report_coverage.py).
-- Gerados os artefatos sem PII em `data/`: [data/analytical_base.json](data/analytical_base.json) (`6,6 MB`, 27.367 registros de 2022 + 19.098 de 2026), [data/network_hubs.json](data/network_hubs.json) (`203 KB`), [data/coverage.json](data/coverage.json) (`5,7 KB`).
-- Gerado automaticamente [docs/relatorio_cobertura_2022.md](docs/relatorio_cobertura_2022.md) com volumetria bruta/filtrada, `APTO` vs. `INAPTO`, gênero, micro-chapas `< 4`, taxas de casamento entre fontes, distribuição `TP_PRESTACAO_CONTAS` e checagens de sanidade.
-- Criada suíte [tests/test_etl.py](tests/test_etl.py) e atualizado [docs/plano_de_dados.md](docs/plano_de_dados.md) com regra empírica da conta `20240000`.
+- Criado pipeline ETL reprodutível em passada única com DuckDB: [etl/__init__.py](../etl/__init__.py), [etl/config.py](../etl/config.py), [etl/build_dataset.py](../etl/build_dataset.py), [etl/report_coverage.py](../etl/report_coverage.py).
+- Gerados os artefatos sem PII em `data/`: [data/analytical_base.json](../data/analytical_base.json) (`6,6 MB`, 27.367 registros de 2022 + 19.098 de 2026), [data/network_hubs.json](../data/network_hubs.json) (`203 KB`), [data/coverage.json](../data/coverage.json) (`5,7 KB`).
+- Gerado automaticamente [docs/relatorio_cobertura_2022.md](../docs/relatorio_cobertura_2022.md) com volumetria bruta/filtrada, `APTO` vs. `INAPTO`, gênero, micro-chapas `< 4`, taxas de casamento entre fontes, distribuição `TP_PRESTACAO_CONTAS` e checagens de sanidade.
+- Criada suíte [tests/test_etl.py](../tests/test_etl.py) e atualizado [docs/plano_de_dados.md](../docs/plano_de_dados.md) com regra empírica da conta `20240000`.
 
 ## Evidência
 - `.venv/bin/python -m etl.build_dataset && .venv/bin/python -m pytest -v`:

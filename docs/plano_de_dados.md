@@ -36,15 +36,15 @@ Todas as leituras usam **apenas os arquivos `*_BRASIL.csv`** de cada fonte (nunc
 
 Conforme os dicionários oficiais (`leiame.pdf` de `consulta_cand`, `votacao` e `prestacao_de_contas`):
 
-1. **Codificação e delimitador:** arquivos CSV com encoding **`cp1252` (Windows-1252 / superset de Latin-1)**, campos entre aspas duplas e separador **`;`** (verificado empiricamente em `despesas_contratadas_candidatos_2026_BRASIL.csv`, linha 152.967, byte `0x88`, que falha em leitores `latin-1` estritos).
-2. **Valores monetários:** `VR_RECEITA` e `VR_DESPESA_CONTRATADA` vêm no padrão brasileiro com vírgula decimal (ex.: `"8000,00"`). Converter trocando `,` por `.` e fazendo cast para decimal/float64 (`DECIMAL(14,2)` na soma).
+1. **Codificação e delimitador:** arquivos CSV com encoding **`cp1252` (Windows-1252 / superset de Latin-1)**, campos entre aspas duplas e separador **`;`** (verificado empiricamente em `despesas_contratadas_candidatos_2026_BRASIL.csv`, linha 639.117 no extrato de 20/11/2026 — anteriormente linha 152.967 na extração de 21/10/2026 —, byte `0x88`, que falha em leitores `latin-1` estritos).
+2. **Valores monetários:** `VR_RECEITA` e `VR_DESPESA_CONTRATADA` vêm no padrão brasileiro com vírgula decimal (ex.: `"8000,00"`). Converter trocando `,` por `.` e fazendo cast para `DOUBLE` (float64) com arredondamento a 2 casas na exportação (reconciliado ao centavo contra `DECIMAL(18,2)` nas auditorias).
 3. **Sentinelas do TSE:**
    - Texto `"#NULO"` / `"#NULO#"` e numérico `"-1"` → **ausência/em branco** (`NULL` analítico).
    - Texto `"#NE"` e numérico `"-3"` → **campo não existente/não coletado naquele ano** (`NULL` estrutural — ex.: `CD_SITUACAO_CANDIDATURA = -3` em 2026).
    - Texto `"NÃO DIVULGÁVEL"` e numérico `"-4"` → **dado protegido/sigiloso** (ex.: `CD_GENERO = -4`: 21 registros em 2022, 51 em 2018).
 4. **Privacidade e LGPD (Resolução TSE nº 23.729/2024):**
    - `NR_CPF_CANDIDATO` **nunca** é usado como chave de cruzamento (usar exclusivamente `SQ_CANDIDATO`).
-   - `NM_CANDIDATO`, `NM_URNA_CANDIDATO`, `NM_SOCIAL_CANDIDATO`, `NR_CPF_CANDIDATO`, `DS_EMAIL`, `NR_TITULO_ELEITORAL_CANDIDATO` e `SQ_CANDIDATO` em claro **não são exportados** para os JSONs públicos do frontend. Para a rede bipartida (H4), usar identificador anônimo derivado (`cand_hash` determinístico sem reversão direta para CPF/nome).
+   - `NM_CANDIDATO`, `NM_URNA_CANDIDATO`, `NM_SOCIAL_CANDIDATO`, `NR_CPF_CANDIDATO`, `DS_EMAIL`, `NR_TITULO_ELEITORAL_CANDIDATO` e `SQ_CANDIDATO` em claro **não são exportados** para os JSONs públicos do frontend. Para a base pública e a rede bipartida (H4), usa-se um identificador numérico anônimo (`cid`, atribuído em ordem embaralhada determinística via `md5` de `SQ_CANDIDATO`, sem correspondência posicional com o CSV bruto). Fornecedores Pessoa Física, MEIs com CPF/raiz CNPJ+nome civil e empresários individuais cujo nome coincida com `NM_CANDIDATO` são anonimizados em `network_hubs.json`. *(Nota metodológica: como os microdados originais do TSE são públicos, a anonimização elimina exposição direta de PII na aplicação, embora cruzamentos externos por combinações exatas de UF, partido, votos e valores permaneçam tecnicamente possíveis fora da ferramenta.)*
 
 ---
 
@@ -104,7 +104,7 @@ Conforme os dicionários oficiais (`leiame.pdf` de `consulta_cand`, `votacao` e 
 ### 4.5 Definição Operacional dos Sinais de Alerta (P4 / H6–H8)
 - **Sinal A (Votação inexpressiva):** `votos_validos <= limiar_A` (padrão: `10` votos; ajustável na interface para análise de sensibilidade).
 - **Sinal B (Movimentação financeira zerada):** candidato apresentou prestação de contas com `receita_total == 0` e `despesa_contratada_total == 0` (distinguido explicitamente de ausência de prestação em 2026!).
-- **Sinal C (Pacote padronizado / compartilhamento suspeito em lote):** mesma legenda/federação, mesmo `NR_CPF_CNPJ_FORNECEDOR`, mesmo valor unitário e mesma `DT_DESPESA` (ou mesmo valor exato de FEFC/FP em lote) em `>= 3` candidaturas.
+- **Sinal C (Pacote padronizado / compartilhamento suspeito em lote):** entre candidaturas `APTO` da mesma `(SG_UF, SG_PARTIDO)`, ocorrência em `>= 3` candidaturas de: (i) despesa com mesmo fornecedor externo (`dest_kind = 'EXT'`, mesmo `NR_CPF_CNPJ_FORNECEDOR`), mesmo valor unitário (`vr > 0`, arredondado a 2 casas) e mesma `DT_DESPESA`; **ou** (ii) mesmo valor exato de repasse público `(FEFC, FP)` em lote (`FEFC > 0` ou `FP > 0`). *(Nota: o agrupamento usa partido — e não federação — porque mesmo em federações cada partido mantém CNPJ, tesouraria e distribuição própria de FEFC/FP, evitando falsos positivos por valores redondos coincidentes entre tesourarias distintas.)*
 - **Limitação explícita (Súmula 73 do TSE):** o terceiro critério jurisprudencial (*ausência efetiva de atos de campanha*) não consta nos microdados do TSE; além disso, **Sinal B** (`r=0` e `e=0`) e **Sinal C** (`vr > 0` ou `fefc/fp > 0`) são mutuamente exclusivos por construção contábil (máximo observável simultâneo = 2 sinais: `A+B` ou `A+C`). A aplicação reporta **sinais estatísticos compatíveis com candidatura fictícia**, nunca acusação de fraude.
 
 ---

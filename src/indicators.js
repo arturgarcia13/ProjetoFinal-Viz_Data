@@ -1,5 +1,5 @@
 /**
- * Módulo auditável de indicadores e veredictos (H1–H5 nesta unidade U3).
+ * Módulo auditável de indicadores e veredictos (H1–H9).
  * Sem dependências de DOM: executável em Node (testes) e no navegador.
  */
 

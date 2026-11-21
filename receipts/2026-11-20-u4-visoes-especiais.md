@@ -4,10 +4,10 @@
 - **Commit inicial:** `9684dd4`
 
 ## O que mudou
-- Estendido [src/indicators.js](src/indicators.js) com `computeH6`, `computeH7`, `computeH8`, `computeH9AndParallel` e estados `Inconclusivo` explícitos.
-- Adicionado mapeamento `IBGE_TO_UF` em [src/data.js](src/data.js) para `data/br_uf.json` (`codarea`).
-- Criadas as visualizações especiais: [src/charts/h2Dumbbell.js](src/charts/h2Dumbbell.js), [src/charts/h4SankeyNetwork.js](src/charts/h4SankeyNetwork.js), [src/charts/h6Signals.js](src/charts/h6Signals.js), [src/charts/h7Boxplot.js](src/charts/h7Boxplot.js), [src/charts/h8Temporal.js](src/charts/h8Temporal.js), [src/charts/h9MapAndParallel.js](src/charts/h9MapAndParallel.js).
-- Estendidos [tests/test_indicators.py](tests/test_indicators.py), [index.html](index.html), [styles.css](styles.css) e [src/main.js](src/main.js).
+- Estendido [src/indicators.js](../src/indicators.js) com `computeH6`, `computeH7`, `computeH8`, `computeH9AndParallel` e estados `Inconclusivo` explícitos.
+- Adicionado mapeamento `IBGE_TO_UF` em [src/data.js](../src/data.js) para `data/br_uf.json` (`codarea`).
+- Criadas as visualizações especiais: [src/charts/h2Dumbbell.js](../src/charts/h2Dumbbell.js), [src/charts/h4SankeyNetwork.js](../src/charts/h4SankeyNetwork.js), [src/charts/h6Signals.js](../src/charts/h6Signals.js), [src/charts/h7Boxplot.js](../src/charts/h7Boxplot.js), [src/charts/h8Temporal.js](../src/charts/h8Temporal.js), [src/charts/h9MapAndParallel.js](../src/charts/h9MapAndParallel.js).
+- Estendidos [tests/test_indicators.py](../tests/test_indicators.py), [index.html](../index.html), [styles.css](../styles.css) e [src/main.js](../src/main.js).
 
 ## Evidência
 - `./init.sh && .venv/bin/python -m pytest -v`: `13 passed in 1.91s`.

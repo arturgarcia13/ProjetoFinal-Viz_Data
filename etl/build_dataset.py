@@ -91,12 +91,18 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
         CREATE OR REPLACE TEMP TABLE cand_all_scan_{year} AS
         SELECT
             (TRIM(CD_CARGO) IN {TARGET_CARGOS} AND TRIM(CD_TIPO_ELEICAO) = '{TARGET_ELECTION_TYPE}') AS keep_row,
-            DT_GERACAO, CD_CARGO, SG_UF, SQ_CANDIDATO,
+            DT_GERACAO, CD_CARGO, SG_UF, SQ_CANDIDATO, NM_CANDIDATO,
             CD_SITUACAO_CANDIDATURA, CD_GENERO, DS_COR_RACA,
             SG_PARTIDO, TP_AGREMIACAO, SQ_COLIGACAO, NR_FEDERACAO, SG_FEDERACAO,
             CD_SIT_TOT_TURNO
         FROM {cand_csv}
     """)
+    cand_names_norm = {
+        " ".join(row[0].upper().split())
+        for row in con.execute(
+            f"SELECT DISTINCT NM_CANDIDATO FROM cand_all_scan_{year} WHERE NM_CANDIDATO IS NOT NULL AND TRIM(NM_CANDIDATO) != ''"
+        ).fetchall()
+    }
     cand_counts = con.execute(f"""
         SELECT
             COUNT(*) AS raw_total,
@@ -230,7 +236,7 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
 
     con.execute(f"""
         CREATE OR REPLACE TEMP TABLE orig_scan_{year} AS
-        SELECT TRIM(SQ_RECEITA) AS sq_receita
+        SELECT TRIM(SQ_RECEITA) AS sq_receita, DT_GERACAO
         FROM {orig_csv}
     """)
     orig_stats = con.execute(f"""
@@ -248,7 +254,8 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
             (SELECT COUNT(*) FROM orig_u o JOIN rec_keys r ON o.sq_receita = r.sq_receita) AS orig_matched_rec_sq,
             (SELECT COUNT(*) FROM rec_keys WHERE cd_origem IN ('10040000', '10020000', '10020500')) AS rec_transfer_sq,
             (SELECT COUNT(*) FROM rec_keys rk JOIN orig_u o ON rk.sq_receita = o.sq_receita
-             WHERE rk.cd_origem IN ('10040000', '10020000', '10020500')) AS rec_transfer_matched_orig
+             WHERE rk.cd_origem IN ('10040000', '10020000', '10020500')) AS rec_transfer_matched_orig,
+            (SELECT MAX(DT_GERACAO) FROM orig_scan_{year}) AS dt_geracao
     """).fetchone()
 
     print(f"[ETL {year}] 4/5 lendo despesas_contratadas...", flush=True)
@@ -387,7 +394,9 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
     con.execute(f"""
         CREATE OR REPLACE TEMP TABLE cand_final_{year} AS
         SELECT
-            ({start_cid - 1} + ROW_NUMBER() OVER (ORDER BY c.uf, c.cargo, c.sq_candidato))::INTEGER AS cid,
+            ({start_cid - 1} + ROW_NUMBER() OVER (
+                ORDER BY md5(CONCAT('vd-cota-genero-', CAST(c.y AS VARCHAR), '-', c.sq_candidato))
+            ))::INTEGER AS cid,
             c.sq_candidato,
             c.y,
             c.g,
@@ -507,13 +516,20 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
         if hkey not in hub_map:
             hid = f"H{year}_{len(hub_map) + 1}"
             # Nos CSVs reais do TSE, CD_TIPO_FORNECEDOR '1' = PESSOA JURÍDICA e '0' = PESSOA FÍSICA.
-            # Sanitiza também MEIs cujo nome empresarial da RFB embute o CPF de 11 dígitos do titular.
+            # Sanitiza também MEIs (CPF de 11 dígitos ou raiz CNPJ de 8 dígitos + nome civil pós-2022)
+            # e qualquer fornecedor individual cujo nome coincida com NM_CANDIDATO em consulta_cand.
             is_pj = (cd_tipo == "1") and ("JUR" in (ds_tipo or "").upper())
-            has_embedded_cpf = bool(nm_forn and re.search(r"\b\d{11}\b", nm_forn))
-            if is_pj and nm_forn and nm_forn not in ("#NULO", "#NULO#") and not has_embedded_cpf:
-                label = nm_forn
-            elif is_pj and has_embedded_cpf:
+            nm_clean = (nm_forn or "").strip()
+            nm_norm = " ".join(nm_clean.upper().split())
+            has_embedded_cpf = bool(nm_clean and re.search(r"\b\d{11}\b", nm_clean))
+            is_mei_post2022 = bool(nm_clean and re.match(r"^\d{2}\.\d{3}\.\d{3}\s+", nm_clean))
+            is_cand_name = bool(nm_norm and nm_norm in cand_names_norm)
+            if is_pj and nm_clean and nm_clean not in ("#NULO", "#NULO#") and not (has_embedded_cpf or is_mei_post2022 or is_cand_name):
+                label = nm_clean
+            elif is_pj and (has_embedded_cpf or is_mei_post2022):
                 label = f"Fornecedor MEI ({uf}) #{len(hub_map) + 1}"
+            elif is_pj and is_cand_name:
+                label = f"Fornecedor Individual ({uf}) #{len(hub_map) + 1}"
             else:
                 label = f"Fornecedor PF ({uf}) #{len(hub_map) + 1}"
             hub_map[hkey] = {
@@ -610,6 +626,18 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
         ORDER BY n DESC
     """).fetchall()
 
+    inapto_stats = con.execute(f"""
+        SELECT
+            COALESCE(SUM(v), 0) AS v_val,
+            COALESCE(SUM(v_nom), 0) AS v_nom,
+            ROUND(COALESCE(SUM(r), 0.0), 2) AS r,
+            ROUND(COALESCE(SUM(fefc), 0.0), 2) AS fefc,
+            ROUND(COALESCE(SUM(e), 0.0), 2) AS e,
+            COUNT(*) FILTER (WHERE el) AS elected
+        FROM cand_final_{year}
+        WHERE NOT apto
+    """).fetchone()
+
     coverage_year = {
         "year": year,
         "role": "baseline" if year == BASELINE_YEAR else ("comparison" if year == COMPARISON_YEAR else "auxiliary"),
@@ -618,6 +646,7 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
             "votacao": vot_stats[5],
             "receitas": rec_stats[5],
             "despesas_contratadas": desp_stats[5],
+            "doador_originario": orig_stats[5],
         },
         "sources": {
             "consulta_cand": {"raw_rows": int(cand_counts[0]), "cargo_6_7_rows": int(cand_counts[1]), "unique_sq": int(cand_counts[2])},
@@ -642,6 +671,14 @@ def process_year(con: duckdb.DuckDBPyConnection, year: int, start_cid: int = 1) 
             "total_cands": int(cov_counts[0]),
             "apto_cands": int(cov_counts[1]),
             "inapto_cands": int(cov_counts[2]),
+            "inapto_impact": {
+                "v_val": int(inapto_stats[0]),
+                "v_nom": int(inapto_stats[1]),
+                "r": float(inapto_stats[2]),
+                "fefc": float(inapto_stats[3]),
+                "e": float(inapto_stats[4]),
+                "elected": int(inapto_stats[5]),
+            },
             "gender_all": {"F": int(cov_counts[3]), "M": int(cov_counts[4]), "ND": int(cov_counts[5])},
             "gender_apto": {"F": int(cov_counts[6]), "M": int(cov_counts[7]), "ND": int(cov_counts[8])},
             "chapas_reg": {"total": int(cov_counts[24]), "micro_lt4": int(cov_counts[25]), "micro_cands": int(cov_counts[26])},

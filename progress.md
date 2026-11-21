@@ -1,12 +1,12 @@
 # Progress & Harness Contract
 
 ## Commands
-- Install Python deps: `uv pip install --python .venv/bin/python -r etl/requirements.txt` (atual: `pytest`, `pypdf`, `numpy`, `matplotlib`)
+- Install Python deps: `uv pip install --python .venv/bin/python -r etl/requirements.txt` (atual: `duckdb`, `pytest`, `pypdf`, `numpy`, `matplotlib`)
 - Install JS deps: `npm install`
 - Single test file: `.venv/bin/python -m pytest tests/<arquivo>.py -v`
 - Full Python test suite: `.venv/bin/python -m pytest -v`
 - Frontend build: `npm run build`
-- End-to-end check: `node tests/e2e.mjs` (a criar na U5)
+- End-to-end check: `node tests/e2e.mjs`
 - Environment sanity check: `./init.sh`
 
 ---
@@ -54,7 +54,7 @@
   - Decisões fechadas com o usuário: Federal + Estadual apenas (sem Distrital); Observable Plot + D3.js; Coordenadas Paralelas no Ato 5; tratamento de `APTO` vs. `INAPTO` por etapa; corte `n >= 4` apenas em H1/H7 mantendo todas as 244 candidaturas de micro-chapas nos totais individuais.
 - **2026-11-20 (U1 — refinamento de recorte):**
   - Usuário definiu **2022** como baseline principal, **2026** como comparativo direto (mesmo regime de federações) e **2018** apenas como referência auxiliar opcional.
-  - Descoberto byte `0x88` (`cp1252`) na linha 152.967 de `despesas_contratadas_candidatos_2026_BRASIL.csv`; Plano de Dados atualizado para leitura `cp1252`.
+  - Descoberto byte `0x88` (`cp1252`) na linha 152.967 de `despesas_contratadas_candidatos_2026_BRASIL.csv` (extrato de 21/10/2026; linha 639.117 no extrato atualizado de 20/11/2026); Plano de Dados atualizado para leitura `cp1252`.
   - Verificado pelo calendário TSE 2026 que prazos finais de prestação de contas encerraram em 03/11 (1º turno) e 16/11 (2º turno); extração atual no repo é de 21/10/2026 (5,8% `FINAL` em receitas).
 
 - **2026-11-20 (U2 — ETL, Base 2022/2026 e Relatório de Cobertura):**
@@ -71,6 +71,10 @@
 - **2026-11-20 (U5 — Auditoria Independente Final em Contexto Frio):**
   - Subagente auditor sem contexto (`955d51f8`) analisou todo o repositório, identificou 7 defeitos iniciais (CPFs de MEI em 7 hubs de `network_hubs.json`, click-to-filter quebrado em H2/H3/H5, partidos de 2026 ausentes no dropdown, brush H9, amostra mínima H4, colisão mobile e label H6) e depois 1 pendência de sobreposição sticky desktop em H9 + 3px em H6 mobile.
   - Todos os pontos foram corrigidos, `tests/e2e.mjs` e `tests/test_etl.py` reforçados, e o auditor concluiu **`APROVADO SEM ERROS`** (`./init.sh` → `15 passed`, `ERRORS: []` em `1280×820` e `390×844`, observando apenas `-4px` cosmético em `REPUBLICANOS` no eixo Y de H2 a `390px`).
+
+- **2026-11-21 (Auditoria Independente dos Relatórios — A01–A08):**
+  - Subagente auditor dedicado (`report-auditor`, contexto frio, somente leitura) auditou `docs/plano_de_dados.md`, `docs/relatorio_cobertura_2022.md`, os 7 arquivos em `receipts/` e a consistência cruzada com CSVs brutos do TSE, `data/*.json`, `etl/`, `src/` e `git log` (reconciliação numérica 100% confirmada; 8 achados A01–A08 identificados).
+  - Todos os achados foram corrigidos: anonimização adicional em `etl/build_dataset.py` para fornecedores individuais coincidentes com `NM_CANDIDATO` (`H2022_116`) e 4 MEIs pós-2022 (`^\d{2}\.\d{3}\.\d{3}\s+`), com invariante em `tests/test_etl.py`; `cid` embaralhado deterministicamente via `md5`; bloco `inapto_impact` e `DT_GERACAO` de `doador_originario` incluídos em `data/coverage.json` e `docs/relatorio_cobertura_2022.md`; `docs/plano_de_dados.md` alinhado ao ETL (Sinal C por `(UF, partido)` entre `APTO` e fornecedores `EXT`, `cid`, `DOUBLE`, linha `639.117`); criado `etl/requirements.txt`; corrigidos os 70 links relativos em `receipts/*.md`, `DONATION_DRD_CODES` não utilizada e cabeçalho de `src/indicators.js`.
 
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.

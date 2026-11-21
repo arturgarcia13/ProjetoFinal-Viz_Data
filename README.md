@@ -29,3 +29,64 @@ npm run build
 # 4. Servir localmente em http://localhost:8000
 npm run serve
 ```
+
+## Como baixar os dados brutos do TSE (Google Drive)
+
+> **Nota:** Você só precisa baixar estes arquivos se quiser **reprocessar o pipeline ETL** (`.venv/bin/python -m etl.build_dataset`). Para apenas rodar ou desenvolver o site (`npm run build && npm run serve`), os JSONs já processados em `data/` estão versionados no repositório.
+
+**Pasta no Google Drive:** https://drive.google.com/drive/folders/1dsDaznt5W9vjkb3lQTtuGkeO1G-jBvVs?usp=drive_link
+
+### Opção 1 — Download enxuto pelo navegador (Recomendado: ~10 GB)
+
+O pipeline padrão (`2022` + `2026`, ver `etl/config.py`) lê **apenas os 10 arquivos consolidados `*_BRASIL.csv`** (não é necessário baixar os arquivos separados por UF nem 2018, que somam ~42 GB).
+
+1. Crie as pastas na raiz do repositório:
+   ```bash
+   mkdir -p \
+     consulta_cand_2022 \
+     consulta_cand_2026 \
+     prestacao_de_contas_eleitorais_candidatos_2022 \
+     prestacao_de_contas_eleitorais_candidatos_2026 \
+     votacao-2022/votacao_candidato_munzona_2022 \
+     votacao-2026/votacao_candidato_munzona_2026
+   ```
+2. Abra o link do Drive, faça download (botão direito → **Fazer download**) dos 10 arquivos `*_BRASIL.csv` abaixo e salve exatamente nestes caminhos:
+   - `consulta_cand_2022/consulta_cand_2022_BRASIL.csv` (~16 MB)
+   - `votacao-2022/votacao_candidato_munzona_2022/votacao_candidato_munzona_2022_BRASIL.csv` (~4,1 GB)
+   - `prestacao_de_contas_eleitorais_candidatos_2022/receitas_candidatos_2022_BRASIL.csv` (~413 MB)
+   - `prestacao_de_contas_eleitorais_candidatos_2022/receitas_candidatos_doador_originario_2022_BRASIL.csv` (~53 MB)
+   - `prestacao_de_contas_eleitorais_candidatos_2022/despesas_contratadas_candidatos_2022_BRASIL.csv` (~1,3 GB)
+   - `consulta_cand_2026/consulta_cand_2026_BRASIL.csv` (~12 MB)
+   - `votacao-2026/votacao_candidato_munzona_2026/votacao_candidato_munzona_2026_BRASIL.csv` (~3,0 GB)
+   - `prestacao_de_contas_eleitorais_candidatos_2026/receitas_candidatos_2026_BRASIL.csv` (~180 MB)
+   - `prestacao_de_contas_eleitorais_candidatos_2026/receitas_candidatos_doador_originario_2026_BRASIL.csv` (~87 MB)
+   - `prestacao_de_contas_eleitorais_candidatos_2026/despesas_contratadas_candidatos_2026_BRASIL.csv` (~1,1 GB)
+
+*(Opcional — referência auxiliar de 2018: repita o mesmo padrão para `consulta_cand_2018/`, `votacao-2018/votacao_candidato_munzona_2018/` e `prestacao_de_contas_eleitorais_candidatos_2018/`.)*
+
+### Opção 2 — Download completo pelo navegador (~42 GB)
+
+1. Abra o link do Drive e baixe cada pasta uma por vez (botão direito → **Fazer download**): `consulta_cand_2022`, `consulta_cand_2026`, `prestacao_de_contas_eleitorais_candidatos_2022`, `prestacao_de_contas_eleitorais_candidatos_2026`, `votacao-2022` e `votacao-2026` (e as de `2018`, se desejar).
+2. O Google Drive divide pastas grandes em múltiplos `.zip`. Descompacte todos na raiz do repositório, mesclando pastas de mesmo nome:
+   ```bash
+   for z in ~/Downloads/*.zip; do unzip -o "$z" -d .; done
+   ```
+3. Confirme que não ficou nenhuma pasta duplicada (ex.: `consulta_cand_2022/consulta_cand_2022/`).
+
+> **Sobre `gdown`:** Evite `gdown --folder` para esta pasta do Drive, pois o `gdown` limita downloads de pasta a 50 arquivos e as pastas `prestacao_de_contas_*` (120 arquivos) e `votacao-*` (60–90 arquivos) excedem esse limite.
+
+### Verificação após o download
+
+Na raiz do projeto, confirme que todos os arquivos estão nos caminhos esperados pelo ETL:
+
+```bash
+.venv/bin/python -c "
+from etl.config import source_paths
+for year in (2022, 2026):
+    for name, path in source_paths(year).items():
+        status = 'OK' if path.exists() else 'FALTANDO'
+        print(f'[{status}] {year}/{name}: {path}')
+"
+```
+
+Todas as pastas brutas já estão listadas no `.gitignore` e não serão versionadas no Git.

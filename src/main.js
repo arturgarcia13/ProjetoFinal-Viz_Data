@@ -21,6 +21,8 @@ const state = {
   threshold: 10,
   activeStep: 'h1',
   h1Mode: 'reg',
+  h3Scale: 'log',
+  h3Zoom: 'focus',
   h4Tab: 'sankey',
   pcUnit: 'party',
   mapMode: 'h9',
@@ -215,9 +217,21 @@ function renderStage(computed) {
     case 'h3':
       kicker.textContent = 'Ato 02 · No Dinheiro (H3)';
       title.textContent = '% de Candidatas × % do Fundo Público (FEFC + FP)';
-      buildStageControls([]);
-      renderH3Scatter(canvas, h3, { width: w, onSelectParty: toggleParty });
-      caption.textContent = 'Partidos com n ≥ 10 candidaturas APTO. Pontos abaixo da diagonal Y = X indicam menor fatia de Fundo Público que a presença feminina.';
+      buildStageControls([
+        { label: 'Escala Log', active: state.h3Scale === 'log', onClick: () => { state.h3Scale = 'log'; update(); } },
+        { label: 'Escala Linear', active: state.h3Scale === 'linear', onClick: () => { state.h3Scale = 'linear'; update(); } },
+        { label: 'Foco (≤46%)', active: state.h3Zoom === 'focus', onClick: () => { state.h3Zoom = 'focus'; update(); } },
+        { label: 'Todos', active: state.h3Zoom === 'all', onClick: () => { state.h3Zoom = 'all'; update(); } },
+      ]);
+      renderH3Scatter(canvas, h3, {
+        width: w,
+        scale: state.h3Scale,
+        zoom: state.h3Zoom,
+        onSelectParty: toggleParty,
+      });
+      caption.textContent = state.h3Scale === 'log'
+        ? 'Partidos com n ≥ 10 APTO em escala log₁₀. Use "Foco (≤46%)" para abrir o miolo dos grandes partidos ou "Todos" para incluir extremos.'
+        : 'Partidos com n ≥ 10 candidaturas APTO (escala linear). Pontos abaixo da diagonal Y = X indicam menor fatia de Fundo Público que a presença feminina.';
       break;
 
     case 'h4':

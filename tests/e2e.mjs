@@ -59,6 +59,19 @@ for (const s of steps) {
     throw new Error(`Stage kicker não atualizou para ${s}: ${kicker}`);
   }
   if (s === 'h2' || s === 'h3') {
+    if (s === 'h3') {
+      const logActive = await page.$eval('#stage-controls button:nth-child(1)', (el) => el.getAttribute('aria-pressed'));
+      const focusActive = await page.$eval('#stage-controls button:nth-child(3)', (el) => el.getAttribute('aria-pressed'));
+      if (logActive !== 'true' || focusActive !== 'true') {
+        throw new Error('H3 deveria iniciar em Escala Log + Foco (≤46%)');
+      }
+      await page.click('#stage-controls button:nth-child(4)'); // Todos
+      await page.click('#stage-controls button:nth-child(2)'); // Escala Linear
+      const linActive = await page.$eval('#stage-controls button:nth-child(2)', (el) => el.getAttribute('aria-pressed'));
+      if (linActive !== 'true') throw new Error('Alternância para Escala Linear falhou em H3');
+      await page.click('#stage-controls button:nth-child(1)'); // Escala Log
+      await page.click('#stage-controls button:nth-child(3)'); // Foco (≤46%)
+    }
     await page.click('#stage-canvas g[aria-label="dot"] circle');
     const selectedParty = await page.$eval('#filter-party', (el) => el.value);
     if (!selectedParty) throw new Error(`Click-to-filter falhou em ${s}`);

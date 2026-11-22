@@ -126,7 +126,7 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
   const topHubIds = new Set(
     [...hubStats.entries()]
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 22)
+      .slice(0, 15)
       .map(([hid]) => hid),
   );
 
@@ -141,70 +141,244 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
   const activeCands = [...activeCandIds].map((cid) => ({ ...candById.get(cid), id: `C_${cid}`, kind: 'cand' }));
 
   const nodes = [...activeHubs, ...activeCands];
+  const nodeById = new Map(nodes.map((n) => [n.id, n]));
   const links = activeLinks.map((l) => ({ source: `C_${l.cid}`, target: l.hid, val: l.val, share: l.share }));
 
-  const height = 340;
+  // 1. Separa componentes conectados para evitar que ilhas desconectadas se repilam para as bordas
+  const adj = new Map(nodes.map((n) => [n.id, []]));
+  for (const l of links) {
+    adj.get(l.source).push(l.target);
+    adj.get(l.target).push(l.source);
+  }
+
+  const visited = new Set();
+  const components = [];
+  for (const n of nodes) {
+    if (visited.has(n.id)) continue;
+    const queue = [n.id];
+    visited.add(n.id);
+    const compNodeIds = new Set();
+    while (queue.length > 0) {
+      const cur = queue.shift();
+      compNodeIds.add(cur);
+      for (const nb of adj.get(cur) || []) {
+        if (!visited.has(nb)) {
+          visited.add(nb);
+          queue.push(nb);
+        }
+      }
+    }
+    const compNodes = [...compNodeIds].map((id) => nodeById.get(id));
+    const compLinks = links.filter((l) => compNodeIds.has(l.source) && compNodeIds.has(l.target));
+    const compHubs = compNodes.filter((x) => x.kind === 'hub').sort((a, b) => b.totalVal - a.totalVal);
+    components.push({
+      id: components.length,
+      nodes: compNodes,
+      links: compLinks,
+      mainHub: compHubs[0] || null,
+      totalVal: compHubs.reduce((s, h) => s + (h.totalVal || 0), 0),
+    });
+  }
+  components.sort((a, b) => b.totalVal - a.totalVal);
+
+  // 2. Layout local estável por componente (cada constelação centralizada em 0,0)
+  for (const comp of components) {
+    const hubCount = comp.nodes.filter((d) => d.kind === 'hub').length;
+    const candCount = comp.nodes.length - hubCount;
+    const linkDist = hubCount > 1 ? 36 : Math.max(24, Math.min(46, 18 + Math.sqrt(candCount) * 4.2));
+
+    // Inicialização determinística em anel evita simetrias degeneradas
+    comp.nodes.forEach((d, idx) => {
+      const angle = (idx / Math.max(1, comp.nodes.length)) * Math.PI * 2;
+      const rad = d.kind === 'hub' ? (hubCount > 1 ? 18 : 0) : linkDist;
+      d.x = Math.cos(angle) * rad;
+      d.y = Math.sin(angle) * rad;
+      d.compId = comp.id;
+    });
+
+    const localSim = d3.forceSimulation(comp.nodes)
+      .force('link', d3.forceLink(comp.links).id((d) => d.id).distance(linkDist).strength(0.9))
+      .force('charge', d3.forceManyBody().strength(candCount > 25 ? -28 : -45))
+      .force('x', d3.forceX(0).strength(0.08))
+      .force('y', d3.forceY(0).strength(0.08))
+      .force('collide', d3.forceCollide().radius((d) => (d.kind === 'hub' ? 12 : (d.v < 20 ? 7.5 : 5.8))))
+      .stop();
+
+    for (let i = 0; i < 160; i += 1) localSim.tick();
+
+    // Centraliza o componente na sua própria média e calcula o raio envolvente
+    const cx = d3.mean(comp.nodes, (d) => d.x) || 0;
+    const cy = d3.mean(comp.nodes, (d) => d.y) || 0;
+    let maxR = 18;
+    for (const d of comp.nodes) {
+      d.x -= cx;
+      d.y -= cy;
+      const rr = Math.hypot(d.x, d.y) + (d.kind === 'hub' ? 12 : 8);
+      if (rr > maxR) maxR = rr;
+    }
+    comp.r = maxR + 22;
+  }
+
+  // 3. Empacota os componentes sem sobreposição usando d3.packSiblings
+  d3.packSiblings(components);
+  for (const comp of components) {
+    for (const d of comp.nodes) {
+      d.x += comp.x;
+      d.y += comp.y;
+    }
+  }
+
+  // 4. Ajusta escala uniforme e centraliza todo o grafo dentro do viewBox útil (sem esmagar nas bordas)
+  const isNarrow = width < 520;
+  const height = isNarrow ? 420 : 400;
+  const padX = 24;
+  const padTop = 18;
+  const legendH = isNarrow ? 58 : 38;
+  const availW = width - padX * 2;
+  const availH = height - padTop - legendH - 10;
+
+  const minX = d3.min(components, (c) => c.x - c.r);
+  const maxX = d3.max(components, (c) => c.x + c.r);
+  const minY = d3.min(components, (c) => c.y - c.r);
+  const maxY = d3.max(components, (c) => c.y + c.r);
+  const spanX = Math.max(1, maxX - minX);
+  const spanY = Math.max(1, maxY - minY);
+  const scale = Math.min(availW / spanX, availH / spanY, 1.35);
+  const offX = padX + (availW - spanX * scale) / 2 - minX * scale;
+  const offY = padTop + (availH - spanY * scale) / 2 - minY * scale;
+
+  for (const d of nodes) {
+    d.px = d.x * scale + offX;
+    d.py = d.y * scale + offY;
+  }
+
   const svg = d3.select(container).append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', width)
     .attr('height', height);
 
-  const sim = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id((d) => d.id).distance(42))
-    .force('charge', d3.forceManyBody().strength(-75))
-    .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collide', d3.forceCollide().radius((d) => (d.kind === 'hub' ? 10 : 5)))
-    .stop();
-
-  for (let i = 0; i < 160; i += 1) sim.tick();
+  // Moldura suave de agrupamento por componente (facilita identificar cada cluster partido/UF)
+  svg.append('g')
+    .attr('aria-label', 'component-halos')
+    .selectAll('circle')
+    .data(components)
+    .join('circle')
+    .attr('cx', (c) => c.x * scale + offX)
+    .attr('cy', (c) => c.y * scale + offY)
+    .attr('r', (c) => Math.max(18, (c.r - 4) * scale))
+    .attr('fill', '#ebe4d8')
+    .attr('fill-opacity', 0.28)
+    .attr('stroke', '#d7cdbc')
+    .attr('stroke-width', 0.8)
+    .attr('stroke-dasharray', '3,3');
 
   const linkEl = svg.append('g')
     .selectAll('line')
     .data(links)
     .join('line')
-    .attr('x1', (d) => Math.max(16, Math.min(width - 16, d.source.x)))
-    .attr('y1', (d) => Math.max(16, Math.min(height - 16, d.source.y)))
-    .attr('x2', (d) => Math.max(16, Math.min(width - 16, d.target.x)))
-    .attr('y2', (d) => Math.max(16, Math.min(height - 16, d.target.y)))
+    .attr('x1', (d) => d.source.px)
+    .attr('y1', (d) => d.source.py)
+    .attr('x2', (d) => d.target.px)
+    .attr('y2', (d) => d.target.py)
     .attr('stroke', '#8d8375')
-    .attr('stroke-opacity', 0.45)
-    .attr('stroke-width', (d) => Math.max(1, Math.min(5, d.share * 6)));
+    .attr('stroke-opacity', 0.48)
+    .attr('stroke-width', (d) => Math.max(0.9, Math.min(4.2, d.share * 5.2)));
 
   const nodeEl = svg.append('g')
-    .selectAll('path')
+    .selectAll('g')
     .data(nodes)
     .join('g')
-    .attr('transform', (d) => `translate(${Math.max(16, Math.min(width - 16, d.x))},${Math.max(16, Math.min(height - 16, d.y))})`);
+    .attr('transform', (d) => `translate(${d.px.toFixed(1)},${d.py.toFixed(1)})`);
+
+  const fmtVal = (v) => (v >= 1e6
+    ? `R$ ${(v / 1e6).toFixed(2).replace('.', ',')}M`
+    : `R$ ${Math.round(v / 1e3).toLocaleString('pt-BR')} mil`);
+
+  nodeEl.filter((d) => d.kind === 'cand')
+    .append('circle')
+    .attr('r', (d) => (d.v < 20 ? 5.2 : 3.6))
+    .attr('fill', (d) => (d.g === 'F' ? '#b4452f' : '#3d5a80'))
+    .attr('stroke', (d) => (d.v < 20 ? '#1b1a17' : '#fffdf9'))
+    .attr('stroke-width', (d) => (d.v < 20 ? 1.5 : 0.7))
+    .append('title')
+    .text((d) =>
+      `Candidatura anônima (${d.g === 'F' ? 'Mulher' : 'Homem'}) · ${d.p}/${d.uf}\n` +
+      `Votos válidos: ${d.v.toLocaleString('pt-BR')}${d.v < 20 ? ' (< 20 votos)' : ''}\n` +
+      `Despesa total: R$ ${Math.round(d.e).toLocaleString('pt-BR')}`);
 
   nodeEl.filter((d) => d.kind === 'hub')
     .append('rect')
-    .attr('x', -7).attr('y', -7).attr('width', 14).attr('height', 14).attr('rx', 2)
+    .attr('x', -6.5).attr('y', -6.5).attr('width', 13).attr('height', 13).attr('rx', 2.2)
     .attr('fill', '#1b1a17')
     .attr('stroke', '#fffdf9')
-    .attr('stroke-width', 1.2)
+    .attr('stroke-width', 1.3)
     .style('cursor', 'pointer')
     .on('click', (_, d) => {
       if (onSelectParty) onSelectParty(d.p);
     })
     .append('title')
-    .text((d) => `Hub ${d.label} (${d.p}/${d.uf}) · ${d.candsN} cand. (${d.lowVoteN} <20 votos) · R$ ${d.totalVal.toLocaleString('pt-BR')}`);
+    .text((d) =>
+      `Fornecedor-Hub: ${d.label}\n` +
+      `Partido/UF: ${d.p}/${d.uf}\n` +
+      `Atende ${d.candsN} candidaturas (${d.lowVoteN} com < 20 votos)\n` +
+      `Volume contratado no grupo: ${fmtVal(d.totalVal)}`);
 
-  nodeEl.filter((d) => d.kind === 'cand')
-    .append('circle')
-    .attr('r', (d) => (d.v < 20 ? 5.5 : 4))
-    .attr('fill', (d) => (d.g === 'F' ? '#b4452f' : '#3d5a80'))
-    .attr('stroke', (d) => (d.v < 20 ? '#1b1a17' : '#fffdf9'))
-    .attr('stroke-width', (d) => (d.v < 20 ? 1.5 : 0.8))
-    .append('title')
-    .text((d) => `Candidatura anônima (${d.g}) · ${d.p}/${d.uf} · ${d.v} votos · Despesa: R$ ${d.e.toLocaleString('pt-BR')}`);
+  // Rótulo discreto (Partido/UF) acomodado na base interna de cada constelação
+  svg.append('g')
+    .attr('aria-label', 'cluster-labels')
+    .style('pointer-events', 'none')
+    .selectAll('text')
+    .data(components.filter((c) => c.mainHub))
+    .join('text')
+    .attr('x', (c) => c.x * scale + offX)
+    .attr('y', (c) => (c.y + c.r - 7) * scale + offY)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', 9.2)
+    .attr('font-weight', '600')
+    .attr('fill', '#3b362f')
+    .attr('stroke', '#fffdf9')
+    .attr('stroke-width', 2.8)
+    .attr('paint-order', 'stroke')
+    .text((c) => `${c.mainHub.p}/${c.mainHub.uf}`);
 
-  // Destaca ligações no hover do hub
+  // Destaca constelação e ligações no hover do hub
   nodeEl.filter((d) => d.kind === 'hub')
     .on('mouseenter', (_, d) => {
-      linkEl.attr('stroke-opacity', (l) => (l.target.id === d.id ? 0.95 : 0.1))
+      linkEl
+        .attr('stroke-opacity', (l) => (l.target.id === d.id ? 0.95 : 0.08))
         .attr('stroke', (l) => (l.target.id === d.id ? '#b4452f' : '#8d8375'));
+      nodeEl.attr('opacity', (n) => (n.compId === d.compId ? 1 : 0.22));
     })
     .on('mouseleave', () => {
-      linkEl.attr('stroke-opacity', 0.45).attr('stroke', '#8d8375');
+      linkEl.attr('stroke-opacity', 0.48).attr('stroke', '#8d8375');
+      nodeEl.attr('opacity', 1);
     });
+
+  // Legenda clara no rodapé do SVG
+  const leg = svg.append('g').attr('transform', `translate(14, ${height - (isNarrow ? 40 : 20)})`);
+  const legendItems = [
+    { kind: 'square', fill: '#1b1a17', stroke: '#fffdf9', label: 'Fornecedor-Hub (clique filtra partido)' },
+    { kind: 'circle', fill: '#b4452f', stroke: '#fffdf9', sw: 0.8, label: 'Candidata (F)' },
+    { kind: 'circle', fill: '#3d5a80', stroke: '#fffdf9', sw: 0.8, label: 'Candidato (M)' },
+    { kind: 'circle', fill: '#b4452f', stroke: '#1b1a17', sw: 1.8, label: '< 20 votos (borda preta)' },
+  ];
+  let lx = 0;
+  let ly = 0;
+  for (const item of legendItems) {
+    const itemW = item.label.length * 5.8 + 24;
+    if (lx > 0 && lx + itemW > width - 20) {
+      lx = 0;
+      ly += 16;
+    }
+    const g = leg.append('g').attr('transform', `translate(${lx}, ${ly})`);
+    if (item.kind === 'square') {
+      g.append('rect').attr('x', 0).attr('y', -5).attr('width', 10).attr('height', 10).attr('rx', 2)
+        .attr('fill', item.fill).attr('stroke', item.stroke).attr('stroke-width', 1);
+    } else {
+      g.append('circle').attr('cx', 5).attr('cy', 0).attr('r', 4.5)
+        .attr('fill', item.fill).attr('stroke', item.stroke).attr('stroke-width', item.sw);
+    }
+    g.append('text').attr('x', 14).attr('y', 3.5).attr('font-size', 10.5).attr('fill', '#3b362f').text(item.label);
+    lx += itemW + 10;
+  }
 }

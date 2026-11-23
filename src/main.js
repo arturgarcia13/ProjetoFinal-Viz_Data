@@ -1,6 +1,6 @@
 import { loadAppData, filterCandidates, UF_NAMES, CARGO_LABEL } from './data.js';
 import {
-  computeH1, computeH2, computeH3, computeH4, computeH5,
+  computeH1, computeH1Comparison, computeH2, computeH3, computeH4, computeH5,
   computeH6, computeH7, computeH8, computeH9AndParallel,
 } from './indicators.js';
 import { renderH1Histogram } from './charts/h1Histogram.js';
@@ -112,18 +112,21 @@ function buildStageControls(buttons) {
   const ctrl = document.getElementById('stage-controls');
   ctrl.innerHTML = '';
   if (!buttons || buttons.length === 0) return;
-  const grp = document.createElement('div');
-  grp.className = 'filter-group';
-  for (const { label, active, onClick } of buttons) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = `seg${active ? ' active' : ''}`;
-    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-    btn.textContent = label;
-    btn.addEventListener('click', onClick);
-    grp.appendChild(btn);
+  const groups = Array.isArray(buttons[0]) ? buttons : [buttons];
+  for (const groupButtons of groups) {
+    const grp = document.createElement('div');
+    grp.className = 'filter-group';
+    for (const { label, active, onClick } of groupButtons) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `seg${active ? ' active' : ''}`;
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      btn.textContent = label;
+      btn.addEventListener('click', onClick);
+      grp.appendChild(btn);
+    }
+    ctrl.appendChild(grp);
   }
-  ctrl.appendChild(grp);
 }
 
 function updateSummaryAndNarrative(rows, computed) {
@@ -192,19 +195,28 @@ function renderStage(computed) {
 
   secondary.innerHTML = '';
   const w = Math.min(720, Math.max(300, canvas.clientWidth || 640));
-  const { h1, h2, h3, h4, h5, h6, h7, h8, h9, mapH9, mapH7 } = computed;
+  const { h1Comparison, h2, h3, h4, h5, h6, h7, h8, h9, mapH9, mapH7 } = computed;
 
   switch (state.activeStep) {
-    case 'h1':
+    case 'h1': {
       kicker.textContent = 'Ato 01 · No Papel (H1)';
-      title.textContent = 'Distribuição de % de Mulheres por Chapa (n ≥ 4)';
+      title.textContent = 'Histograma Espelhado: % de Mulheres por Chapa (2022 vs. 2026)';
       buildStageControls([
         { label: 'Registradas', active: state.h1Mode === 'reg', onClick: () => { state.h1Mode = 'reg'; update(); } },
-        { label: 'Apenas APTO', active: state.h1Mode === 'apto', onClick: () => { state.h1Mode = 'apto'; update(); } },
+        { label: 'Aptas', active: state.h1Mode === 'apto', onClick: () => { state.h1Mode = 'apto'; update(); } },
       ]);
-      renderH1Histogram(canvas, h1, { width: w, mode: state.h1Mode });
-      caption.textContent = `${h1.totalSlates.toLocaleString('pt-BR')} chapas (n ≥ 4) exibidas. ${h1.microSlatesReg} micro-chapas (<4 cand., ${h1.microCandsReg} pessoas) documentadas à parte.`;
+      renderH1Histogram(canvas, h1Comparison, {
+        width: w,
+        mode: state.h1Mode,
+        activeYear: state.year,
+      });
+      const y22 = h1Comparison.byYear[2022];
+      const y26 = h1Comparison.byYear[2026];
+      caption.textContent = state.h1Mode === 'apto'
+        ? `Exibindo apenas chapas aptas (n ≥ 4) com a mesma escala travada de Registradas. Ao retirar inaptidões, ${y22.droppedByInapto} chapas em 2022 e ${y26.droppedByInapto} em 2026 migram de ≥30% para <30%.`
+        : `Exibindo chapas registradas (n ≥ 4). Micro-chapas (<4 cand.) fora do percentual: ${y22.microSlatesReg} em 2022 (${y22.microCandsReg} pessoas) e ${y26.microSlatesReg} em 2026 (${y26.microCandsReg} pessoas). Alterne para "Aptas" ou passe o mouse sobre uma faixa para comparar 2022 vs. 2026.`;
       break;
+    }
 
     case 'h2':
       kicker.textContent = 'Ato 02 · No Dinheiro (H2)';
@@ -374,6 +386,13 @@ function update() {
 
   const computed = {
     h1: computeH1(rows),
+    h1Comparison: computeH1Comparison(APP_DATA.candidates, {
+      cargo: state.cargo,
+      uf: state.uf || null,
+      party: state.party || null,
+      parties: state.pcAllowedParties,
+      ufs: state.pcAllowedUFs,
+    }),
     h2: computeH2(rows),
     h3: computeH3(rows),
     h4: computeH4(rows),

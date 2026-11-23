@@ -163,6 +163,88 @@ export function computeH1(candidates) {
   };
 }
 
+export const H1_MIRROR_BINS = [
+  { id: '50+', label: '50%+', zone: 'above', status: 'Paridade / maioria feminina', test: (p) => p >= 50 },
+  { id: '40-49', label: '40%–49%', zone: 'above', status: 'Acima da cota', test: (p) => p >= 40 && p < 50 },
+  { id: '33-39', label: '33,4%–39%', zone: 'above', status: 'Acima do piso', test: (p) => p > 33.34 && p < 40 },
+  { id: '30-33', label: '30%–33,3%', zone: 'floor', status: 'Limiar legal (teto operacional)', test: (p) => p >= 30 && p <= 33.34 },
+  { id: 'lt30', label: '< 30%', zone: 'below', status: 'Irregular (abaixo da cota)', test: (p) => p < 30 },
+];
+
+/**
+ * H1 (Comparativo Espelhado 2022 vs. 2026) — 5 faixas estratégicas sobre chapas (n >= 4),
+ * calculando distribuição percentual e absoluta em dois universos limpos: Registradas e Aptas.
+ */
+export function computeH1Comparison(
+  allCandidates,
+  { cargo = 'all', uf = null, party = null, parties = null, ufs = null } = {},
+) {
+  const byYear = {};
+
+  for (const yr of [2022, 2026]) {
+    const subset = allCandidates.filter((c) => {
+      if (c.y !== yr) return false;
+      if (cargo && cargo !== 'all' && c.cargo !== cargo) return false;
+      if (uf && c.uf !== uf) return false;
+      if (party && c.p !== party) return false;
+      if (parties && parties.size > 0 && !parties.has(c.p)) return false;
+      if (ufs && ufs.size > 0 && !ufs.has(c.uf)) return false;
+      return true;
+    });
+    byYear[yr] = computeH1(subset);
+  }
+
+  const bins = H1_MIRROR_BINS.map((def) => {
+    const entry = { id: def.id, label: def.label, zone: def.zone, status: def.status };
+    for (const yr of [2022, 2026]) {
+      const h1y = byYear[yr];
+      const totalReg = h1y.totalSlates;
+      const totalApto = h1y.aptoSlatesCount;
+      const regN = h1y.slates.filter((s) => def.test(s.pctReg * 100)).length;
+      const aptoN = h1y.slates.filter((s) => s.nApto >= 4 && def.test(s.pctApto * 100)).length;
+      const regPct = safeDiv(regN, totalReg) * 100;
+      const aptoPct = safeDiv(aptoN, totalApto) * 100;
+      entry[`y${yr}`] = {
+        regN,
+        aptoN,
+        regPct,
+        aptoPct,
+        totalReg,
+        totalApto,
+      };
+    }
+    entry.deltaRegPP = entry.y2026.regPct - entry.y2022.regPct;
+    entry.deltaAptoPP = entry.y2026.aptoPct - entry.y2022.aptoPct;
+    entry.deltaRegN = entry.y2026.regN - entry.y2022.regN;
+    entry.deltaAptoN = entry.y2026.aptoN - entry.y2022.aptoN;
+    return entry;
+  });
+
+  return {
+    bins,
+    byYear: {
+      2022: {
+        totalSlates: byYear[2022].totalSlates,
+        aptoSlatesCount: byYear[2022].aptoSlatesCount,
+        microSlatesReg: byYear[2022].microSlatesReg,
+        microCandsReg: byYear[2022].microCandsReg,
+        microSlatesApto: byYear[2022].microSlatesApto,
+        microCandsApto: byYear[2022].microCandsApto,
+        droppedByInapto: byYear[2022].droppedByInapto,
+      },
+      2026: {
+        totalSlates: byYear[2026].totalSlates,
+        aptoSlatesCount: byYear[2026].aptoSlatesCount,
+        microSlatesReg: byYear[2026].microSlatesReg,
+        microCandsReg: byYear[2026].microCandsReg,
+        microSlatesApto: byYear[2026].microSlatesApto,
+        microCandsApto: byYear[2026].microCandsApto,
+        droppedByInapto: byYear[2026].droppedByInapto,
+      },
+    },
+  };
+}
+
 /**
  * H2 — Receita mediana F vs. M por partido e fonte (Público vs. Privado)
  */

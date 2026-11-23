@@ -1,0 +1,181 @@
+name: CI/CD (Testes + Deploy Vercel)
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ci:
+    name: Build, Testes Unitários e E2E
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependências JS e Python
+        run: |
+          npm ci
+          python -m pip install --quiet pytest
+
+      - name: Instalar dependências de sistema do Chrome (Puppeteer)
+        run: sudo env "PATH=$PATH" "PUPPETEER_CACHE_DIR=$HOME/.cache/puppeteer" npx puppeteer browsers install chrome --install-deps
+
+      - name: Build estático (bundle + pasta site/ para Vercel)
+        run: npm run build:vercel
+
+      - name: Testes Python (Harness, Plano de Dados, ETL sem CSVs brutos e Indicadores)
+        run: |
+          python -m pytest -v tests/test_harness.py tests/test_indicators.py
+          python -m pytest -v tests/test_data_plan.py -k test_plano_de_dados_exists_and_has_required_sections
+          python -m pytest -v tests/test_etl.py -k "not test_network_hubs_integrity_and_lgpd"
+
+      - name: Verificação LGPD e integridade de network_hubs.json
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+
+          net = json.loads(Path("data/network_hubs.json").read_text(encoding="utf-8"))["years"]
+          cpf_re = re.compile(r"\b\d{11}\b")
+          mei_cnpj_re = re.compile(r"^\d{2}\.\d{3}\.\d{3}\s+")
+          for yr in ("2022", "2026"):
+              ydata = net[yr]
+              cids = {c["cid"] for c in ydata["candidates"]}
+              hids = {h["hid"] for h in ydata["hubs"]}
+              assert len(hids) > 0, f"Sem hubs em {yr}"
+              for h in ydata["hubs"]:
+                  lbl = h["label"]
+                  assert not cpf_re.search(lbl), f"CPF exposto: {lbl}"
+                  assert not mei_cnpj_re.match(lbl.strip()), f"MEI exposto: {lbl}"
+                  if h["tipo"] == "PF":
+                      assert lbl.startswith("Fornecedor PF ("), f"PF label inseguro: {lbl}"
+              for link in ydata["links"]:
+                  assert link["cid"] in cids
+                  assert link["hid"] in hids
+                  assert link["val"] > 0
+          print("OK: network_hubs.json íntegro e sem PII")
+          PY
+
+      - name: Testes E2E no navegador (raiz e artefato site/ da Vercel)
+        run: |
+          python -m pytest -v tests/test_e2e.py
+          E2E_ROOT=site node tests/e2e.mjs
+
+  deploy:
+    name: Deploy Vercel (Testes)
+    needs: ci
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verificar credenciais da Vercel
+        id: check_secrets
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Secrets VERCEL_TOKEN, VERCEL_ORG_ID e VERCEL_PROJECT_ID ainda não configurados no GitHub."
+            {
+              echo "### Deploy Vercel pendente de credenciais"
+              echo "Os testes de CI passaram, mas o deploy via GitHub Actions aguarda os secrets \`VERCEL_TOKEN\`, \`VERCEL_ORG_ID\` e \`VERCEL_PROJECT_ID\` em **Settings → Secrets and variables → Actions**."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        if: steps.check_secrets.outputs.configured == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar Vercel CLI
+        if: steps.check_secrets.outputs.configured == 'true'
+        run: npm install --global vercel@latest
+
+      - name: Pull das configurações do projeto Vercel
+        if: steps.check_secrets.outputs.configured == 'true'
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          else
+            vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+          fi
+
+      - name: Build do artefato Vercel
+        if: steps.check_secrets.outputs.configured == 'true'
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            vercel build --prod --token="$VERCEL_TOKEN"
+          else
+            vercel build --token="$VERCEL_TOKEN"
+          fi
+
+      - name: Deploy na Vercel
+        id: vercel_deploy
+        if: steps.check_secrets.outputs.configured == 'true'
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            URL=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          else
+            URL=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN")
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Deploy Vercel concluído"
+            echo "- **URL:** $URL"
+            echo "- **Branch / Ref:** \`${{ github.ref_name }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Smoke test pós-deploy (HTTP 200)
+        if: steps.check_secrets.outputs.configured == 'true' && steps.vercel_deploy.outputs.url != ''
+        run: |
+          URL="${{ steps.vercel_deploy.outputs.url }}"
+          echo "Testando $URL"
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" "$URL/")
+          echo "GET / -> HTTP $STATUS"
+          if [ "$STATUS" = "200" ]; then
+            curl -fsSI "$URL/data/coverage.json" | head -n 5
+          elif [ "$STATUS" = "401" ] || [ "$STATUS" = "403" ]; then
+            echo "::notice::URL protegida por Vercel Deployment Protection (HTTP $STATUS)."
+          else
+            echo "::error::Resposta inesperada no smoke test: HTTP $STATUS"
+            exit 1
+          fi
+
+      - name: Comentar URL de Preview no PR
+        if: steps.check_secrets.outputs.configured == 'true' && github.event_name == 'pull_request' && steps.vercel_deploy.outputs.url != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.vercel_deploy.outputs.url }}';
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ CI passou e o deploy de preview para testes foi publicado na Vercel:\n\n🔗 ${url}`
+            });

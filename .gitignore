@@ -20,3 +20,7 @@ votacao-2026/
 etl/cache/
 _*.js
 *.log
+
+# Build estático empacotado para Vercel e estado local do Vercel CLI
+site/
+.vercel/

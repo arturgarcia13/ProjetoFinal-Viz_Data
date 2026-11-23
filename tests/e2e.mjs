@@ -11,9 +11,11 @@ const mime = {
   '.woff2': 'font/woff2',
 };
 
+const rootDir = path.resolve(process.env.E2E_ROOT || process.cwd());
+
 const server = http.createServer((req, res) => {
   const urlPath = req.url === '/' ? '/index.html' : req.url.split('?')[0];
-  const filePath = path.join(process.cwd(), urlPath);
+  const filePath = path.join(rootDir, urlPath);
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     res.writeHead(404);
     res.end('Not found');
@@ -57,6 +59,38 @@ for (const s of steps) {
   const kicker = await page.$eval('#stage-kicker', (el) => el.textContent);
   if (!kicker.toUpperCase().includes(s.toUpperCase())) {
     throw new Error(`Stage kicker não atualizou para ${s}: ${kicker}`);
+  }
+  if (s === 'h1') {
+    const h1Check = await page.evaluate(() => {
+      const leftTicks = [...document.querySelectorAll('#stage-canvas .h1-axis-left .h1-axis-tick')].map((e) => e.textContent);
+      const rightTicks = [...document.querySelectorAll('#stage-canvas .h1-axis-right .h1-axis-tick')].map((e) => e.textContent);
+      const rows = document.querySelectorAll('#stage-canvas .h1-row').length;
+      const quotaRule = Boolean(document.querySelector('#stage-canvas .h1-quota-rule line'));
+      return { leftTicks, rightTicks, rows, quotaRule };
+    });
+    if (h1Check.rows !== 5 || !h1Check.quotaRule) {
+      throw new Error(`H1 espelhado incompleto: ${JSON.stringify(h1Check)}`);
+    }
+    if (JSON.stringify(h1Check.leftTicks) !== JSON.stringify(h1Check.rightTicks) || h1Check.leftTicks.length < 2) {
+      throw new Error(`Escalas espelhadas de H1 assimétricas: ${JSON.stringify(h1Check)}`);
+    }
+    // Hover sobre a faixa crítica (30%–33,3%) deve exibir tooltip comparativo sem linha de número absoluto
+    await page.hover('#stage-canvas .h1-row[data-bin="30-33"] .h1-row-hit');
+    const tipText = await page.$eval('#stage-canvas .h1-tooltip', (el) => ({ hidden: el.hidden, text: el.textContent }));
+    if (tipText.hidden || !tipText.text.includes('54,2%') || !tipText.text.includes('42,3%') || tipText.text.includes('Absoluto')) {
+      throw new Error(`Tooltip comparativo de H1 falhou no hover: ${JSON.stringify(tipText)}`);
+    }
+    // Alternância Registradas ↔ Aptas mantém a mesma escala travada (apenas modo %, sem botão N)
+    const unitToggleCount = await page.$$eval('#stage-controls button', (els) => els.filter((b) => b.textContent.trim() === 'N').length);
+    if (unitToggleCount !== 0) {
+      throw new Error(`Botão "N" ainda está presente nos controles de H1`);
+    }
+    await page.click('#stage-controls button:nth-child(2)'); // Aptas
+    const aptoTicks = await page.$$eval('#stage-canvas .h1-axis-left .h1-axis-tick', (els) => els.map((e) => e.textContent));
+    if (JSON.stringify(aptoTicks) !== JSON.stringify(h1Check.leftTicks)) {
+      throw new Error(`Escala de H1 mudou entre Registradas (${h1Check.leftTicks}) e Aptas (${aptoTicks})`);
+    }
+    await page.click('#stage-controls button:nth-child(1)'); // volta para Registradas
   }
   if (s === 'h2' || s === 'h3') {
     if (s === 'h3') {

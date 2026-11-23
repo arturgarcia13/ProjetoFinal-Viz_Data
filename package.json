@@ -6,7 +6,10 @@
   "main": "index.js",
   "scripts": {
     "build": "esbuild src/main.js --bundle --minify --outfile=dist/app.js",
-    "serve": "python3 -m http.server 8000",
+    "build:vercel": "node scripts/build-vercel.mjs",
+    "watch": "esbuild src/main.js --bundle --outfile=dist/app.js --watch",
+    "serve": "live-server . --port=8000",
+    "dev": "npm run watch & npm run serve",
     "start": "npm run build && npm run serve",
     "test": "node tests/e2e.mjs"
   },
@@ -27,7 +30,10 @@
     "d3": "^7.9.0",
     "d3-sankey": "^0.12.3",
     "esbuild": "^0.28.2",
-    "puppeteer": "^25.16.0",
     "topojson-client": "^3.1.0"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.0",
+    "puppeteer": "^25.16.0"
   }
 }

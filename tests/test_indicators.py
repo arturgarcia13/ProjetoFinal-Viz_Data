@@ -150,3 +150,50 @@ def test_h1_to_h5_2026_comparative_consistency():
     assert res["h2"]["nAptoM"] == cov["population"]["gender_apto"]["M"]
     assert res["h2"]["verdict"]["status"] != "inconclusivo"  # 97.9% FINAL after 20/11 update
     assert res["h5"]["elF"] + res["h5"]["elM"] > 1000
+
+
+def test_h1_mirror_comparison_bins_partition_and_totals():
+    script = """
+    import fs from 'node:fs';
+    import { decodeAnalyticalBase } from './src/data.js';
+    import { computeH1Comparison } from './src/indicators.js';
+
+    const raw = JSON.parse(fs.readFileSync('data/analytical_base.json', 'utf8'));
+    const { candidates } = decodeAnalyticalBase(raw);
+    const cmp = computeH1Comparison(candidates, { cargo: 'all' });
+    const sum22Reg = cmp.bins.reduce((s, b) => s + b.y2022.regN, 0);
+    const sum22Apto = cmp.bins.reduce((s, b) => s + b.y2022.aptoN, 0);
+    const sum26Reg = cmp.bins.reduce((s, b) => s + b.y2026.regN, 0);
+    const sum26Apto = cmp.bins.reduce((s, b) => s + b.y2026.aptoN, 0);
+    const floor = cmp.bins.find((b) => b.id === '30-33');
+    console.log(JSON.stringify({
+      binCount: cmp.bins.length,
+      sum22Reg,
+      total22Reg: cmp.byYear[2022].totalSlates,
+      sum22Apto,
+      total22Apto: cmp.byYear[2022].aptoSlatesCount,
+      sum26Reg,
+      total26Reg: cmp.byYear[2026].totalSlates,
+      sum26Apto,
+      total26Apto: cmp.byYear[2026].aptoSlatesCount,
+      floor22Reg: floor.y2022.regN,
+      floor22Apto: floor.y2022.aptoN,
+      floor26Reg: floor.y2026.regN,
+      floor26Apto: floor.y2026.aptoN,
+    }));
+    """
+    proc = subprocess.run(
+        ["node", "--input-type=module", "-e", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    out = json.loads(proc.stdout)
+    assert out["binCount"] == 5
+    assert out["sum22Reg"] == out["total22Reg"] == 1060
+    assert out["sum22Apto"] == out["total22Apto"] == 1032
+    assert out["sum26Reg"] == out["total26Reg"] == 756
+    assert out["sum26Apto"] == out["total26Apto"] == 737
+    assert out["floor22Reg"] == 575 and out["floor22Apto"] == 511
+    assert out["floor26Reg"] == 320 and out["floor26Apto"] == 291

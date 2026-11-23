@@ -35,7 +35,7 @@ Cada hipótese recebe automaticamente um selo calculado sobre o recorte ativo:
 
 | Ato | Passo | Gráfico(s) na tela | Pergunta central que responde | Interação no gráfico |
 | :---: | :---: | :--- | :--- | :--- |
-| **01** | **H1** | Histograma de % feminino por chapa | As chapas cumprem 30% ou estacionam coladas no piso (30%–33,3%)? | Alternar `Registradas` / `Apenas APTO` + hover |
+| **01** | **H1** | Histograma espelhado (*Butterfly Chart*) 2022 vs. 2026 (5 faixas) | As chapas cumprem 30% ou estacionam coladas no piso (30%–33,3%), e como 2022 compara com 2026? | Alternar `Registradas`/`Aptas` + hover comparativo (`Δ p.p.`) |
 | **02** | **H2** | Dumbbell de medianas por partido + Barras empilhadas 100% por fonte | Mulheres recebem menos dinheiro que homens dentro dos partidos e no recurso privado? | Clique nos círculos filtra o partido + hover |
 | **02** | **H3** | Dispersão (bolhas, escala `log₁₀`) `% Candidatas × % Fundo Público` | Quando um partido lança mais de 30% de mulheres, o Fundo Público acompanha? | Alternar `Escala Log` / `Linear` e `Foco (≤46%)` / `Todos` + clique nas bolhas filtra o partido + hover |
 | **02** | **H4** | Diagrama de Sankey + Grafo de Rede Bipartida (Hubs) | Para onde vai o dinheiro público? Ele volta para o partido ou se concentra em fornecedores-hub? | Alternar `Sankey` / `Rede de Hubs`, hover no hub destaca ligações, clique filtra partido |
@@ -49,19 +49,16 @@ Cada hipótese recebe automaticamente um selo calculado sobre o recorte ativo:
 
 ## Ato 01 — No Papel (P1)
 
-### 1. H1 — Histograma: Distribuição de `% de Mulheres por Chapa (n ≥ 4)`
+### 1. H1 — Histograma Espelhado (*Butterfly Chart*): `% de Mulheres por Chapa (2022 vs. 2026, n ≥ 4)`
 
 **O que está sendo medido**  
-Cada barra conta **quantas chapas eleitorais** (combinação de `Federação ou Partido Isolado × UF × Cargo`) caíram em cada faixa de percentual feminino. A lei exige no mínimo **30% de mulheres** por chapa.
+Compara lado a lado a distribuição das **chapas eleitorais** (`Federação ou Partido Isolado × UF × Cargo`, com `n ≥ 4`) entre **2022** (lado esquerdo) e **2026** (lado direito). A lei exige no mínimo **30% de mulheres** por chapa.
 
 **Como ler o gráfico**
-- **Eixo horizontal (X):** percentual de candidaturas femininas na chapa (de `0%` a `80%`), dividido em intervalos exatos de `3,33` pontos percentuais para que a faixa **`30%–33,3%`** apareça isolada.
-- **Eixo vertical (Y):** quantidade de chapas naquela faixa.
-- **Linha vertical tracejada vermelha:** marca o **piso legal de 30%**.
-- **Faixa sombreada e barras em terracota/vermelho (`30%–33,3%`):** representam chapas que cumpriram a cota "na régua", ou seja, trataram o piso mínimo como um **teto burocrático**.
-- **Barras cinza (`< 30%`):** chapas abaixo do piso legal.
-- **Barras verdes (`> 33,3%`):** chapas que foram além do mínimo operacional.
-- **Botões no topo do gráfico (`Registradas` vs. `Apenas APTO`):** permitem ver se o cumprimento da cota piora depois que candidaturas indeferidas ou renúncias (`INAPTO`) são retiradas.
+- **Eixo vertical central (compartilhado):** 5 faixas limpas alinhadas à regra legal — `< 30%` (irregular), **`30%–33,3%`** (faixa crítica colada no piso legal), `33,4%–39%`, `40%–49%` e `50%+`.
+- **Linha horizontal tracejada em âmbar (`Piso legal: 30%`):** cruza o gráfico inteiro separando visualmente chapas irregulares (`< 30%`, abaixo) e chapas em conformidade (`≥ 30%`, acima).
+- **Lado esquerdo (`2022`, tom neutro) vs. Lado direito (`2026`, terracota):** escalas rigorosamente simétricas e travadas entre `Registradas` e `Aptas`, garantindo comparação visual fiel.
+- **Controles no topo (`Registradas` / `Aptas`) e hover:** exibem 1 único rótulo limpo por barra (`%`); ao alternar para `Aptas`, observa-se a migração de chapas que caíram para `< 30%` após inaptidões; ao passar o mouse sobre qualquer barra/faixa, o tooltip exibe os percentuais de 2022 e 2026 e a variação em pontos percentuais (`Δ p.p.`).
 
 **Por que só chapas com `n ≥ 4`?**  
 Micro-chapas de 1 a 3 pessoas só conseguem gerar percentuais "aos saltos" (`0%`, `33%`, `50%`, `67%`, `100%`), o que distorceria o histograma. Elas não são apagadas do projeto: continuam em todos os cálculos individuais dos Atos 2–5 e têm sua contagem informada na legenda (`129` micro-chapas / `244` candidaturas em 2022; `91` micro-chapas / `204` candidaturas em 2026).

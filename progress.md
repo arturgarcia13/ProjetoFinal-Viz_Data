@@ -83,12 +83,16 @@
 - **2026-11-23 (Deploy Vercel + Pipeline CI/CD para testes):**
   - Configurado build estático isolado em `site/` (`scripts/build-vercel.mjs` + script `build:vercel` em `package.json`, empacotando apenas `index.html`, `styles.css`, `dist/app.js`, `assets/` e `data/` = 10 arquivos / `7,56 MB`), movido `puppeteer` para `devDependencies` (`npm ci --omit=dev` na Vercel), e adicionados `vercel.json` (com `"framework": null` para impedir detecção automática de Python pela presença de `etl/` e `tests/`) e `.vercelignore` (garantindo exclusão dos CSVs brutos do TSE, `.venv/`, `etl/`, `tests/` e docs internos).
   - Adicionado workflow `.github/workflows/ci-cd.yml` com job `ci` (build `site/`, testes Python sem CSVs brutos, validação LGPD de `network_hubs.json` e Puppeteer E2E tanto na raiz quanto em `E2E_ROOT=site`) e job `deploy` na Vercel (preview em PRs com comentário automático e produção/testes em `master` via `VERCEL_TOKEN`, `VERCEL_ORG_ID` e `VERCEL_PROJECT_ID`).
-  - Bloqueio de autenticação Vercel neste ambiente: `vercel whoami` está deslogado e `vercel deploy --temporary` não está disponível para este projeto sem login OAuth (`vercel login`).
+  - Integração GitHub–Vercel conectada pelo usuário (`artur-garcias-projects/viz-data`) e deploy concluído após ajuste de `"framework": null` (`abc99e3`, CI `45205362606` verde).
+
+- **2026-11-23 (Padronização do hover/tooltip H1 em todos os gráficos):**
+  - Extraído utilitário compartilhado [src/charts/tooltip.js](src/charts/tooltip.js) (`createChartTooltip`, `buildTooltipCard`, `bindTooltipEvents`, formatadores pt-BR) e classes unificadas em [styles.css](styles.css) (`.chart-wrap`, `.chart-tooltip`, `.chart-tip-head`, `.chart-tip-status`, `.chart-tip-table`, `.chart-tip-hint`, `.is-hovered`) seguindo exatamente o card flutuante de H1 (fundo papel `--surface`, borda superior `--accent` de 3px, pílula de status, tabela `tabular-nums` e posicionamento clamped dentro do container).
+  - Removidos tooltips nativos `<title>` e `tip: true` do Observable Plot em todos os gráficos (`h1Histogram.js`–`h9MapAndParallel.js`), incluindo ambos os gráficos de H2, Sankey e Rede em H4, caixas/pontos/outliers em H7, comparativo 2022×2026 em H8 e Mapa UF + Coordenadas Paralelas em H9.
+  - Ampliado [tests/e2e.mjs](tests/e2e.mjs) com `assertUnifiedHover` cobrindo todas as 9 visualizações (`H1`–`H9`), garantindo ausência de `<title>`/`g[aria-label="tip"]` e abertura do card dentro da área visível; `./init.sh` (`16 passed`) e `E2E_ROOT=site node tests/e2e.mjs` verdes.
 
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.
-- O deploy automático no job `deploy` do GitHub Actions só executará na Vercel após o usuário autenticar/vincular o repositório na Vercel e cadastrar os secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID` e `VERCEL_PROJECT_ID` (ou conectar o repositório diretamente pela integração Git da Vercel).
 
 ## 5. Next Action
-1. Conectar `arturgarcia13/ProjetoFinal-Viz_Data` na Vercel (ou rodar `npx vercel login && npx vercel link` localmente e cadastrar `VERCEL_TOKEN`, `VERCEL_ORG_ID` e `VERCEL_PROJECT_ID` nos secrets do GitHub) para ativar a URL de testes e os previews por PR.
+1. Fazer `git push origin master` quando desejar publicar os tooltips padronizados na Vercel (o pipeline CI/CD e a integração Vercel atualizarão automaticamente a URL de testes).
 2. Seguir na janela **24–27/nov** com inspeção visual na URL publicada, validação cruzada pontual com o DivulgaCandContas/TSE e ajustes finais (28–30/nov).

@@ -1,7 +1,15 @@
 import * as Plot from '@observablehq/plot';
+import {
+  bindTooltipEvents,
+  buildTooltipCard,
+  createChartTooltip,
+  fmtInt,
+  fmtPct,
+  fmtSignedPP,
+} from './tooltip.js';
 
 /**
- * H6 — Barras agrupadas por gênero × volume de sinais acumulados (0, 1, 2, 3)
+ * H6 — Barras agrupadas por gênero × volume de sinais acumulados (0, 1, 2)
  */
 export function renderH6Signals(container, h6Data, { width = 700 } = {}) {
   container.innerHTML = '';
@@ -27,6 +35,13 @@ export function renderH6Signals(container, h6Data, { width = 700 } = {}) {
     }
   }
 
+  const byBin = new Map();
+  for (const r of rows) {
+    const entry = byBin.get(r.sinais) || {};
+    entry[r.genero] = r;
+    byBin.set(r.sinais, entry);
+  }
+
   const chart = Plot.plot({
     width,
     height: 300,
@@ -45,12 +60,54 @@ export function renderH6Signals(container, h6Data, { width = 700 } = {}) {
         x: 'genero',
         y: 'pct',
         fill: 'genero',
-        title: (d) => `${d.genero} · ${d.sinais}: ${d.pct.toFixed(2)}% (${d.count.toLocaleString('pt-BR')} de ${d.n.toLocaleString('pt-BR')})`,
-        tip: true,
       }),
       Plot.ruleY([0]),
     ],
   });
 
-  container.appendChild(chart);
+  const tipCtrl = createChartTooltip(container);
+  tipCtrl.wrap.appendChild(chart);
+
+  chart.querySelectorAll('g[aria-label="bar"] rect').forEach((el) => {
+    const datum = rows[el.__data__];
+    if (!datum) return;
+    el.style.cursor = 'pointer';
+    bindTooltipEvents(el, tipCtrl, () => {
+      const pair = byBin.get(datum.sinais) || {};
+      const fRow = pair.Mulheres || { pct: 0, count: 0, n: 0 };
+      const mRow = pair.Homens || { pct: 0, count: 0, n: 0 };
+      const clsF = datum.genero === 'Mulheres' ? 'is-focus' : '';
+      const clsM = datum.genero === 'Homens' ? 'is-focus' : '';
+      const badgeTone = datum.sinais.startsWith('2') ? 'below' : (datum.sinais.startsWith('1') ? 'floor' : 'above');
+      return buildTooltipCard({
+        title: datum.sinais,
+        badge: datum.sinais.startsWith('2') ? 'Alerta máximo' : (datum.sinais.startsWith('1') ? 'Alerta parcial' : 'Sem sinais'),
+        badgeTone,
+        columns: [
+          'Candidaturas APTO',
+          { text: 'Mulheres', cls: clsF },
+          { text: 'Homens', cls: clsM },
+          'Δ F−M',
+        ],
+        rows: [
+          {
+            cells: [
+              'Proporção',
+              { text: fmtPct(fRow.pct, 2), cls: clsF },
+              { text: fmtPct(mRow.pct, 2), cls: clsM },
+              fmtSignedPP(fRow.pct - mRow.pct),
+            ],
+          },
+          {
+            cells: [
+              'Contagem',
+              { text: fmtInt(fRow.count), cls: clsF },
+              { text: fmtInt(mRow.count), cls: clsM },
+              `${fmtInt(fRow.count + mRow.count)} tot.`,
+            ],
+          },
+        ],
+      });
+    });
+  });
 }

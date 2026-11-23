@@ -1,4 +1,11 @@
 import * as Plot from '@observablehq/plot';
+import {
+  bindTooltipEvents,
+  buildTooltipCard,
+  createChartTooltip,
+  fmtInt,
+  fmtPct,
+} from './tooltip.js';
 
 /**
  * H7 — Boxplot da taxa de sinais de alerta (≥2 sinais) por faixa de % de mulheres na chapa
@@ -37,12 +44,81 @@ export function renderH7Boxplot(container, h7Data, { width = 700 } = {}) {
         fill: '#b4452f',
         stroke: '#fffdf9',
         strokeWidth: 1.5,
-        title: (d) => `Faixa ${d.band} (${d.slatesCount} chapas): taxa agregada ${(d.aggRate * 100).toFixed(1)}% (${d.twoPlusCount}/${d.nF} mulheres)`,
-        tip: true,
       }),
       Plot.ruleY([0]),
     ],
   });
 
-  container.appendChild(chart);
+  const tipCtrl = createChartTooltip(container);
+  tipCtrl.wrap.appendChild(chart);
+
+  const buildBandHtml = (datum) => {
+    const isFloor = datum.band === '30%–33,3%';
+    const isBelow = datum.band === '< 30%';
+    const badgeTone = isFloor ? 'floor' : (isBelow ? 'below' : 'above');
+    return buildTooltipCard({
+      title: `Faixa ${datum.band}`,
+      badge: `${fmtInt(datum.slatesCount)} chapas (n ≥ 4)`,
+      badgeTone,
+      rows: [
+        {
+          label: 'Taxa agregada (≥2 sinais)',
+          value: fmtPct(datum.aggRate * 100),
+          sub: `${fmtInt(datum.twoPlusCount)}/${fmtInt(datum.nF)} mulheres`,
+          focus: true,
+        },
+        {
+          label: 'Mediana por chapa',
+          value: fmtPct(datum.medianRate * 100),
+        },
+      ],
+    });
+  };
+
+  // O último grupo "dot" pertence ao Plot.dot(h7Data.bandStats); grupos anteriores são outliers do Plot.boxY
+  const dotGroups = [...chart.querySelectorAll('g[aria-label="dot"]')];
+  const aggDotGroup = dotGroups[dotGroups.length - 1];
+  const dotCenters = [];
+  if (aggDotGroup) {
+    aggDotGroup.querySelectorAll('circle').forEach((el) => {
+      const datum = h7Data.bandStats[el.__data__];
+      if (!datum) return;
+      el.classList.add('h7-agg-dot');
+      el.style.cursor = 'pointer';
+      dotCenters.push({ cx: Number(el.getAttribute('cx')) || 0, datum });
+      bindTooltipEvents(el, tipCtrl, () => buildBandHtml(datum));
+    });
+  }
+
+  const nearestBand = (xPos) => {
+    if (dotCenters.length === 0) return null;
+    let best = dotCenters[0];
+    let minDist = Math.abs(xPos - best.cx);
+    for (const c of dotCenters) {
+      const dist = Math.abs(xPos - c.cx);
+      if (dist < minDist) {
+        minDist = dist;
+        best = c;
+      }
+    }
+    return best.datum;
+  };
+
+  // Caixas, medianas, hastes e outliers do boxplot usam o mesmo card padronizado da faixa
+  chart.querySelectorAll('g[aria-label="bar"] rect').forEach((rect) => {
+    const xCenter = (Number(rect.getAttribute('x')) || 0) + (Number(rect.getAttribute('width')) || 0) / 2;
+    const datum = nearestBand(xCenter);
+    if (!datum) return;
+    rect.style.cursor = 'pointer';
+    bindTooltipEvents(rect, tipCtrl, () => buildBandHtml(datum));
+  });
+
+  dotGroups.slice(0, -1).forEach((outlierG) => {
+    outlierG.querySelectorAll('circle').forEach((circle) => {
+      const datum = nearestBand(Number(circle.getAttribute('cx')) || 0);
+      if (!datum) return;
+      circle.style.cursor = 'pointer';
+      bindTooltipEvents(circle, tipCtrl, () => buildBandHtml(datum));
+    });
+  });
 }

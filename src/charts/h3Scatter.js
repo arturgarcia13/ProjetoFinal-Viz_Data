@@ -1,10 +1,14 @@
 import * as Plot from '@observablehq/plot';
-
-function fmtCompactBrl(v) {
-  if (v >= 1e6) return `R$ ${(v / 1e6).toFixed(1).replace('.', ',')}M`;
-  if (v >= 1e3) return `R$ ${Math.round(v / 1e3).toLocaleString('pt-BR')} mil`;
-  return `R$ ${Math.round(v).toLocaleString('pt-BR')}`;
-}
+import {
+  bindTooltipEvents,
+  buildTooltipCard,
+  createChartTooltip,
+  fmtCompactBrl,
+  fmtInt,
+  fmtPct,
+  fmtRatio,
+  fmtSignedPP,
+} from './tooltip.js';
 
 /**
  * H3 — Dispersão por partido: % de candidatas × % do Fundo Público (FEFC + FP),
@@ -129,20 +133,6 @@ export function renderH3Scatter(
         fillOpacity: 0.65,
         stroke: '#1b1a17',
         strokeWidth: 0.9,
-        title: (d) => {
-          const gapPp = d.yPct - d.xPct;
-          const sign = gapPp >= 0 ? '+' : '';
-          const status = Math.abs(gapPp) < 0.05
-            ? 'no proporcional'
-            : (gapPp > 0 ? 'acima do proporcional' : 'abaixo do proporcional');
-          return (
-            `${d.party} · ${d.n.toLocaleString('pt-BR')} candidaturas APTO\n` +
-            `Mulheres na chapa: ${d.xPct.toFixed(1).replace('.', ',')}% (${d.nF.toLocaleString('pt-BR')} mulheres)\n` +
-            `Fundo Público p/ mulheres: ${d.yPct.toFixed(1).replace('.', ',')}% (${fmtCompactBrl(d.pubF)} de ${fmtCompactBrl(d.pubTotal)})\n` +
-            `Proporcionalidade: ${d.ratio.toFixed(2).replace('.', ',')}× (${sign}${gapPp.toFixed(1).replace('.', ',')} p.p. · ${status})`
-          );
-        },
-        tip: true,
       }),
       Plot.text(topLabels, {
         x: 'xPct',
@@ -246,17 +236,50 @@ export function renderH3Scatter(
     el.style.pointerEvents = 'none';
   });
 
-  if (onSelectParty) {
-    chart.querySelectorAll('g[aria-label="dot"] circle').forEach((el) => {
-      const datum = parties[el.__data__];
-      if (!datum) return;
+  const tipCtrl = createChartTooltip(container);
+  tipCtrl.wrap.appendChild(chart);
+
+  chart.querySelectorAll('g[aria-label="dot"] circle').forEach((el) => {
+    const datum = parties[el.__data__];
+    if (!datum) return;
+    if (onSelectParty) {
       el.style.cursor = 'pointer';
       el.dataset.party = datum.party;
       el.addEventListener('click', () => onSelectParty(datum.party));
-    });
-  }
+    }
 
-  container.appendChild(chart);
+    bindTooltipEvents(el, tipCtrl, () => {
+      const gapPp = datum.yPct - datum.xPct;
+      const badgeTone = Math.abs(gapPp) < 0.05 ? 'floor' : (gapPp > 0 ? 'above' : 'below');
+      const status = Math.abs(gapPp) < 0.05
+        ? 'No proporcional'
+        : (gapPp > 0 ? 'Acima do proporcional' : 'Abaixo do proporcional');
+      return buildTooltipCard({
+        title: `${datum.party} · ${fmtInt(datum.n)} APTO`,
+        badge: status,
+        badgeTone,
+        rows: [
+          {
+            label: 'Mulheres na chapa',
+            value: fmtPct(datum.xPct),
+            sub: `${fmtInt(datum.nF)} mulheres`,
+          },
+          {
+            label: 'Fundo Público (F)',
+            value: fmtPct(datum.yPct),
+            sub: `${fmtCompactBrl(datum.pubF)} de ${fmtCompactBrl(datum.pubTotal)}`,
+          },
+          {
+            label: 'Proporcionalidade',
+            value: fmtRatio(datum.ratio),
+            sub: fmtSignedPP(gapPp),
+            focus: true,
+          },
+        ],
+        hint: onSelectParty ? 'Clique na bolha para filtrar o partido' : '',
+      });
+    });
+  });
 
   if (omitted.length > 0) {
     const note = document.createElement('p');

@@ -1,4 +1,12 @@
 import * as Plot from '@observablehq/plot';
+import {
+  bindTooltipEvents,
+  buildTooltipCard,
+  createChartTooltip,
+  fmtInt,
+  fmtPct,
+  fmtSignedPP,
+} from './tooltip.js';
 
 /**
  * H8 — Comparativo Temporal 2022 vs. 2026 (Contas zeradas brutas vs. Movimentações padronizadas em lote)
@@ -21,6 +29,13 @@ export function renderH8Temporal(container, h8Data, { width = 700 } = {}) {
   }));
   const metrics = [...new Set(compactRows.map((r) => r.shortMetric))];
 
+  const byMetric = new Map();
+  for (const r of compactRows) {
+    const entry = byMetric.get(r.metric) || {};
+    entry[r.year] = r;
+    byMetric.set(r.metric, entry);
+  }
+
   const chart = Plot.plot({
     width,
     height: 310,
@@ -39,12 +54,54 @@ export function renderH8Temporal(container, h8Data, { width = 700 } = {}) {
         x: 'year',
         y: 'pct',
         fill: 'year',
-        title: (d) => `${d.year} · ${d.metric}: ${d.pct.toFixed(1)}% (${d.count.toLocaleString('pt-BR')} de ${d.n.toLocaleString('pt-BR')})`,
-        tip: true,
       }),
       Plot.ruleY([0]),
     ],
   });
 
-  container.appendChild(chart);
+  const tipCtrl = createChartTooltip(container);
+  tipCtrl.wrap.appendChild(chart);
+
+  chart.querySelectorAll('g[aria-label="bar"] rect').forEach((el) => {
+    const datum = compactRows[el.__data__];
+    if (!datum) return;
+    el.style.cursor = 'pointer';
+    bindTooltipEvents(el, tipCtrl, () => {
+      const pair = byMetric.get(datum.metric) || {};
+      const r22 = pair['2022'] || { pct: 0, count: 0, n: 0 };
+      const r26 = pair['2026'] || { pct: 0, count: 0, n: 0 };
+      const deltaPP = r26.pct - r22.pct;
+      const cls22 = datum.year === '2022' ? 'is-focus' : '';
+      const cls26 = datum.year === '2026' ? 'is-focus' : '';
+      return buildTooltipCard({
+        title: datum.metric,
+        badge: '2022 vs. 2026',
+        badgeTone: deltaPP > 0.05 ? 'below' : (deltaPP < -0.05 ? 'above' : 'neutral'),
+        columns: [
+          'Candidatas APTO',
+          { text: '2022', cls: cls22 },
+          { text: '2026', cls: cls26 },
+          'Δ 22→26',
+        ],
+        rows: [
+          {
+            cells: [
+              'Proporção',
+              { text: fmtPct(r22.pct), cls: cls22 },
+              { text: fmtPct(r26.pct), cls: cls26 },
+              fmtSignedPP(deltaPP),
+            ],
+          },
+          {
+            cells: [
+              'Ocorrências',
+              { text: fmtInt(r22.count), cls: cls22 },
+              { text: fmtInt(r26.count), cls: cls26 },
+              fmtInt(r26.count - r22.count),
+            ],
+          },
+        ],
+      });
+    });
+  });
 }

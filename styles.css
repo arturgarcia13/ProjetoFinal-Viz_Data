@@ -342,16 +342,31 @@ h1 em { color: var(--accent); font-style: italic; }
   color: var(--muted);
 }
 
-/* H1 — Histograma Espelhado (Butterfly Chart) */
+/* Hover padronizado (modelo H1) e container relativo dos gráficos */
+.chart-wrap,
 .h1-butterfly-wrap {
   position: relative;
   width: 100%;
 }
+.chart-wrap svg,
 .h1-butterfly-svg {
   display: block;
   max-width: 100%;
   height: auto;
   overflow: visible;
+}
+.chart-wrap circle.is-hovered {
+  stroke: var(--ink) !important;
+  stroke-width: 2.2px !important;
+  fill-opacity: 1 !important;
+}
+.chart-wrap rect.is-hovered {
+  stroke: var(--ink);
+  stroke-width: 1.3px;
+  filter: brightness(0.94);
+}
+.chart-wrap path.is-hovered {
+  filter: brightness(0.94);
 }
 .h1-row {
   cursor: pointer;
@@ -365,11 +380,12 @@ h1 em { color: var(--accent); font-style: italic; }
   stroke: var(--accent);
   stroke-width: 1.5;
 }
+.chart-tooltip,
 .h1-tooltip {
   position: absolute;
   z-index: 25;
   pointer-events: none;
-  min-width: 260px;
+  min-width: 250px;
   max-width: min(390px, calc(100% - 12px));
   background: var(--surface);
   border: 1px solid var(--border);
@@ -381,6 +397,7 @@ h1 em { color: var(--accent); font-style: italic; }
   line-height: 1.38;
   color: var(--ink);
 }
+.chart-tip-head,
 .h1-tip-head {
   display: flex;
   justify-content: space-between;
@@ -388,6 +405,7 @@ h1 em { color: var(--accent); font-style: italic; }
   gap: 0.5rem;
   margin-bottom: 0.4rem;
 }
+.chart-tip-status,
 .h1-tip-status {
   font-size: 0.7rem;
   font-weight: 600;
@@ -395,24 +413,35 @@ h1 em { color: var(--accent); font-style: italic; }
   border-radius: 999px;
   background: #f0e9dc;
   color: var(--muted);
+  white-space: nowrap;
 }
+.chart-tip-tone-floor,
 .h1-tip-zone-floor {
   background: #f6eedb;
   color: var(--warn);
 }
+.chart-tip-tone-above,
 .h1-tip-zone-above {
   background: #e3f1ec;
   color: var(--ok);
 }
+.chart-tip-tone-below,
 .h1-tip-zone-below {
   background: #fbe9e5;
   color: var(--accent);
 }
+.chart-tip-tone-neutral {
+  background: #f0e9dc;
+  color: var(--muted);
+}
+.chart-tip-table,
 .h1-tip-table {
   width: 100%;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
 }
+.chart-tip-table th,
+.chart-tip-table td,
 .h1-tip-table th,
 .h1-tip-table td {
   padding: 0.22rem 0.3rem;
@@ -420,26 +449,39 @@ h1 em { color: var(--accent); font-style: italic; }
   text-align: right;
   white-space: nowrap;
 }
+.chart-tip-table tr:last-child td,
 .h1-tip-table tr:last-child td {
   border-bottom: 0;
 }
+.chart-tip-table th:first-child,
+.chart-tip-table td:first-child,
 .h1-tip-table th:first-child,
 .h1-tip-table td:first-child {
   text-align: left;
   color: var(--muted);
 }
+.chart-tip-table th,
 .h1-tip-table th {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--muted);
 }
+.chart-tip-table td span,
 .h1-tip-table td span {
   color: var(--muted);
   font-size: 0.71rem;
 }
+.chart-tip-table .is-focus,
 .h1-tip-table .is-focus {
   background: #f7f1e5;
+}
+.chart-tip-hint {
+  margin: 0.38rem 0 0;
+  padding-top: 0.3rem;
+  border-top: 1px dashed #ece4d6;
+  font-size: 0.69rem;
+  color: var(--muted);
 }
 
 .site-footer {

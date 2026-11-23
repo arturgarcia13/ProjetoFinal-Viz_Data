@@ -1,5 +1,14 @@
 import * as d3 from 'd3';
 import { sankey as d3Sankey, sankeyLinkHorizontal } from 'd3-sankey';
+import {
+  bindTooltipEvents,
+  buildTooltipCard,
+  createChartTooltip,
+  fmtBrl,
+  fmtCompactBrl,
+  fmtInt,
+  fmtPct,
+} from './tooltip.js';
 
 /**
  * H4 — Diagrama de Sankey do Fluxo Público + Grafo de Rede Bipartida (Candidaturas anônimas × Fornecedores-Hub)
@@ -40,7 +49,8 @@ export function renderH4Sankey(container, h4Data, { width = 700 } = {}) {
   ].filter((l) => l.value > 0);
 
   const height = 310;
-  const svg = d3.select(container).append('svg')
+  const tipCtrl = createChartTooltip(container);
+  const svg = d3.select(tipCtrl.wrap).append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', width)
     .attr('height', height);
@@ -63,7 +73,7 @@ export function renderH4Sankey(container, h4Data, { width = 700 } = {}) {
     return '#5c554c';
   };
 
-  svg.append('g')
+  const linkSel = svg.append('g')
     .attr('fill', 'none')
     .selectAll('path')
     .data(graph.links)
@@ -72,22 +82,56 @@ export function renderH4Sankey(container, h4Data, { width = 700 } = {}) {
     .attr('stroke', (d) => (d.source.name.includes('(F)') ? '#b4452f' : d.source.name.includes('(M)') ? '#3d5a80' : '#9c8f7d'))
     .attr('stroke-opacity', 0.35)
     .attr('stroke-width', (d) => Math.max(1.5, d.width))
-    .append('title')
-    .text((d) => `${d.source.name} → ${d.target.name}: R$ ${(d.value / 1e6).toFixed(2)}M`);
+    .style('cursor', 'pointer');
+
+  linkSel.each(function (d) {
+    const shareOfSource = d.source.value > 0 ? (d.value / d.source.value) * 100 : 0;
+    const isDeviation = d.target.name.includes('Partidária') || d.target.name.includes('Outras Candidaturas (M)');
+    bindTooltipEvents(
+      this,
+      tipCtrl,
+      () => buildTooltipCard({
+        title: `${d.source.name} → ${d.target.name}`,
+        badge: `${fmtPct(shareOfSource)} da origem`,
+        badgeTone: isDeviation ? 'floor' : 'neutral',
+        rows: [
+          { label: 'Montante proporcional', value: fmtCompactBrl(d.value), focus: true },
+          { label: 'Fatia na origem', value: fmtPct(shareOfSource) },
+        ],
+      }),
+      {
+        onEnter: () => linkSel.attr('stroke-opacity', (l) => (l === d ? 0.85 : 0.14)),
+        onLeave: () => linkSel.attr('stroke-opacity', 0.35),
+      },
+    );
+  });
 
   const nodeG = svg.append('g')
     .selectAll('g')
     .data(graph.nodes)
     .join('g');
 
-  nodeG.append('rect')
+  const nodeRects = nodeG.append('rect')
     .attr('x', (d) => d.x0)
     .attr('y', (d) => d.y0)
     .attr('height', (d) => Math.max(2, d.y1 - d.y0))
     .attr('width', (d) => d.x1 - d.x0)
     .attr('fill', (d) => nodeColor(d.name))
-    .append('title')
-    .text((d) => `${d.name}: R$ ${(d.value / 1e6).toFixed(2)}M`);
+    .style('cursor', 'pointer');
+
+  const totalRoot = graph.nodes[0]?.value || 0;
+  nodeRects.each(function (d) {
+    const shareTotal = totalRoot > 0 ? (d.value / totalRoot) * 100 : 0;
+    bindTooltipEvents(this, tipCtrl, () => buildTooltipCard({
+      title: d.name,
+      badge: `${fmtPct(shareTotal)} do fundo`,
+      badgeTone: d.name.includes('Direta') ? 'above' : (d.name.includes('Partidária') ? 'floor' : 'neutral'),
+      rows: [
+        { label: 'Volume proporcional', value: fmtCompactBrl(d.value), focus: true },
+        { label: 'Participação no total', value: fmtPct(shareTotal) },
+      ],
+    }));
+  });
 
   nodeG.append('text')
     .attr('x', (d) => (d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6))
@@ -96,6 +140,7 @@ export function renderH4Sankey(container, h4Data, { width = 700 } = {}) {
     .attr('text-anchor', (d) => (d.x0 < width / 2 ? 'start' : 'end'))
     .attr('font-size', 11)
     .attr('fill', '#1b1a17')
+    .style('pointer-events', 'none')
     .text((d) => `${d.name} (${(d.value / 1e6).toFixed(1)}M)`);
 }
 
@@ -252,7 +297,8 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
     d.py = d.y * scale + offY;
   }
 
-  const svg = d3.select(container).append('svg')
+  const tipCtrl = createChartTooltip(container);
+  const svg = d3.select(tipCtrl.wrap).append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', width)
     .attr('height', height);
@@ -290,23 +336,32 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
     .join('g')
     .attr('transform', (d) => `translate(${d.px.toFixed(1)},${d.py.toFixed(1)})`);
 
-  const fmtVal = (v) => (v >= 1e6
-    ? `R$ ${(v / 1e6).toFixed(2).replace('.', ',')}M`
-    : `R$ ${Math.round(v / 1e3).toLocaleString('pt-BR')} mil`);
-
-  nodeEl.filter((d) => d.kind === 'cand')
+  const candCircles = nodeEl.filter((d) => d.kind === 'cand')
     .append('circle')
     .attr('r', (d) => (d.v < 20 ? 5.2 : 3.6))
     .attr('fill', (d) => (d.g === 'F' ? '#b4452f' : '#3d5a80'))
     .attr('stroke', (d) => (d.v < 20 ? '#1b1a17' : '#fffdf9'))
     .attr('stroke-width', (d) => (d.v < 20 ? 1.5 : 0.7))
-    .append('title')
-    .text((d) =>
-      `Candidatura anônima (${d.g === 'F' ? 'Mulher' : 'Homem'}) · ${d.p}/${d.uf}\n` +
-      `Votos válidos: ${d.v.toLocaleString('pt-BR')}${d.v < 20 ? ' (< 20 votos)' : ''}\n` +
-      `Despesa total: R$ ${Math.round(d.e).toLocaleString('pt-BR')}`);
+    .style('cursor', 'pointer');
 
-  nodeEl.filter((d) => d.kind === 'hub')
+  candCircles.each(function (d) {
+    bindTooltipEvents(this, tipCtrl, () => buildTooltipCard({
+      title: `Candidatura anônima (${d.g === 'F' ? 'Mulher' : 'Homem'})`,
+      badge: `${d.p}/${d.uf}`,
+      badgeTone: d.v < 20 ? 'below' : 'neutral',
+      rows: [
+        {
+          label: 'Votos válidos',
+          value: fmtInt(d.v),
+          sub: d.v < 20 ? '< 20 votos' : '',
+          focus: d.v < 20,
+        },
+        { label: 'Despesa total', value: fmtBrl(d.e) },
+      ],
+    }));
+  });
+
+  const hubRects = nodeEl.filter((d) => d.kind === 'hub')
     .append('rect')
     .attr('x', -6.5).attr('y', -6.5).attr('width', 13).attr('height', 13).attr('rx', 2.2)
     .attr('fill', '#1b1a17')
@@ -315,13 +370,37 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
     .style('cursor', 'pointer')
     .on('click', (_, d) => {
       if (onSelectParty) onSelectParty(d.p);
-    })
-    .append('title')
-    .text((d) =>
-      `Fornecedor-Hub: ${d.label}\n` +
-      `Partido/UF: ${d.p}/${d.uf}\n` +
-      `Atende ${d.candsN} candidaturas (${d.lowVoteN} com < 20 votos)\n` +
-      `Volume contratado no grupo: ${fmtVal(d.totalVal)}`);
+    });
+
+  hubRects.each(function (d) {
+    bindTooltipEvents(
+      this,
+      tipCtrl,
+      () => buildTooltipCard({
+        title: d.label,
+        badge: `Hub · ${d.p}/${d.uf}`,
+        badgeTone: d.lowVoteN > 0 ? 'below' : 'neutral',
+        rows: [
+          { label: 'Candidaturas atendidas', value: fmtInt(d.candsN) },
+          { label: 'Com < 20 votos', value: fmtInt(d.lowVoteN), focus: d.lowVoteN > 0 },
+          { label: 'Volume no grupo', value: fmtCompactBrl(d.totalVal) },
+        ],
+        hint: onSelectParty ? `Clique no quadrado para filtrar ${d.p}` : '',
+      }),
+      {
+        onEnter: () => {
+          linkEl
+            .attr('stroke-opacity', (l) => (l.target.id === d.id ? 0.95 : 0.08))
+            .attr('stroke', (l) => (l.target.id === d.id ? '#b4452f' : '#8d8375'));
+          nodeEl.attr('opacity', (n) => (n.compId === d.compId ? 1 : 0.22));
+        },
+        onLeave: () => {
+          linkEl.attr('stroke-opacity', 0.48).attr('stroke', '#8d8375');
+          nodeEl.attr('opacity', 1);
+        },
+      },
+    );
+  });
 
   // Rótulo discreto (Partido/UF) acomodado na base interna de cada constelação
   svg.append('g')
@@ -340,19 +419,6 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
     .attr('stroke-width', 2.8)
     .attr('paint-order', 'stroke')
     .text((c) => `${c.mainHub.p}/${c.mainHub.uf}`);
-
-  // Destaca constelação e ligações no hover do hub
-  nodeEl.filter((d) => d.kind === 'hub')
-    .on('mouseenter', (_, d) => {
-      linkEl
-        .attr('stroke-opacity', (l) => (l.target.id === d.id ? 0.95 : 0.08))
-        .attr('stroke', (l) => (l.target.id === d.id ? '#b4452f' : '#8d8375'));
-      nodeEl.attr('opacity', (n) => (n.compId === d.compId ? 1 : 0.22));
-    })
-    .on('mouseleave', () => {
-      linkEl.attr('stroke-opacity', 0.48).attr('stroke', '#8d8375');
-      nodeEl.attr('opacity', 1);
-    });
 
   // Legenda clara no rodapé do SVG
   const leg = svg.append('g').attr('transform', `translate(14, ${height - (isNarrow ? 40 : 20)})`);

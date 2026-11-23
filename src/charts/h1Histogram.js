@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import { createChartTooltip, fmtInt, fmtPct, fmtSignedPP } from './tooltip.js';
 
 const PALETTE = {
   y2022: '#8b7e74',
@@ -11,19 +12,6 @@ const PALETTE = {
   grid: '#e6dfd3',
   axis: '#bfb4a3',
 };
-
-function fmtPct(v) {
-  return `${v.toFixed(1).replace('.', ',')}%`;
-}
-
-function fmtSignedPP(v) {
-  const sign = v > 0.05 ? '+' : '';
-  return `${sign}${v.toFixed(1).replace('.', ',')} p.p.`;
-}
-
-function fmtInt(v) {
-  return v.toLocaleString('pt-BR');
-}
 
 function niceAxisMax(rawMax) {
   if (rawMax <= 0) return 20;
@@ -111,8 +99,11 @@ export function renderH1Histogram(
 
   const axisMax = niceAxisMax(rawMax);
 
-  const wrap = document.createElement('div');
-  wrap.className = 'h1-butterfly-wrap';
+  const tipCtrl = createChartTooltip(container, {
+    wrapClass: 'h1-butterfly-wrap',
+    tooltipClass: 'h1-tooltip',
+  });
+  const { wrap } = tipCtrl;
 
   // Geometria limpa de 3 colunas
   const centerW = isCompact ? 78 : 94;
@@ -219,58 +210,14 @@ export function renderH1Histogram(
       .attr('fill-opacity', 0.55);
   }
 
-  // Tooltip comparativo flutuante
-  const tooltip = document.createElement('div');
-  tooltip.className = 'h1-tooltip';
-  tooltip.setAttribute('role', 'tooltip');
-  tooltip.hidden = true;
-  wrap.appendChild(tooltip);
-
-  let activeRowEl = null;
-
+  // Tooltip comparativo flutuante compartilhado
   function showTooltip(bin, rowEl, focusYear, clientX = null) {
-    if (activeRowEl && activeRowEl !== rowEl) {
-      activeRowEl.classList.remove('is-hovered');
-    }
-    activeRowEl = rowEl;
-    rowEl.classList.add('is-hovered');
-    tooltip.innerHTML = buildTooltipHtml(bin, mode, focusYear);
-    tooltip.hidden = false;
-
-    const wrapRect = wrap.getBoundingClientRect();
-    const rowRect = rowEl.getBoundingClientRect();
-    const tipRect = tooltip.getBoundingClientRect();
-
-    const anchorX = clientX != null
-      ? clientX - wrapRect.left
-      : (rowRect.left + rowRect.right) / 2 - wrapRect.left;
-    const clampedLeft = Math.max(
-      6,
-      Math.min(wrapRect.width - tipRect.width - 6, anchorX - tipRect.width / 2),
-    );
-
-    const spaceAbove = rowRect.top - wrapRect.top;
-    const spaceBelow = wrapRect.bottom - rowRect.bottom;
-    let topPos;
-    if (spaceAbove >= tipRect.height + 8) {
-      topPos = (rowRect.top - wrapRect.top) - tipRect.height - 8;
-    } else if (spaceBelow >= tipRect.height + 8) {
-      topPos = (rowRect.bottom - wrapRect.top) + 8;
-    } else {
-      topPos = Math.max(4, wrapRect.height - tipRect.height - 4);
-    }
-    topPos = Math.max(4, Math.min(wrapRect.height - tipRect.height - 4, topPos));
-
-    tooltip.style.left = `${Math.round(clampedLeft)}px`;
-    tooltip.style.top = `${Math.round(topPos)}px`;
+    const evt = clientX != null ? { clientX } : null;
+    tipCtrl.show(rowEl, buildTooltipHtml(bin, mode, focusYear), evt);
   }
 
   function hideTooltip() {
-    if (activeRowEl) {
-      activeRowEl.classList.remove('is-hovered');
-      activeRowEl = null;
-    }
-    tooltip.hidden = true;
+    tipCtrl.hide();
   }
 
   // 5 linhas de barras limpas
@@ -483,6 +430,4 @@ export function renderH1Histogram(
         ? '% das chapas do ano (escalas simétricas)'
         : `% das chapas ${isApto ? 'aptas' : 'registradas'} de cada ano (escalas espelhadas idênticas)`,
     );
-
-  container.appendChild(wrap);
 }

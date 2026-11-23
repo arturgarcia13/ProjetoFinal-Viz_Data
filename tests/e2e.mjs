@@ -51,7 +51,41 @@ if (layout.rightX <= layout.leftX || layout.overflowX) {
   throw new Error(`Layout split-screen inválido: ${JSON.stringify(layout)}`);
 }
 
-// 2. Percorre os 9 passos (H1–H9) e testa click-to-filter em H2, H3 e H5
+// Helper para validar hover padronizado (modelo H1) e ausência de <title> / Plot tip nativos
+async function assertUnifiedHover(targetSelector, containerSelector = '#stage-canvas', wrapIndex = 0) {
+  const forbiddenCount = await page.$$eval(
+    `${containerSelector} svg title, ${containerSelector} svg g[aria-label="tip"]`,
+    (els) => els.length,
+  );
+  if (forbiddenCount !== 0) {
+    throw new Error(`Encontrados ${forbiddenCount} tooltips nativos (<title> ou Plot tip) em ${containerSelector}`);
+  }
+  await page.hover(targetSelector);
+  const tipInfo = await page.evaluate((cSel, idx) => {
+    const wraps = document.querySelectorAll(`${cSel} .chart-wrap`);
+    const wrap = wraps[idx];
+    const tip = wrap?.querySelector('.chart-tooltip');
+    if (!wrap || !tip) return { ok: false, reason: 'Tooltip/wrap ausente' };
+    const wr = wrap.getBoundingClientRect();
+    const tr = tip.getBoundingClientRect();
+    const hasHead = Boolean(tip.querySelector('.chart-tip-head, .h1-tip-head'));
+    const hasTable = Boolean(tip.querySelector('.chart-tip-table, .h1-tip-table'));
+    return {
+      ok: !tip.hidden && hasHead && hasTable && tip.textContent.trim().length > 0,
+      hidden: tip.hidden,
+      hasHead,
+      hasTable,
+      insideX: tr.left >= wr.left - 1 && tr.right <= wr.right + 1,
+      insideY: tr.top >= wr.top - 1 && tr.bottom <= wr.bottom + 1,
+      text: tip.textContent.trim().slice(0, 80),
+    };
+  }, containerSelector, wrapIndex);
+  if (!tipInfo.ok || !tipInfo.insideX || !tipInfo.insideY) {
+    throw new Error(`Hover padronizado falhou em ${targetSelector} (${containerSelector}): ${JSON.stringify(tipInfo)}`);
+  }
+}
+
+// 2. Percorre os 9 passos (H1–H9) e testa hover padronizado + click-to-filter
 const steps = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9'];
 for (const s of steps) {
   await page.click(`.story-step[data-step="${s}"]`);
@@ -75,7 +109,7 @@ for (const s of steps) {
       throw new Error(`Escalas espelhadas de H1 assimétricas: ${JSON.stringify(h1Check)}`);
     }
     // Hover sobre a faixa crítica (30%–33,3%) deve exibir tooltip comparativo sem linha de número absoluto
-    await page.hover('#stage-canvas .h1-row[data-bin="30-33"] .h1-row-hit');
+    await assertUnifiedHover('#stage-canvas .h1-row[data-bin="30-33"] .h1-row-hit', '#stage-canvas', 0);
     const tipText = await page.$eval('#stage-canvas .h1-tooltip', (el) => ({ hidden: el.hidden, text: el.textContent }));
     if (tipText.hidden || !tipText.text.includes('54,2%') || !tipText.text.includes('42,3%') || tipText.text.includes('Absoluto')) {
       throw new Error(`Tooltip comparativo de H1 falhou no hover: ${JSON.stringify(tipText)}`);
@@ -93,12 +127,17 @@ for (const s of steps) {
     await page.click('#stage-controls button:nth-child(1)'); // volta para Registradas
   }
   if (s === 'h2' || s === 'h3') {
+    if (s === 'h2') {
+      await assertUnifiedHover('#stage-canvas .chart-wrap:nth-of-type(1) g[aria-label="dot"] circle', '#stage-canvas', 0);
+      await assertUnifiedHover('#stage-canvas .chart-wrap:nth-of-type(2) g[aria-label="bar"] rect', '#stage-canvas', 1);
+    }
     if (s === 'h3') {
       const logActive = await page.$eval('#stage-controls button:nth-child(1)', (el) => el.getAttribute('aria-pressed'));
       const focusActive = await page.$eval('#stage-controls button:nth-child(3)', (el) => el.getAttribute('aria-pressed'));
       if (logActive !== 'true' || focusActive !== 'true') {
         throw new Error('H3 deveria iniciar em Escala Log + Foco (≤46%)');
       }
+      await assertUnifiedHover('#stage-canvas g[aria-label="dot"] circle', '#stage-canvas', 0);
       await page.click('#stage-controls button:nth-child(4)'); // Todos
       await page.click('#stage-controls button:nth-child(2)'); // Escala Linear
       const linActive = await page.$eval('#stage-controls button:nth-child(2)', (el) => el.getAttribute('aria-pressed'));
@@ -113,21 +152,32 @@ for (const s of steps) {
     await page.click(`.story-step[data-step="${s}"]`);
   }
   if (s === 'h4') {
+    await assertUnifiedHover('#stage-canvas svg rect', '#stage-canvas', 0);
     await page.click('#stage-controls button:nth-child(2)');
     await page.waitForSelector('#stage-canvas svg');
+    await assertUnifiedHover('#stage-canvas svg rect', '#stage-canvas', 0);
   }
   if (s === 'h5') {
+    await assertUnifiedHover('#stage-canvas g[aria-label="bar"] > g rect', '#stage-canvas', 0);
     await page.click('#stage-canvas g[aria-label="bar"] > g rect');
     const selectedParty = await page.$eval('#filter-party', (el) => el.value);
     if (!selectedParty) throw new Error('Click-to-filter falhou em h5');
     await page.click('#reset-filters');
     await page.click('.story-step[data-step="h5"]');
   }
+  if (s === 'h6') {
+    await assertUnifiedHover('#stage-canvas g[aria-label="bar"] rect', '#stage-canvas', 0);
+  }
   if (s === 'h7') {
     const h7MapPaths = await page.$$eval('#stage-secondary path', (els) => els.length);
     if (h7MapPaths !== 27) {
       throw new Error(`H7 deveria exibir mapa das 27 UFs em stage-secondary, obteve ${h7MapPaths}`);
     }
+    await assertUnifiedHover('#stage-canvas g[aria-label="dot"] circle', '#stage-canvas', 0);
+    await assertUnifiedHover('#stage-secondary svg path', '#stage-secondary', 0);
+  }
+  if (s === 'h8') {
+    await assertUnifiedHover('#stage-canvas g[aria-label="bar"] rect', '#stage-canvas', 0);
   }
   if (s === 'h9') {
     const ufCount = await page.$$eval('#stage-canvas path', (els) => els.length);
@@ -135,6 +185,20 @@ for (const s of steps) {
     if (ufCount !== 27 || !pcSvg) {
       throw new Error(`H9 incompleto: ufCount=${ufCount}, pcSvg=${Boolean(pcSvg)}`);
     }
+    await assertUnifiedHover('#stage-canvas svg path', '#stage-canvas', 0);
+    // Hover sobre uma linha das Coordenadas Paralelas entre os eixos 1 e 2
+    const pcPoint = await page.evaluate(() => {
+      const path = document.querySelector('#stage-secondary svg > g:first-child path');
+      if (!path) return null;
+      const len = path.getTotalLength();
+      const pt = path.getPointAtLength(len * 0.12);
+      const svgRect = path.ownerSVGElement.getBoundingClientRect();
+      return { x: svgRect.left + pt.x, y: svgRect.top + pt.y };
+    });
+    if (!pcPoint) throw new Error('Linha das Coordenadas Paralelas não encontrada');
+    await page.mouse.move(pcPoint.x, pcPoint.y);
+    const pcTipOk = await page.$eval('#stage-secondary .chart-tooltip', (el) => !el.hidden && el.textContent.trim().length > 0);
+    if (!pcTipOk) throw new Error('Tooltip padronizado falhou ao fazer hover nas Coordenadas Paralelas');
     // Testa brush nas Coordenadas Paralelas e persistência após clique em UF
     const axisBox = await page.$eval('#stage-secondary .pc-brush .overlay', (el) => {
       const r = el.getBoundingClientRect();

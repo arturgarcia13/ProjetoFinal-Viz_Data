@@ -1,5 +1,13 @@
 import * as d3 from 'd3';
 import { IBGE_TO_UF, UF_NAMES } from '../data.js';
+import {
+  bindTooltipEvents,
+  buildTooltipCard,
+  createChartTooltip,
+  fmtInt,
+  fmtPct,
+  fmtRatio,
+} from './tooltip.js';
 
 const STAGE_COLOR = {
   'Papel': '#7f5539',
@@ -10,6 +18,13 @@ const STAGE_COLOR = {
   'Sem Vazamento Crítico': '#2f6f5e',
   'Inconclusivo': '#cbc3b6',
 };
+
+function bottleneckTone(bottleneck) {
+  if (!bottleneck || bottleneck === 'Inconclusivo') return 'neutral';
+  if (bottleneck === 'Sem Vazamento Crítico') return 'above';
+  if (bottleneck === 'Integridade' || bottleneck === 'Papel') return 'floor';
+  return 'below';
+}
 
 /**
  * H7 / H9 — Mapa Coroplético do Brasil por UF (etapa crítica ou taxa de sinais H7)
@@ -23,7 +38,8 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
 } = {}) {
   container.innerHTML = '';
   const height = 340;
-  const svg = d3.select(container).append('svg')
+  const tipCtrl = createChartTooltip(container);
+  const svg = d3.select(tipCtrl.wrap).append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', width)
     .attr('height', height);
@@ -35,7 +51,7 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
   const h7ByUf = new Map(h7Data.byUf.map((u) => [u.uf, u]));
   const h7Scale = d3.scaleSequential(d3.interpolateYlOrRd).domain([0, 0.12]);
 
-  svg.append('g')
+  const ufPaths = svg.append('g')
     .selectAll('path')
     .data(brUfGeo.features)
     .join('path')
@@ -67,20 +83,87 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
     .on('click', (_, d) => {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
       if (uf && onSelectUF) onSelectUF(uf);
-    })
-    .append('title')
-    .text((d) => {
-      const uf = IBGE_TO_UF[String(d.properties.codarea)];
-      const name = UF_NAMES[uf] || uf;
-      if (mode === 'h7') {
-        const u = h7ByUf.get(uf);
-        if (!u || u.inconclusive) return `${uf} — ${name}: Inconclusivo (n < 10 ou FINAL < 70%)`;
-        return `${uf} — ${name}: ${(u.rate * 100).toFixed(1)}% com ≥2 sinais (${u.twoPlusF}/${u.nF})`;
-      }
-      const u = h9ByUf.get(uf);
-      if (!u || u.inconclusive) return `${uf} — ${name}: Inconclusivo`;
-      return `${uf} — ${name}\nEtapa crítica: ${u.bottleneck}\nInclusão: ${u.inclusaoPct.toFixed(1)}% · Eq. FEFC: ${u.eqFefc.toFixed(2)}× · Urna: ${u.rendUrna.toFixed(2)}× · Cadeiras: ${u.sucParl.toFixed(2)}×`;
     });
+
+  ufPaths.each(function (d) {
+    const uf = IBGE_TO_UF[String(d.properties.codarea)];
+    const name = UF_NAMES[uf] || uf;
+    const isSelected = selectedUF === uf;
+
+    bindTooltipEvents(
+      this,
+      tipCtrl,
+      () => {
+        if (mode === 'h7') {
+          const u = h7ByUf.get(uf);
+          if (!u || u.inconclusive) {
+            return buildTooltipCard({
+              title: `${uf} — ${name}`,
+              badge: 'Inconclusivo',
+              badgeTone: 'neutral',
+              rows: [
+                { label: 'Critério mínimo', value: 'n < 10 ou FINAL < 70%' },
+              ],
+              hint: onSelectUF ? 'Clique na UF para filtrar o painel' : '',
+            });
+          }
+          return buildTooltipCard({
+            title: `${uf} — ${name}`,
+            badge: `${fmtPct(u.rate * 100)} ≥2 sinais`,
+            badgeTone: u.rate >= 0.06 ? 'below' : (u.rate >= 0.03 ? 'floor' : 'above'),
+            rows: [
+              {
+                label: 'Mulheres com ≥2 sinais',
+                value: fmtPct(u.rate * 100),
+                sub: `${fmtInt(u.twoPlusF)}/${fmtInt(u.nF)}`,
+                focus: true,
+              },
+              { label: 'Cobertura FINAL', value: fmtPct(u.finalRate * 100) },
+            ],
+            hint: onSelectUF ? 'Clique na UF para filtrar o painel' : '',
+          });
+        }
+
+        const u = h9ByUf.get(uf);
+        if (!u || u.inconclusive) {
+          return buildTooltipCard({
+            title: `${uf} — ${name}`,
+            badge: 'Inconclusivo',
+            badgeTone: 'neutral',
+            rows: [
+              { label: 'Critério mínimo', value: 'Amostra ou FINAL < 70%' },
+            ],
+            hint: onSelectUF ? 'Clique na UF para filtrar o painel' : '',
+          });
+        }
+        return buildTooltipCard({
+          title: `${uf} — ${name}`,
+          badge: u.bottleneck,
+          badgeTone: bottleneckTone(u.bottleneck),
+          rows: [
+            { label: 'Inclusão no papel', value: fmtPct(u.inclusaoPct), focus: u.bottleneck === 'Papel' },
+            { label: 'Equidade FEFC', value: fmtRatio(u.eqFefc), focus: u.bottleneck === 'Dinheiro' },
+            { label: 'Rendimento na urna', value: fmtRatio(u.rendUrna), focus: u.bottleneck === 'Urna (Votos)' },
+            { label: 'Sucesso em cadeiras', value: fmtRatio(u.sucParl), focus: u.bottleneck === 'Urna (Cadeiras)' },
+            { label: 'Integridade', value: fmtPct(u.integridadePct), focus: u.bottleneck === 'Integridade' },
+          ],
+          hint: onSelectUF ? 'Clique na UF para filtrar o painel' : '',
+        });
+      },
+      {
+        onEnter: () => {
+          d3.select(this)
+            .attr('stroke', '#1b1a17')
+            .attr('stroke-width', isSelected ? 2.5 : 1.9);
+        },
+        onLeave: () => {
+          d3.select(this)
+            .attr('stroke', isSelected ? '#1b1a17' : '#fffdf9')
+            .attr('stroke-width', isSelected ? 2.5 : 1);
+        },
+      },
+    );
+  });
 
   // Legenda com quebra automática de linha para evitar recorte lateral em telas estreitas
   const legendItems = mode === 'h7'
@@ -145,7 +228,8 @@ export function renderParallelCoordinates(container, h9Data, {
 
   const height = 235;
   const margin = { top: 30, right: 56, bottom: 22, left: 40 };
-  const svg = d3.select(container).append('svg')
+  const tipCtrl = createChartTooltip(container);
+  const svg = d3.select(tipCtrl.wrap).append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', width)
     .attr('height', height);
@@ -181,29 +265,64 @@ export function renderParallelCoordinates(container, h9Data, {
       if (onSelectEntity) onSelectEntity(d.key, unit);
     });
 
-  paths.append('title')
-    .text((d) => `${d.key} (${d.bottleneck})\nInclusão: ${d.inclusaoPct.toFixed(1)}% · Eq. FEFC: ${d.eqFefc.toFixed(2)}× · Urna: ${d.rendUrna.toFixed(2)}× · Cadeiras: ${d.sucParl.toFixed(2)}× · Integridade: ${d.integridadePct.toFixed(1)}%`);
+  function isRowAllowed(d) {
+    for (const [k, [y0, y1]] of activeRanges.entries()) {
+      const v = d[k];
+      if (v < y0 || v > y1) return false;
+    }
+    return true;
+  }
 
   function applyBrushStyles(notify = true) {
     const allowed = new Set();
     paths.each(function (d) {
-      let ok = true;
-      for (const [k, [y0, y1]] of activeRanges.entries()) {
-        const v = d[k];
-        if (v < y0 || v > y1) {
-          ok = false;
-          break;
-        }
+      const ok = activeRanges.size === 0 || isRowAllowed(d);
+      if (activeRanges.size > 0 && ok) allowed.add(d.key);
+      if (activeRanges.size > 0) {
+        d3.select(this)
+          .attr('stroke-opacity', ok ? (selectedEntity && selectedEntity !== d.key ? 0.3 : 0.85) : 0.08)
+          .attr('stroke-width', ok ? (selectedEntity === d.key ? 3 : 2.1) : 1);
+      } else {
+        d3.select(this)
+          .attr('stroke-opacity', selectedEntity && selectedEntity !== d.key ? 0.2 : 0.72)
+          .attr('stroke-width', selectedEntity === d.key ? 3 : 1.6);
       }
-      if (ok) allowed.add(d.key);
-      d3.select(this)
-        .attr('stroke-opacity', ok ? (selectedEntity && selectedEntity !== d.key ? 0.3 : 0.85) : 0.08)
-        .attr('stroke-width', ok ? (selectedEntity === d.key ? 3 : 2.1) : 1);
     });
     if (notify && onBrushFilter) {
       onBrushFilter(activeRanges.size > 0 ? allowed : null, new Map(activeRanges));
     }
   }
+
+  paths.each(function (d) {
+    const entityLabel = unit === 'uf' ? `${d.key} — ${UF_NAMES[d.key] || d.key}` : d.key;
+    bindTooltipEvents(
+      this,
+      tipCtrl,
+      () => buildTooltipCard({
+        title: entityLabel,
+        badge: d.bottleneck,
+        badgeTone: bottleneckTone(d.bottleneck),
+        rows: [
+          { label: 'Inclusão (%)', value: fmtPct(d.inclusaoPct), focus: d.bottleneck === 'Papel' },
+          { label: 'Eq. FEFC', value: fmtRatio(d.eqFefc), focus: d.bottleneck === 'Dinheiro' },
+          { label: 'Rend. Urna', value: fmtRatio(d.rendUrna), focus: d.bottleneck === 'Urna (Votos)' },
+          { label: 'Suc. Cadeiras', value: fmtRatio(d.sucParl), focus: d.bottleneck === 'Urna (Cadeiras)' },
+          { label: 'Integridade (%)', value: fmtPct(d.integridadePct), focus: d.bottleneck === 'Integridade' },
+        ],
+        hint: onSelectEntity
+          ? `Clique na linha para filtrar ${unit === 'uf' ? 'a UF' : 'o partido'}`
+          : '',
+      }),
+      {
+        onEnter: () => {
+          d3.select(this).attr('stroke-width', 3).attr('stroke-opacity', 1);
+        },
+        onLeave: () => {
+          applyBrushStyles(false);
+        },
+      },
+    );
+  });
 
   const axisG = svg.selectAll('.pc-axis')
     .data(axes)

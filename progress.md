@@ -90,6 +90,11 @@
   - Removidos tooltips nativos `<title>` e `tip: true` do Observable Plot em todos os gráficos (`h1Histogram.js`–`h9MapAndParallel.js`), incluindo ambos os gráficos de H2, Sankey e Rede em H4, caixas/pontos/outliers em H7, comparativo 2022×2026 em H8 e Mapa UF + Coordenadas Paralelas em H9.
   - Ampliado [tests/e2e.mjs](tests/e2e.mjs) com `assertUnifiedHover` cobrindo todas as 9 visualizações (`H1`–`H9`), garantindo ausência de `<title>`/`g[aria-label="tip"]` e abertura do card dentro da área visível; `./init.sh` (`16 passed`) e `E2E_ROOT=site node tests/e2e.mjs` verdes.
 
+- **2026-11-23 (H2 — Dumbbell facetado 2022 vs. 2026 em escala linear):**
+  - Adicionado `computeH2Comparison` em [src/indicators.js](src/indicators.js) agregando os dois anos no recorte ativo (top 12 partidos por soma de candidaturas em 2022 e 2026), mantendo `computeH2` intacto para os veredictos por ano.
+  - Atualizado [src/charts/h2Dumbbell.js](src/charts/h2Dumbbell.js) e [src/main.js](src/main.js) para renderizar o dumbbell plot facetado lado a lado (`2022` à esquerda, `2026` à direita) em **escala linear** compartilhada (`0` → máximo em R$ mil), alinhado verticalmente com as barras empilhadas de composição por fonte também facetadas (`2022` × `2026`), hover comparativo entre os dois anos e clique nos círculos para filtrar partido.
+  - Atualizados [tests/test_indicators.py](tests/test_indicators.py) (`test_h2_faceted_comparison_2022_and_2026`), [tests/e2e.mjs](tests/e2e.mjs) e [docs/guia_dos_graficos.md](docs/guia_dos_graficos.md); `./init.sh` (`17 passed`) e `E2E_ROOT=site node tests/e2e.mjs` verdes.
+
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.
 

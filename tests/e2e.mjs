@@ -128,6 +128,26 @@ for (const s of steps) {
   }
   if (s === 'h2' || s === 'h3') {
     if (s === 'h2') {
+      const h2Check = await page.evaluate(() => {
+        const dumbbellSvg = document.querySelector('#stage-canvas .chart-wrap:nth-of-type(1) svg[viewBox]');
+        const facetLabels = [...dumbbellSvg.querySelectorAll('g[aria-label="fx-axis tick label"] text')].map((el) => ({
+          text: el.textContent.trim(),
+          x: el.getBoundingClientRect().left,
+        }));
+        const dotFacets = dumbbellSvg.querySelectorAll('g[aria-label="dot"] > g').length;
+        const xTicks = [...dumbbellSvg.querySelectorAll('g[aria-label="x-axis tick label"] text')]
+          .slice(0, 3)
+          .map((el) => Number(el.textContent.replace(/[^\d.-]/g, '')));
+        return { facetLabels, dotFacets, xTicks };
+      });
+      const y22 = h2Check.facetLabels.find((f) => f.text === '2022');
+      const y26 = h2Check.facetLabels.find((f) => f.text === '2026');
+      if (!y22 || !y26 || y26.x <= y22.x || h2Check.dotFacets !== 2) {
+        throw new Error(`H2 dumbbell facetado (2022 ao lado de 2026) inválido: ${JSON.stringify(h2Check)}`);
+      }
+      if (h2Check.xTicks.length < 3 || h2Check.xTicks[0] !== 0) {
+        throw new Error(`Escala linear de H2 inesperada: ${JSON.stringify(h2Check.xTicks)}`);
+      }
       await assertUnifiedHover('#stage-canvas .chart-wrap:nth-of-type(1) g[aria-label="dot"] circle', '#stage-canvas', 0);
       await assertUnifiedHover('#stage-canvas .chart-wrap:nth-of-type(2) g[aria-label="bar"] rect', '#stage-canvas', 1);
     }

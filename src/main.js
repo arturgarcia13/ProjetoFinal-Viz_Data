@@ -1,6 +1,6 @@
 import { loadAppData, filterCandidates, UF_NAMES, CARGO_LABEL } from './data.js';
 import {
-  computeH1, computeH1Comparison, computeH2, computeH3, computeH4, computeH5,
+  computeH1, computeH1Comparison, computeH2, computeH2Comparison, computeH3, computeH4, computeH5,
   computeH6, computeH7, computeH8, computeH9AndParallel,
 } from './indicators.js';
 import { renderH1Histogram } from './charts/h1Histogram.js';
@@ -195,7 +195,7 @@ function renderStage(computed) {
 
   secondary.innerHTML = '';
   const w = Math.min(720, Math.max(300, canvas.clientWidth || 640));
-  const { h1Comparison, h2, h3, h4, h5, h6, h7, h8, h9, mapH9, mapH7 } = computed;
+  const { h1Comparison, h2Comparison, h3, h4, h5, h6, h7, h8, h9, mapH9, mapH7 } = computed;
 
   switch (state.activeStep) {
     case 'h1': {
@@ -220,10 +220,14 @@ function renderStage(computed) {
 
     case 'h2':
       kicker.textContent = 'Ato 02 · No Dinheiro (H2)';
-      title.textContent = 'Mediana de Receitas por Partido (F vs. M) e Fontes';
+      title.textContent = 'Mediana de Receitas por Partido (2022 vs. 2026) e Fontes';
       buildStageControls([]);
-      renderH2Dumbbell(canvas, h2, { width: w, onSelectParty: toggleParty });
-      caption.textContent = 'Clique em qualquer círculo para filtrar o partido. Barras inferiores comparam composição Pública (FEFC+FP) vs. Privada/Própria.';
+      renderH2Dumbbell(canvas, h2Comparison, {
+        width: w,
+        activeYear: state.year,
+        onSelectParty: toggleParty,
+      });
+      caption.textContent = 'Dumbbell facetado em escala linear comparando 2022 e 2026 lado a lado (top 12 partidos no recorte). Clique em qualquer círculo para filtrar o partido; barras inferiores comparam fontes Públicas vs. Privadas.';
       break;
 
     case 'h3':
@@ -394,6 +398,13 @@ function update() {
       ufs: state.pcAllowedUFs,
     }),
     h2: computeH2(rows),
+    h2Comparison: computeH2Comparison(APP_DATA.candidates, {
+      cargo: state.cargo,
+      uf: state.uf || null,
+      party: state.party || null,
+      parties: state.pcAllowedParties,
+      ufs: state.pcAllowedUFs,
+    }),
     h3: computeH3(rows),
     h4: computeH4(rows),
     h5: computeH5(rows),

@@ -21,7 +21,7 @@ const state = {
   threshold: 10,
   activeStep: 'h1',
   h1Mode: 'reg',
-  h3Scale: 'log',
+  h3Scale: 'linear',
   h3Zoom: 'focus',
   h4Tab: 'sankey',
   pcUnit: 'party',
@@ -191,9 +191,14 @@ function renderStage(computed) {
   const secondary = document.getElementById('stage-secondary');
   const kicker = document.getElementById('stage-kicker');
   const title = document.getElementById('stage-title');
+  const subtitle = document.getElementById('stage-subtitle');
   const caption = document.getElementById('stage-caption');
 
   secondary.innerHTML = '';
+  if (subtitle) {
+    subtitle.textContent = '';
+    subtitle.hidden = true;
+  }
   const w = Math.min(720, Math.max(300, canvas.clientWidth || 640));
   const { h1Comparison, h2Comparison, h3, h4, h5, h6, h7, h8, h9, mapH9, mapH7 } = computed;
 
@@ -233,21 +238,59 @@ function renderStage(computed) {
     case 'h3':
       kicker.textContent = 'Ato 02 · No Dinheiro (H3)';
       title.textContent = '% de Candidatas × % do Fundo Público (FEFC + FP)';
+      if (subtitle) {
+        subtitle.textContent = 'Partidos acima da linha diagonal destinaram proporcionalmente mais recursos às mulheres do que o peso delas nas candidaturas.';
+        subtitle.hidden = false;
+      }
       buildStageControls([
-        { label: 'Escala Log', active: state.h3Scale === 'log', onClick: () => { state.h3Scale = 'log'; update(); } },
-        { label: 'Escala Linear', active: state.h3Scale === 'linear', onClick: () => { state.h3Scale = 'linear'; update(); } },
-        { label: 'Foco (≤46%)', active: state.h3Zoom === 'focus', onClick: () => { state.h3Zoom = 'focus'; update(); } },
-        { label: 'Todos', active: state.h3Zoom === 'all', onClick: () => { state.h3Zoom = 'all'; update(); } },
+        [
+          {
+            label: 'Foco (≤46%)',
+            active: state.h3Zoom === 'focus',
+            onClick: () => {
+              state.h3Zoom = 'focus';
+              state.h3Scale = 'linear';
+              update();
+            },
+          },
+          {
+            label: 'Todos',
+            active: state.h3Zoom === 'all',
+            onClick: () => {
+              state.h3Zoom = 'all';
+              update();
+            },
+          },
+        ],
+        [
+          {
+            label: 'Escala Linear',
+            active: state.h3Zoom === 'focus' || state.h3Scale === 'linear',
+            onClick: () => {
+              state.h3Scale = 'linear';
+              update();
+            },
+          },
+          {
+            label: 'Escala Log (Todos)',
+            active: state.h3Zoom === 'all' && state.h3Scale === 'log',
+            onClick: () => {
+              state.h3Zoom = 'all';
+              state.h3Scale = 'log';
+              update();
+            },
+          },
+        ],
       ]);
       renderH3Scatter(canvas, h3, {
         width: w,
-        scale: state.h3Scale,
+        scale: state.h3Zoom === 'focus' ? 'linear' : state.h3Scale,
         zoom: state.h3Zoom,
         onSelectParty: toggleParty,
       });
-      caption.textContent = state.h3Scale === 'log'
-        ? 'Partidos com n ≥ 10 APTO em escala log₁₀. Use "Foco (≤46%)" para abrir o miolo dos grandes partidos ou "Todos" para incluir extremos.'
-        : 'Partidos com n ≥ 10 candidaturas APTO (escala linear). Pontos abaixo da diagonal Y = X indicam menor fatia de Fundo Público que a presença feminina.';
+      caption.textContent = state.h3Zoom === 'all' && state.h3Scale === 'log'
+        ? 'Partidos com n ≥ 10 APTO na visão "Todos" em escala log₁₀. Passe o cursor sobre qualquer bolha para destacar o partido ou clique para filtrar.'
+        : 'Partidos com n ≥ 10 APTO em escala linear (padrão). Passe o cursor sobre qualquer bolha para destacar o partido e ver detalhes, ou clique para filtrar.';
       break;
 
     case 'h4':

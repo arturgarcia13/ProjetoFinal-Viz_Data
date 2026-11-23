@@ -152,18 +152,76 @@ for (const s of steps) {
       await assertUnifiedHover('#stage-canvas .chart-wrap:nth-of-type(2) g[aria-label="bar"] rect', '#stage-canvas', 1);
     }
     if (s === 'h3') {
-      const logActive = await page.$eval('#stage-controls button:nth-child(1)', (el) => el.getAttribute('aria-pressed'));
-      const focusActive = await page.$eval('#stage-controls button:nth-child(3)', (el) => el.getAttribute('aria-pressed'));
-      if (logActive !== 'true' || focusActive !== 'true') {
-        throw new Error('H3 deveria iniciar em Escala Log + Foco (≤46%)');
+      const h3Check = await page.evaluate(() => {
+        const btns = [...document.querySelectorAll('#stage-controls button')].map((el) => ({
+          text: el.textContent.trim(),
+          pressed: el.getAttribute('aria-pressed'),
+        }));
+        const subtitle = document.getElementById('stage-subtitle');
+        const svg = document.querySelector('#stage-canvas svg');
+        const circles = [...svg.querySelectorAll('g[aria-label="dot"] circle')];
+        const radii = circles.map((c) => Number(c.getAttribute('r')));
+        const fillOp = circles[0]?.getAttribute('fill-opacity');
+        const strokeOp = circles[0]?.getAttribute('stroke-opacity');
+        const labels = [...svg.querySelectorAll('g[aria-label="text"] text')].map((t) => t.textContent.trim());
+        const hasLegend = Boolean(svg.querySelector('g[aria-label="h3-legend"]'));
+        const hasQuads = Boolean(svg.querySelector('g[aria-label="h3-quadrants"]'));
+        const diagTransform = svg.querySelector('text[aria-label="diagonal-label"]')?.getAttribute('transform') || '';
+        return {
+          btns,
+          subtitleVisible: Boolean(subtitle && !subtitle.hidden && subtitle.textContent.trim().length > 10),
+          circleCount: circles.length,
+          radiiSortedDesc: radii.every((r, i) => i === 0 || r <= radii[i - 1] + 0.01),
+          fillOp,
+          strokeOp,
+          labels,
+          hasLegend,
+          hasQuads,
+          hasRotatedDiag: diagTransform.includes('rotate('),
+        };
+      });
+      if (h3Check.btns[0]?.pressed !== 'true' || h3Check.btns[2]?.pressed !== 'true') {
+        throw new Error(`H3 deveria iniciar em Foco (≤46%) + Escala Linear: ${JSON.stringify(h3Check.btns)}`);
+      }
+      if (!h3Check.subtitleVisible || !h3Check.hasLegend || !h3Check.hasQuads || !h3Check.hasRotatedDiag) {
+        throw new Error(`Elementos visuais de H3 incompletos: ${JSON.stringify(h3Check)}`);
+      }
+      if (!h3Check.radiiSortedDesc || h3Check.fillOp !== '0.75' || h3Check.strokeOp !== '1') {
+        throw new Error(`Z-order ou opacidade de bolhas H3 inválidos: ${JSON.stringify(h3Check)}`);
+      }
+      if (!h3Check.labels.includes('PSOL') || !h3Check.labels.includes('PMB') || h3Check.labels.length > 10) {
+        throw new Error(`Rótulos seletivos (top 6 + extremos) inesperados em H3: ${JSON.stringify(h3Check.labels)}`);
+      }
+      const labelBoxes = await page.$$eval('#stage-canvas g[aria-label="text"] text', (els) => els.map((el) => {
+        const b = el.getBoundingClientRect();
+        return { p: el.textContent.trim(), l: b.left, r: b.right, t: b.top, b: b.bottom };
+      }));
+      for (let i = 0; i < labelBoxes.length; i += 1) {
+        for (let j = i + 1; j < labelBoxes.length; j += 1) {
+          const a = labelBoxes[i];
+          const b = labelBoxes[j];
+          if (a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t) {
+            throw new Error(`Sobreposição de rótulos em H3: ${a.p} vs ${b.p}`);
+          }
+        }
       }
       await assertUnifiedHover('#stage-canvas g[aria-label="dot"] circle', '#stage-canvas', 0);
-      await page.click('#stage-controls button:nth-child(4)'); // Todos
-      await page.click('#stage-controls button:nth-child(2)'); // Escala Linear
-      const linActive = await page.$eval('#stage-controls button:nth-child(2)', (el) => el.getAttribute('aria-pressed'));
-      if (linActive !== 'true') throw new Error('Alternância para Escala Linear falhou em H3');
-      await page.click('#stage-controls button:nth-child(1)'); // Escala Log
-      await page.click('#stage-controls button:nth-child(3)'); // Foco (≤46%)
+      const dimmedCount = await page.$$eval(
+        '#stage-canvas g[aria-label="dot"] circle',
+        (els) => els.filter((c) => c.style.opacity === '0.2').length,
+      );
+      if (dimmedCount < h3Check.circleCount - 1) {
+        throw new Error(`Hover em H3 não esmaeceu os demais partidos (dimmed=${dimmedCount}/${h3Check.circleCount})`);
+      }
+      await page.click('#stage-controls .filter-group:nth-child(2) button:nth-child(2)'); // Escala Log (Todos)
+      const logActive = await page.$eval('#stage-controls .filter-group:nth-child(2) button:nth-child(2)', (el) => el.getAttribute('aria-pressed'));
+      const todosActive = await page.$eval('#stage-controls .filter-group:nth-child(1) button:nth-child(2)', (el) => el.getAttribute('aria-pressed'));
+      if (logActive !== 'true' || todosActive !== 'true') {
+        throw new Error('Alternância para Todos + Escala Log falhou em H3');
+      }
+      await page.click('#stage-controls .filter-group:nth-child(1) button:nth-child(1)'); // Volta para Foco (≤46%) -> Linear
+      const backLin = await page.$eval('#stage-controls .filter-group:nth-child(2) button:nth-child(1)', (el) => el.getAttribute('aria-pressed'));
+      if (backLin !== 'true') throw new Error('Volta para Foco (≤46%) deveria restaurar Escala Linear');
     }
     await page.click('#stage-canvas g[aria-label="dot"] circle');
     const selectedParty = await page.$eval('#filter-party', (el) => el.value);

@@ -322,6 +322,13 @@ h1 em { color: var(--accent); font-style: italic; }
   font-family: 'Fraunces', Georgia, serif;
   font-size: 1.22rem;
 }
+.stage-subtitle {
+  margin: 0.22rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: var(--muted);
+  max-width: 64ch;
+}
 .stage-canvas, .stage-secondary {
   width: 100%;
   overflow-x: auto;

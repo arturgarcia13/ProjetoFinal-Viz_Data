@@ -37,7 +37,7 @@ Cada hipótese recebe automaticamente um selo calculado sobre o recorte ativo:
 | :---: | :---: | :--- | :--- | :--- |
 | **01** | **H1** | Histograma espelhado (*Butterfly Chart*) 2022 vs. 2026 (5 faixas) | As chapas cumprem 30% ou estacionam coladas no piso (30%–33,3%), e como 2022 compara com 2026? | Alternar `Registradas`/`Aptas` + hover comparativo (`Δ p.p.`) |
 | **02** | **H2** | Dumbbell facetado (`2022` vs. `2026`, escala linear) + Barras empilhadas 100% por fonte | Mulheres recebem menos dinheiro que homens dentro dos partidos e no recurso privado em 2022 e 2026? | Clique nos círculos filtra o partido + hover comparativo |
-| **02** | **H3** | Dispersão (bolhas, escala `log₁₀`) `% Candidatas × % Fundo Público` | Quando um partido lança mais de 30% de mulheres, o Fundo Público acompanha? | Alternar `Escala Log` / `Linear` e `Foco (≤46%)` / `Todos` + clique nas bolhas filtra o partido + hover |
+| **02** | **H3** | Dispersão (bolhas, escala linear padrão) `% Candidatas × % Fundo Público` | Quando um partido lança mais de 30% de mulheres, o Fundo Público acompanha? | Alternar `Foco (≤46%)` / `Todos` e `Escala Linear` / `Escala Log (Todos)` + hover destaca partido e esmaece demais + clique filtra |
 | **02** | **H4** | Diagrama de Sankey + Grafo de Rede Bipartida (Hubs) | Para onde vai o dinheiro público? Ele volta para o partido ou se concentra em fornecedores-hub? | Alternar `Sankey` / `Rede de Hubs`, hover no hub destaca ligações, clique filtra partido |
 | **03** | **H5** | Barras agrupadas em 3 etapas (Funil de conversão) | Onde as mulheres mais perdem: para conquistar votos ou para converter votos em cadeiras? | Clique nas barras filtra o partido + hover |
 | **04** | **H6** | Barras agrupadas de sinais acumulados (`0`, `1`, `2` sinais) | Mulheres acumulam mais sinais de alerta (voto baixo + conta zerada/lote padronizado) que homens? | Reage ao slider `Limiar A` + hover |
@@ -122,28 +122,25 @@ Isso ocorre por dois mecanismos diferentes:
 
 ---
 
-### 3. H3 — Gráfico de Dispersão (Bolhas, Escala Logarítmica): `% de Candidatas × % do Fundo Público`
+### 3. H3 — Gráfico de Dispersão (Bolhas, Escala Linear): `% de Candidatas × % do Fundo Público`
 
 **O que está sendo medido**  
 Testa se, quando um partido lança **mais do que 30% de mulheres**, ele repassa uma fatia **proporcional** do Fundo Público (`FEFC + Fundo Partidário`) ou se "trava" o repasse próximo dos 30%.
 
-**Por que escala logarítmica (`log₁₀`) + modo `Foco (≤46%)`?**  
-Nos dados reais, cerca de **90% dos partidos** (que concentram mais de `99,9%` de todo o Fundo Público) ficam entre `32%` e `44%` de candidatas e entre `23%` e `55%` de verba pública feminina, enquanto 3 ou 4 micro-partidos extremos (como `UP`, `PCO`, `PSTU` e `NOVO` em 2022, ou `DEMOCRATA` em 2026) ficam isolados em `0%` ou `65%–81%`. Para evitar que esses extremos esmaguem todas as bolhas grandes num canto:
-- **Escala `log₁₀` nos dois eixos (padrão):** ajusta automaticamente os limites de X e Y aos valores positivos reais, ampliando o espaçamento relativo na região de `30%–45%` e comprimindo o topo da escala.
-- **Modo `Foco (≤46%)` (padrão) vs. `Todos`:** abre o quadro no miolo onde estão os grandes partidos (até `46%` em X e `58%` em Y) para eliminar a condensação visual. Todos os partidos que ficam fora desse recorte — ou com `0%` na escala `log₁₀` (como o `NOVO` em 2022) — são **listados explicitamente logo abaixo do gráfico** e podem ser vistos a qualquer momento clicando em **`Todos`** ou **`Escala Linear`**.
-- **Diagonal `Y = X` sempre reta:** como X e Y usam a mesma transformação `log₁₀`, a linha de proporcionalidade perfeita (`log₁₀(Y) = log₁₀(X)`) permanece uma reta exata: acima dela (verde) o repasse é proporcional ou superior; abaixo dela (terracota) há subfinanciamento relativo.
+**Por que Escala Linear por padrão + modo `Foco (≤46%)` (com `log₁₀` reservada para `Todos`)?**  
+Nos dados reais, cerca de **90% dos partidos** (que concentram mais de `99,9%` de todo o Fundo Público) ficam entre `32%` e `44%` de candidatas e entre `23%` e `55%` de verba pública feminina, enquanto 3 ou 4 micro-partidos extremos (como `UP`, `PCO`, `PSTU` e `NOVO` em 2022, ou `DEMOCRATA` em 2026) ficam isolados em `0%` ou `65%–81%`. Para manter a leitura proporcional imediata sem distorcer o miolo:
+- **Escala Linear (padrão):** facilita a leitura direta das proporções em pontos percentuais, especialmente no modo `Foco (≤46%)`, onde a amplitude é pequena.
+- **Modo `Foco (≤46%)` (padrão) vs. `Todos` + `Escala Log (Todos)`:** abre o quadro no miolo onde estão os grandes partidos (até `46%` em X e `15%–58%` em Y); todos os partidos fora desse recorte são listados explicitamente abaixo do gráfico e podem ser inspecionados clicando em **`Todos`** (com opção de **`Escala Log (Todos)`** para comprimir *outliers* extremos).
+- **Diagonal `Y = X` (rotacionada ao longo da reta):** acima dela (verde) o repasse é proporcional ou superior; abaixo dela (terracota) há **zona de subfinanciamento** relativo.
 
 **Como ler o gráfico**
-- **Cada bolha** é um partido com pelo menos `10` candidaturas `APTO` e algum Fundo Público.
-- **Eixo horizontal (X, escala `log₁₀`):** `% de candidatas mulheres (APTO)` no partido.
-- **Eixo vertical (Y, escala `log₁₀`):** `% de todo o Fundo Público (FEFC + FP)` do partido que foi para mulheres.
-- **Tamanho (raio) da bolha:** volume total de Fundo Público do partido (em R$ milhões, área proporcional ao valor). Os 10 maiores partidos exibem a sigla com afastamento automático de colisões.
-- **Diagonal cinza tracejada (`Y = X`):** linha de **proporcionalidade perfeita** (ex.: 35% de candidatas recebendo 35% da verba pública).
-- **Linhas pontilhadas vermelhas em `30%` (X e Y):** piso mínimo legal.
-- **Cor da bolha:**
-  - **Verde (`Y ≥ X`):** o partido destina às mulheres uma fatia igual ou superior ao peso feminino na chapa.
-  - **Terracota/vermelha (`Y < X`):** o partido fica **abaixo da diagonal** (subfinanciamento relativo ao número de candidatas).
-- **Interação:** use os botões **`Escala Log` / `Escala Linear`** e **`Foco (≤46%)` / `Todos`** no topo do gráfico; passe o mouse sobre qualquer bolha para ver o detalhamento completo; **clique em uma bolha** para filtrar o partido.
+- **Cada bolha** é um partido com pelo menos `10` candidaturas `APTO` e algum Fundo Público, desenhada das maiores (ao fundo) para as menores (à frente), com preenchimento semitransparente (`75%`) e borda sólida para não ocultar partidos menores atrás de grandes legendas.
+- **Eixo horizontal (X):** `% de candidatas mulheres (APTO)` no partido.
+- **Eixo vertical (Y):** `% de todo o Fundo Público (FEFC + FP)` do partido que foi para mulheres.
+- **Micro-legenda (canto superior direito):** explica a **Cor** (`Y ≥ X` verde vs. `Y < X` terracota) e o **Tamanho** (área proporcional ao volume total de Fundo Público do partido em R$).
+- **Rótulos fixos seletivos + repulsão:** exibe siglas fixas apenas para os **6 maiores partidos** por volume do Fundo e para os **extremos relevantes** (ex.: `PSOL` no topo e `PMB` abaixo de 25% em 2022), posicionadas com algoritmo de repulsão (`d3-force`) e linhas de chamada finas.
+- **Linhas pontilhadas vermelhas em `30%` (X e Y) e rótulos de quadrante:** marcam o piso mínimo legal e identificam a *Zona de subfinanciamento* (abaixo de `Y = X`) e o *Descumprimento da cota* (abaixo de `30%` no eixo Y).
+- **Interação:** passe o cursor sobre qualquer bolha para revelar seu rótulo e tooltip completo enquanto as demais bolhas esmaecem; **clique em uma bolha** para filtrar o partido.
 
 **Como ler o cartão ao passar o mouse (tooltip)**  
 Ao repousar o cursor sobre uma bolha, aparecem 4 linhas (exemplo real de `UNIÃO` em 2022):

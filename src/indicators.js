@@ -360,50 +360,6 @@ export function computeH2(candidates, coverageYear = null) {
 }
 
 /**
- * H2 (Comparativo 2022 vs. 2026) — Mediana de receita F vs. M por partido e fontes nos dois anos.
- */
-export function computeH2Comparison(
-  allCandidates,
-  { cargo = 'all', uf = null, party = null, parties = null, ufs = null } = {},
-) {
-  const byYear = {};
-
-  for (const yr of [2022, 2026]) {
-    const subset = allCandidates.filter((c) => {
-      if (c.y !== yr) return false;
-      if (cargo && cargo !== 'all' && c.cargo !== cargo) return false;
-      if (uf && c.uf !== uf) return false;
-      if (party && c.p !== party) return false;
-      if (parties && parties.size > 0 && !parties.has(c.p)) return false;
-      if (ufs && ufs.size > 0 && !ufs.has(c.uf)) return false;
-      return true;
-    });
-    byYear[yr] = computeH2(subset);
-  }
-
-  const partyMap = new Map();
-  for (const yr of [2022, 2026]) {
-    for (const p of byYear[yr].byParty) {
-      let entry = partyMap.get(p.party);
-      if (!entry) {
-        entry = { party: p.party, totalCombined: 0, y2022: null, y2026: null };
-        partyMap.set(p.party, entry);
-      }
-      entry[`y${yr}`] = p;
-      entry.totalCombined += p.total;
-    }
-  }
-
-  const partiesList = [...partyMap.values()]
-    .sort((a, b) => b.totalCombined - a.totalCombined);
-
-  return {
-    byYear,
-    parties: partiesList,
-  };
-}
-
-/**
  * H3 — % de candidatas × % do Fundo Público (FEFC + FP) por partido
  */
 export function computeH3(candidates, coverageYear = null) {

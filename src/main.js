@@ -1,6 +1,6 @@
 import { loadAppData, filterCandidates, UF_NAMES, CARGO_LABEL } from './data.js';
 import {
-  computeH1, computeH1Comparison, computeH2, computeH2Comparison, computeH3, computeH4, computeH5,
+  computeH1, computeH1Comparison, computeH2, computeH3, computeH4, computeH5,
   computeH6, computeH7, computeH8, computeH9AndParallel,
 } from './indicators.js';
 import { renderH1Histogram } from './charts/h1Histogram.js';
@@ -21,6 +21,7 @@ const state = {
   threshold: 10,
   activeStep: 'h1',
   h1Mode: 'reg',
+  h2Year: 2022,
   h3Scale: 'linear',
   h3Zoom: 'focus',
   h4Tab: 'sankey',
@@ -66,9 +67,9 @@ function clearBrushState() {
   state.pcAllowedUFs = null;
 }
 
-function getScopedRows({ ignoreUF = false } = {}) {
+function getScopedRows({ ignoreUF = false, year = state.year } = {}) {
   let rows = filterCandidates(APP_DATA.candidates, {
-    year: state.year,
+    year,
     cargo: state.cargo,
     uf: ignoreUF ? null : (state.uf || null),
     party: state.party || null,
@@ -200,7 +201,7 @@ function renderStage(computed) {
     subtitle.hidden = true;
   }
   const w = Math.min(720, Math.max(300, canvas.clientWidth || 640));
-  const { h1Comparison, h2Comparison, h3, h4, h5, h6, h7, h8, h9, mapH9, mapH7 } = computed;
+  const { h1Comparison, h2Stage, h3, h4, h5, h6, h7, h8, h9, mapH9, mapH7 } = computed;
 
   switch (state.activeStep) {
     case 'h1': {
@@ -225,14 +226,13 @@ function renderStage(computed) {
 
     case 'h2':
       kicker.textContent = 'Ato 02 · No Dinheiro (H2)';
-      title.textContent = 'Mediana de Receitas por Partido (2022 vs. 2026) e Fontes';
-      buildStageControls([]);
-      renderH2Dumbbell(canvas, h2Comparison, {
-        width: w,
-        activeYear: state.year,
-        onSelectParty: toggleParty,
-      });
-      caption.textContent = 'Dumbbell facetado em escala linear comparando 2022 e 2026 lado a lado (top 12 partidos no recorte). Clique em qualquer círculo para filtrar o partido; barras inferiores comparam fontes Públicas vs. Privadas.';
+      title.textContent = `Mediana de Receitas por Partido (F vs. M) e Fontes · ${state.h2Year}`;
+      buildStageControls([
+        { label: '2022', active: state.h2Year === 2022, onClick: () => { state.h2Year = 2022; update(); } },
+        { label: '2026', active: state.h2Year === 2026, onClick: () => { state.h2Year = 2026; update(); } },
+      ]);
+      renderH2Dumbbell(canvas, h2Stage, { width: w, onSelectParty: toggleParty });
+      caption.textContent = `Exibindo ${state.h2Year} no gráfico (seletor independente do filtro global). Clique em qualquer círculo para filtrar o partido; barras inferiores comparam composição Pública (FEFC+FP) vs. Privada/Própria.`;
       break;
 
     case 'h3':
@@ -429,6 +429,7 @@ function renderStage(computed) {
 function update() {
   if (!APP_DATA) return;
   const rows = getScopedRows();
+  const h2StageRows = getScopedRows({ year: state.h2Year });
   const mapRows = getScopedRows({ ignoreUF: true });
 
   const computed = {
@@ -441,13 +442,7 @@ function update() {
       ufs: state.pcAllowedUFs,
     }),
     h2: computeH2(rows),
-    h2Comparison: computeH2Comparison(APP_DATA.candidates, {
-      cargo: state.cargo,
-      uf: state.uf || null,
-      party: state.party || null,
-      parties: state.pcAllowedParties,
-      ufs: state.pcAllowedUFs,
-    }),
+    h2Stage: computeH2(h2StageRows),
     h3: computeH3(rows),
     h4: computeH4(rows),
     h5: computeH5(rows),
@@ -615,6 +610,7 @@ async function init() {
 
   document.getElementById('reset-filters').addEventListener('click', () => {
     state.year = 2022;
+    state.h2Year = 2022;
     state.cargo = 'all';
     state.uf = '';
     state.party = '';

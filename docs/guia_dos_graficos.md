@@ -36,7 +36,7 @@ Cada hipótese recebe automaticamente um selo calculado sobre o recorte ativo:
 | Ato | Passo | Gráfico(s) na tela | Pergunta central que responde | Interação no gráfico |
 | :---: | :---: | :--- | :--- | :--- |
 | **01** | **H1** | Histograma espelhado (*Butterfly Chart*) 2022 vs. 2026 (5 faixas) | As chapas cumprem 30% ou estacionam coladas no piso (30%–33,3%), e como 2022 compara com 2026? | Alternar `Registradas`/`Aptas` + hover comparativo (`Δ p.p.`) |
-| **02** | **H2** | Dumbbell facetado (`2022` vs. `2026`, escala linear) + Barras empilhadas 100% por fonte | Mulheres recebem menos dinheiro que homens dentro dos partidos e no recurso privado em 2022 e 2026? | Clique nos círculos filtra o partido + hover comparativo |
+| **02** | **H2** | Dumbbell de medianas por partido + Barras empilhadas 100% por fonte | Mulheres recebem menos dinheiro que homens dentro dos partidos e no recurso privado? | Alternar `2022` / `2026` no gráfico + clique nos círculos filtra o partido + hover |
 | **02** | **H3** | Dispersão (bolhas, escala linear padrão) `% Candidatas × % Fundo Público` | Quando um partido lança mais de 30% de mulheres, o Fundo Público acompanha? | Alternar `Foco (≤46%)` / `Todos` e `Escala Linear` / `Escala Log (Todos)` + hover destaca partido e esmaece demais + clique filtra |
 | **02** | **H4** | Diagrama de Sankey + Grafo de Rede Bipartida (Hubs) | Para onde vai o dinheiro público? Ele volta para o partido ou se concentra em fornecedores-hub? | Alternar `Sankey` / `Rede de Hubs`, hover no hub destaca ligações, clique filtra partido |
 | **03** | **H5** | Barras agrupadas em 3 etapas (Funil de conversão) | Onde as mulheres mais perdem: para conquistar votos ou para converter votos em cadeiras? | Clique nas barras filtra o partido + hover |
@@ -77,28 +77,27 @@ Candidaturas **`INAPTO`** são aquelas que foram registradas na chapa, mas não 
 
 ## Ato 02 — No Dinheiro (P2)
 
-### 2. H2 — Dumbbell Facetado (`2022` vs. `2026`) de Medianas por Partido + Composição por Fonte
+### 2. H2 — Dumbbell de Medianas por Partido + Composição por Fonte
 
-Este passo exibe **dois gráficos empilhados**, ambos facetados com **2022 à esquerda** e **2026 à direita**.
+Este passo exibe **dois gráficos empilhados** com um **seletor de ano próprio (`2022` | `2026`)** no cabeçalho do palco (independente do filtro global no topo).
 
-#### Gráfico 2A (superior) — Dumbbell Facetado: Mediana de Receitas por Partido (`2022` × `2026`, escala linear)
+#### Gráfico 2A (superior) — Dumbbell: Mediana de Receitas por Partido (Mulheres vs. Homens)
 
 **O que está sendo medido**  
-Compara lado a lado, na mesma **escala linear em R$ mil**, a **receita total mediana** de candidatas mulheres e candidatos homens `APTO` (que prestaram contas) nos **12 maiores partidos** do recorte (por soma de candidaturas em 2022 e 2026, com pelo menos 5 mulheres e 5 homens).
+Compara a **receita total mediana** (em R$ mil) de candidatas mulheres e candidatos homens `APTO` (que prestaram contas) nos **12 maiores partidos** do recorte no ano selecionado no gráfico (com pelo menos 5 mulheres e 5 homens).
 
 **Por que mediana e não média?**  
 Em eleições, poucos candidatos arrecadam milhões e puxam a média para cima. A **mediana** mostra o valor da candidatura "típica" (metade arrecadou mais, metade arrecadou menos).
 
 **Como ler o gráfico**
-- **Facetas horizontais (`2022` à esquerda | `2026` à direita):** compartilham o mesmo eixo vertical de partidos e a mesma **escala linear horizontal** (a partir de `R$ 0`), permitindo comparar diretamente a distância F vs. M e o salto nominal de recursos entre as duas eleições.
-- **Eixo horizontal (X):** receita mediana em **R$ mil** (escala linear).
+- **Eixo horizontal (X):** receita mediana em **R$ mil**.
 - **Eixo vertical (Y):** os 12 partidos com mais candidaturas no recorte.
 - **Círculo terracota:** mediana das **Mulheres**.
 - **Círculo azul:** mediana dos **Homens**.
 - **Linha cinza ligando os dois círculos:** quanto maior a linha, maior a desigualdade dentro daquele partido. Se o círculo terracota está à **esquerda** do azul, a candidatura feminina típica recebeu menos que a masculina naquela legenda.
-- **Interação:** passe o mouse para ver os valores exatos do ano focado e a comparação com o outro ano (`2022` ↔ `2026`) mais a razão `F/M`; **clique em qualquer círculo** para filtrar o site inteiro para aquele partido.
+- **Interação:** use os botões **`2022` / `2026`** no topo do gráfico para alternar o ano de H2 sem alterar o restante da página; passe o mouse para ver os valores exatos e a razão `F/M`; **clique em qualquer círculo** para filtrar o site inteiro para aquele partido.
 
-#### Gráfico 2B (inferior) — Barras Empilhadas 100% Facetadas (`2022` vs. `2026`): Composição das Fontes
+#### Gráfico 2B (inferior) — Barras Empilhadas 100%: Composição das Fontes
 
 **O que está sendo medido**  
 Mostra de onde vem cada R$ 100 arrecadados por **Mulheres** e por **Homens**, divididos em 4 fontes:

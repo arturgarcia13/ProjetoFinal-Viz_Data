@@ -130,26 +130,37 @@ for (const s of steps) {
     if (s === 'h2') {
       const h2Check = await page.evaluate(() => {
         const dumbbellSvg = document.querySelector('#stage-canvas .chart-wrap:nth-of-type(1) svg[viewBox]');
-        const facetLabels = [...dumbbellSvg.querySelectorAll('g[aria-label="fx-axis tick label"] text')].map((el) => ({
+        const facetLabels = dumbbellSvg.querySelectorAll('g[aria-label="fx-axis tick label"]').length;
+        const btns = [...document.querySelectorAll('#stage-controls button')].map((el) => ({
           text: el.textContent.trim(),
-          x: el.getBoundingClientRect().left,
+          pressed: el.getAttribute('aria-pressed'),
         }));
-        const dotFacets = dumbbellSvg.querySelectorAll('g[aria-label="dot"] > g').length;
-        const xTicks = [...dumbbellSvg.querySelectorAll('g[aria-label="x-axis tick label"] text')]
-          .slice(0, 3)
-          .map((el) => Number(el.textContent.replace(/[^\d.-]/g, '')));
-        return { facetLabels, dotFacets, xTicks };
+        const title = document.getElementById('stage-title').textContent;
+        return { facetLabels, btns, title };
       });
-      const y22 = h2Check.facetLabels.find((f) => f.text === '2022');
-      const y26 = h2Check.facetLabels.find((f) => f.text === '2026');
-      if (!y22 || !y26 || y26.x <= y22.x || h2Check.dotFacets !== 2) {
-        throw new Error(`H2 dumbbell facetado (2022 ao lado de 2026) inválido: ${JSON.stringify(h2Check)}`);
-      }
-      if (h2Check.xTicks.length < 3 || h2Check.xTicks[0] !== 0) {
-        throw new Error(`Escala linear de H2 inesperada: ${JSON.stringify(h2Check.xTicks)}`);
+      if (h2Check.facetLabels !== 0 || h2Check.btns[0]?.text !== '2022' || h2Check.btns[0]?.pressed !== 'true') {
+        throw new Error(`H2 deveria ser dumbbell simples com seletor 2022|2026: ${JSON.stringify(h2Check)}`);
       }
       await assertUnifiedHover('#stage-canvas .chart-wrap:nth-of-type(1) g[aria-label="dot"] circle', '#stage-canvas', 0);
       await assertUnifiedHover('#stage-canvas .chart-wrap:nth-of-type(2) g[aria-label="bar"] rect', '#stage-canvas', 1);
+
+      // Troca o ano apenas dentro de H2 (2022 -> 2026) sem alterar o filtro global no topo
+      await page.click('#stage-controls button:nth-child(2)');
+      const afterH2Toggle = await page.evaluate(() => ({
+        h2Pressed26: document.querySelector('#stage-controls button:nth-child(2)').getAttribute('aria-pressed'),
+        stageTitle: document.getElementById('stage-title').textContent,
+        globalYear22: document.querySelector('[data-year="2022"]').getAttribute('aria-pressed'),
+        scopeSummary: document.getElementById('scope-summary').textContent,
+      }));
+      if (
+        afterH2Toggle.h2Pressed26 !== 'true'
+        || !afterH2Toggle.stageTitle.includes('2026')
+        || afterH2Toggle.globalYear22 !== 'true'
+        || !afterH2Toggle.scopeSummary.includes('2022')
+      ) {
+        throw new Error(`Seletor de ano de H2 não manteve independência do filtro global: ${JSON.stringify(afterH2Toggle)}`);
+      }
+      await page.click('#stage-controls button:nth-child(1)'); // volta para 2022
     }
     if (s === 'h3') {
       const h3Check = await page.evaluate(() => {

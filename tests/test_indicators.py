@@ -199,33 +199,10 @@ def test_h1_mirror_comparison_bins_partition_and_totals():
     assert out["floor26Reg"] == 320 and out["floor26Apto"] == 291
 
 
-def test_h2_faceted_comparison_2022_and_2026():
-    script = """
-    import fs from 'node:fs';
-    import { decodeAnalyticalBase } from './src/data.js';
-    import { computeH2Comparison } from './src/indicators.js';
-
-    const raw = JSON.parse(fs.readFileSync('data/analytical_base.json', 'utf8'));
-    const { candidates } = decodeAnalyticalBase(raw);
-    const cmp = computeH2Comparison(candidates, { cargo: 'all' });
-    const top12 = cmp.parties.slice(0, 12);
-    console.log(JSON.stringify({
-      totalParties: cmp.parties.length,
-      top12BothYears: top12.every((p) => p.y2022 && p.y2026),
-      firstParty: top12[0]?.party,
-      sources22: cmp.byYear[2022].sources.length,
-      sources26: cmp.byYear[2026].sources.length,
-    }));
-    """
-    proc = subprocess.run(
-        ["node", "--input-type=module", "-e", script],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    out = json.loads(proc.stdout)
-    assert out["totalParties"] >= 28
-    assert out["top12BothYears"] is True
-    assert out["firstParty"] == "PL"
-    assert out["sources22"] == 2 and out["sources26"] == 2
+def test_h2_by_year_2022_and_2026_top12():
+    res22 = _run_js_indicators(2022)["h2"]
+    res26 = _run_js_indicators(2026)["h2"]
+    assert len(res22["byParty"]) >= 12
+    assert len(res26["byParty"]) >= 12
+    assert len(res22["sources"]) == 2
+    assert len(res26["sources"]) == 2

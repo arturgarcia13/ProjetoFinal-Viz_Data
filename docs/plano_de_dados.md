@@ -1,6 +1,6 @@
 # Plano de Dados e Regras de Limpeza (U1 — Entregável 22–26/out)
 
-Este documento define o contrato de entrada, limpeza, padronização, cruzamento e comparações condicionais entre as bases abertas do Tribunal Superior Eleitoral (TSE) para o projeto **"A Cota de Gênero Leva Mulheres ao Poder ou Apenas ao Papel?"** ([SPEC.md](../SPEC.md)).
+Este documento define o contrato de entrada, limpeza, padronização, cruzamento e comparações condicionais entre as bases abertas do Tribunal Superior Eleitoral (TSE) para o projeto **"A Cota de Gênero Leva Mulheres ao Poder ou Apenas ao Papel?"** ([SPEC.md](harness/SPEC.md)).
 
 ---
 
@@ -18,15 +18,15 @@ Este documento define o contrato de entrada, limpeza, padronização, cruzamento
 
 ## 2. Fontes Oficiais e Chaves de Cruzamento
 
-Todas as leituras usam **apenas os arquivos `*_BRASIL.csv`** de cada fonte (nunca `glob *.csv` que misturaria `BRASIL.csv` + `BR.csv` + 27 UFs).
+Todas as leituras usam **apenas os arquivos `*_BRASIL.csv`** de cada fonte sob `data/raw/` (nunca `glob *.csv` que misturaria `BRASIL.csv` + `BR.csv` + 27 UFs).
 
 | Fonte | Arquivo por Ano (`<ANO>` ∈ {2018, 2022, 2026}) | Chave Primária / Granularidade | Chave de Ligação | Volume Cargo 6+7 (2022) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Candidaturas** | `consulta_cand_<ANO>/consulta_cand_<ANO>_BRASIL.csv` | `SQ_CANDIDATO` (único por ano: 27.367 em 2022; 26.580 em 2018; 19.098 em 2026) | `SQ_CANDIDATO` + `ANO_ELEICAO` | `27.367` registros |
-| **Votação Nominal** | `votacao-<ANO>/votacao_candidato_munzona_<ANO>/votacao_candidato_munzona_<ANO>_BRASIL.csv` | `(SQ_CANDIDATO, NR_TURNO, CD_MUNICIPIO, NR_ZONA)` | Agregar por `SQ_CANDIDATO` antes de unir a `consulta_cand` | `9.175.975` linhas → `25.222` candidatos |
-| **Receitas** | `prestacao_de_contas_eleitorais_candidatos_<ANO>/receitas_candidatos_<ANO>_BRASIL.csv` | Item de receita (múltiplos itens podem compartilhar o mesmo `SQ_RECEITA`) | Agregar por `SQ_CANDIDATO` antes de unir | `259.446` linhas → `26.875` candidatos |
-| **Doador Originário** | `prestacao_de_contas_eleitorais_candidatos_<ANO>/receitas_candidatos_doador_originario_<ANO>_BRASIL.csv` | `(SQ_RECEITA, NR_CPF_CNPJ_DOADOR_ORIGINARIO, ...)` | Ligado a `receitas` **apenas após deduplicar/agregar `receitas` por `SQ_RECEITA`** para evitar multiplicação N:N | Checagem de origem em transferências |
-| **Despesas Contratadas** | `prestacao_de_contas_eleitorais_candidatos_<ANO>/despesas_contratadas_candidatos_<ANO>_BRASIL.csv` | Item de despesa (múltiplos itens podem compartilhar `SQ_DESPESA`) | Agregar por `SQ_CANDIDATO` e por `(SQ_CANDIDATO, NR_CPF_CNPJ_FORNECEDOR)` | `1.993.422` linhas → `26.875` candidatos |
+| **Candidaturas** | `data/raw/consulta_cand_<ANO>/consulta_cand_<ANO>_BRASIL.csv` | `SQ_CANDIDATO` (único por ano: 27.367 em 2022; 26.580 em 2018; 19.098 em 2026) | `SQ_CANDIDATO` + `ANO_ELEICAO` | `27.367` registros |
+| **Votação Nominal** | `data/raw/votacao-<ANO>/votacao_candidato_munzona_<ANO>/votacao_candidato_munzona_<ANO>_BRASIL.csv` | `(SQ_CANDIDATO, NR_TURNO, CD_MUNICIPIO, NR_ZONA)` | Agregar por `SQ_CANDIDATO` antes de unir a `consulta_cand` | `9.175.975` linhas → `25.222` candidatos |
+| **Receitas** | `data/raw/prestacao_de_contas_eleitorais_candidatos_<ANO>/receitas_candidatos_<ANO>_BRASIL.csv` | Item de receita (múltiplos itens podem compartilhar o mesmo `SQ_RECEITA`) | Agregar por `SQ_CANDIDATO` antes de unir | `259.446` linhas → `26.875` candidatos |
+| **Doador Originário** | `data/raw/prestacao_de_contas_eleitorais_candidatos_<ANO>/receitas_candidatos_doador_originario_<ANO>_BRASIL.csv` | `(SQ_RECEITA, NR_CPF_CNPJ_DOADOR_ORIGINARIO, ...)` | Ligado a `receitas` **apenas após deduplicar/agregar `receitas` por `SQ_RECEITA`** para evitar multiplicação N:N | Checagem de origem em transferências |
+| **Despesas Contratadas** | `data/raw/prestacao_de_contas_eleitorais_candidatos_<ANO>/despesas_contratadas_candidatos_<ANO>_BRASIL.csv` | Item de despesa (múltiplos itens podem compartilhar `SQ_DESPESA`) | Agregar por `SQ_CANDIDATO` e por `(SQ_CANDIDATO, NR_CPF_CNPJ_FORNECEDOR)` | `1.993.422` linhas → `26.875` candidatos |
 
 **Observação sobre `despesas_pagas_candidatos_<ANO>_BRASIL.csv`:** conforme inspecionado nos cabeçalhos de 2022, esse arquivo **não contém `SQ_CANDIDATO` nem `NR_CPF_CNPJ_FORNECEDOR`** (apenas `SQ_PRESTADOR_CONTAS` e `SQ_DESPESA`). Portanto, a rede bipartida de fornecedores (H4) e o Sinal C utilizam **`despesas_contratadas`**, documentando explicitamente que se trata de valor *contratado*, não de caixa efetivamente liquidado.
 

@@ -68,7 +68,7 @@ def test_network_hubs_integrity_and_lgpd():
         hids = {h["hid"] for h in ydata["hubs"]}
         assert len(hids) > 0
 
-        cand_csv = ROOT / f"consulta_cand_{yr}" / f"consulta_cand_{yr}_BRASIL.csv"
+        cand_csv = DATA / "raw" / f"consulta_cand_{yr}" / f"consulta_cand_{yr}_BRASIL.csv"
         with cand_csv.open(encoding="cp1252") as f:
             reader = csv.DictReader(f, delimiter=";")
             cand_names = {" ".join((row["NM_CANDIDATO"] or "").upper().split()) for row in reader if row.get("NM_CANDIDATO")}

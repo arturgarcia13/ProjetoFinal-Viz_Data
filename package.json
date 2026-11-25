@@ -8,9 +8,9 @@
     "build": "esbuild src/main.js --bundle --minify --outfile=dist/app.js",
     "build:vercel": "node scripts/build-vercel.mjs",
     "watch": "esbuild src/main.js --bundle --outfile=dist/app.js --watch",
-    "serve": "live-server . --port=8000",
-    "dev": "npm run watch & npm run serve",
-    "start": "npm run build && npm run serve",
+    "serve": "npm run build:vercel && live-server site --port=8000",
+    "dev": "esbuild src/main.js --bundle --outfile=dist/app.js --watch & live-server public --mount=/dist:./dist --mount=/data:./data --port=8000",
+    "start": "npm run serve",
     "test": "node tests/e2e.mjs"
   },
   "keywords": [

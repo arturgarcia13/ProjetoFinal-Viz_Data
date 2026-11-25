@@ -4,6 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
+RAW_DATA_DIR = DATA_DIR / "raw"
 DOCS_DIR = ROOT / "docs"
 
 BASELINE_YEAR = 2022
@@ -24,9 +25,9 @@ def source_paths(year: int) -> dict[str, Path]:
     if year not in SUPPORTED_YEARS:
         raise ValueError(f"Ano não suportado: {year}")
     return {
-        "consulta_cand": ROOT / f"consulta_cand_{year}" / f"consulta_cand_{year}_BRASIL.csv",
-        "votacao": ROOT / f"votacao-{year}" / f"votacao_candidato_munzona_{year}" / f"votacao_candidato_munzona_{year}_BRASIL.csv",
-        "receitas": ROOT / f"prestacao_de_contas_eleitorais_candidatos_{year}" / f"receitas_candidatos_{year}_BRASIL.csv",
-        "doador_originario": ROOT / f"prestacao_de_contas_eleitorais_candidatos_{year}" / f"receitas_candidatos_doador_originario_{year}_BRASIL.csv",
-        "despesas_contratadas": ROOT / f"prestacao_de_contas_eleitorais_candidatos_{year}" / f"despesas_contratadas_candidatos_{year}_BRASIL.csv",
+        "consulta_cand": RAW_DATA_DIR / f"consulta_cand_{year}" / f"consulta_cand_{year}_BRASIL.csv",
+        "votacao": RAW_DATA_DIR / f"votacao-{year}" / f"votacao_candidato_munzona_{year}" / f"votacao_candidato_munzona_{year}_BRASIL.csv",
+        "receitas": RAW_DATA_DIR / f"prestacao_de_contas_eleitorais_candidatos_{year}" / f"receitas_candidatos_{year}_BRASIL.csv",
+        "doador_originario": RAW_DATA_DIR / f"prestacao_de_contas_eleitorais_candidatos_{year}" / f"receitas_candidatos_doador_originario_{year}_BRASIL.csv",
+        "despesas_contratadas": RAW_DATA_DIR / f"prestacao_de_contas_eleitorais_candidatos_{year}" / f"despesas_contratadas_candidatos_{year}_BRASIL.csv",
     }

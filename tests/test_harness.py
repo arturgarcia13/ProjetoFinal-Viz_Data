@@ -5,12 +5,20 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_harness_files_exist():
-    for name in ("SPEC.md", "progress.md", "feature_list.json", "init.sh", "Proposta do Projeto Final.md"):
+    for name in (
+        "docs/harness/SPEC.md",
+        "docs/harness/progress.md",
+        "docs/harness/feature_list.json",
+        "docs/proposta_projeto_final.md",
+        "init.sh",
+        "public/index.html",
+        "public/styles.css",
+    ):
         assert (ROOT / name).is_file(), f"Arquivo obrigatório ausente: {name}"
 
 
 def test_feature_list_schema():
-    items = json.loads((ROOT / "feature_list.json").read_text(encoding="utf-8"))
+    items = json.loads((ROOT / "docs" / "harness" / "feature_list.json").read_text(encoding="utf-8"))
     assert isinstance(items, list) and len(items) >= 10
     required_keys = {"id", "category", "description", "steps", "passes"}
     for item in items:

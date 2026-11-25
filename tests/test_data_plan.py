@@ -29,11 +29,11 @@ def test_plano_de_dados_exists_and_has_required_sections():
 
 
 def test_plano_de_dados_columns_match_2022_sources():
-    cand_cols = set(_read_header("consulta_cand_2022/consulta_cand_2022_BRASIL.csv"))
-    rec_cols = set(_read_header("prestacao_de_contas_eleitorais_candidatos_2022/receitas_candidatos_2022_BRASIL.csv"))
-    desp_cols = set(_read_header("prestacao_de_contas_eleitorais_candidatos_2022/despesas_contratadas_candidatos_2022_BRASIL.csv"))
-    orig_cols = set(_read_header("prestacao_de_contas_eleitorais_candidatos_2022/receitas_candidatos_doador_originario_2022_BRASIL.csv"))
-    pag_cols = set(_read_header("prestacao_de_contas_eleitorais_candidatos_2022/despesas_pagas_candidatos_2022_BRASIL.csv"))
+    cand_cols = set(_read_header("data/raw/consulta_cand_2022/consulta_cand_2022_BRASIL.csv"))
+    rec_cols = set(_read_header("data/raw/prestacao_de_contas_eleitorais_candidatos_2022/receitas_candidatos_2022_BRASIL.csv"))
+    desp_cols = set(_read_header("data/raw/prestacao_de_contas_eleitorais_candidatos_2022/despesas_contratadas_candidatos_2022_BRASIL.csv"))
+    orig_cols = set(_read_header("data/raw/prestacao_de_contas_eleitorais_candidatos_2022/receitas_candidatos_doador_originario_2022_BRASIL.csv"))
+    pag_cols = set(_read_header("data/raw/prestacao_de_contas_eleitorais_candidatos_2022/despesas_pagas_candidatos_2022_BRASIL.csv"))
 
     for col in ("ANO_ELEICAO", "CD_CARGO", "SG_UF", "SQ_CANDIDATO", "CD_SITUACAO_CANDIDATURA", "CD_GENERO", "DS_GENERO", "DS_COR_RACA", "NR_FEDERACAO", "SG_FEDERACAO", "SQ_COLIGACAO", "SG_PARTIDO", "CD_SIT_TOT_TURNO"):
         assert col in cand_cols, f"Coluna ausente em consulta_cand_2022: {col}"

@@ -4,8 +4,8 @@
 - **Commit inicial:** `cc92dec`
 
 ## O que mudou
-- Criado [docs/plano_de_dados.md](../docs/plano_de_dados.md) com o contrato completo das fontes do TSE (2018, 2022, 2026), chaves de junção (`SQ_CANDIDATO`), sentinelas (`#NULO`/`-1`, `#NE`/`-3`, `NÃO DIVULGÁVEL`/`-4`), regras de privacidade/LGPD, tratamento de `APTO` vs. `INAPTO`, unidade legal de chapa (`Coligação` em 2018 vs. `Federação/Partido` em 2022/2026), micro-chapas `< 4`, classificação de fontes (`FEFC`, `FP`, `Próprio`, `Privado`), regras de despesas contratadas/Sankey e comparações condicionais para 2018 e 2026.
-- Criado [tests/test_data_plan.py](../tests/test_data_plan.py) verificando as seções obrigatórias e conferindo todas as colunas citadas contra os cabeçalhos reais dos CSVs de 2022.
+- Criado [docs/plano_de_dados.md](../../plano_de_dados.md) com o contrato completo das fontes do TSE (2018, 2022, 2026), chaves de junção (`SQ_CANDIDATO`), sentinelas (`#NULO`/`-1`, `#NE`/`-3`, `NÃO DIVULGÁVEL`/`-4`), regras de privacidade/LGPD, tratamento de `APTO` vs. `INAPTO`, unidade legal de chapa (`Coligação` em 2018 vs. `Federação/Partido` em 2022/2026), micro-chapas `< 4`, classificação de fontes (`FEFC`, `FP`, `Próprio`, `Privado`), regras de despesas contratadas/Sankey e comparações condicionais para 2018 e 2026.
+- Criado [tests/test_data_plan.py](../../../tests/test_data_plan.py) verificando as seções obrigatórias e conferindo todas as colunas citadas contra os cabeçalhos reais dos CSVs de 2022.
 
 ## Evidência
 - `./init.sh && .venv/bin/python -m pytest -v`:

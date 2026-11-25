@@ -11,11 +11,19 @@ const mime = {
   '.woff2': 'font/woff2',
 };
 
-const rootDir = path.resolve(process.env.E2E_ROOT || process.cwd());
+const rootDir = process.env.E2E_ROOT ? path.resolve(process.env.E2E_ROOT) : null;
+const cwd = process.cwd();
+
+function resolveRequestPath(urlPath) {
+  if (rootDir) return path.join(rootDir, urlPath);
+  if (urlPath.startsWith('/dist/')) return path.join(cwd, urlPath);
+  if (urlPath.startsWith('/data/') && !urlPath.startsWith('/data/raw/')) return path.join(cwd, urlPath);
+  return path.join(cwd, 'public', urlPath);
+}
 
 const server = http.createServer((req, res) => {
   const urlPath = req.url === '/' ? '/index.html' : req.url.split('?')[0];
-  const filePath = path.join(rootDir, urlPath);
+  const filePath = resolveRequestPath(urlPath);
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     res.writeHead(404);
     res.end('Not found');
@@ -88,6 +96,7 @@ async function assertUnifiedHover(targetSelector, containerSelector = '#stage-ca
 // 2. Percorre os 9 passos (H1–H9) e testa hover padronizado + click-to-filter
 const steps = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9'];
 for (const s of steps) {
+  await page.$eval(`.story-step[data-step="${s}"]`, (el) => el.scrollIntoView({ behavior: 'instant', block: 'center' }));
   await page.click(`.story-step[data-step="${s}"]`);
   await page.waitForSelector('#stage-canvas svg');
   const kicker = await page.$eval('#stage-kicker', (el) => el.textContent);

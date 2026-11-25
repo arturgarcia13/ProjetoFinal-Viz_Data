@@ -3,16 +3,10 @@
 .pytest_cache/
 node_modules/
 etl/
-python/
 tests/
 docs/
-receipts/
 site/
-consulta_cand_*/
-prestacao_de_contas_*/
-votacao-*/
+data/raw/
 *.log
 *.md
-SPEC.md
-feature_list.json
 init.sh

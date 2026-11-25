@@ -5,16 +5,7 @@ __pycache__/
 *:Zone.Identifier
 
 # Dados brutos do TSE (grandes; não fazem parte do site)
-consulta_cand_2018/
-consulta_cand_2022/
-consulta_cand_2026/
-prestacao_de_contas_eleitorais_candidatos_2018/
-prestacao_de_contas_eleitorais_candidatos_2022/
-prestacao_de_contas_eleitorais_candidatos_2026/
-prestacao_de_contas_eleitorais_orgaos_partidarios_2026/
-votacao-2018/
-votacao-2022/
-votacao-2026/
+data/raw/
 
 # Artefatos intermediários do ETL (pesados) e logs
 etl/cache/

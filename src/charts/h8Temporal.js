@@ -43,11 +43,11 @@ export function renderH8Temporal(container, h8Data, { width = 700 } = {}) {
     marginRight: 28,
     marginBottom: 46,
     marginLeft: 52,
-    style: { background: 'transparent', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px' },
+    style: { background: 'transparent', color: '#FFFFFF', fontFamily: 'Barlow, Inter, system-ui, sans-serif', fontSize: '12px' },
     fx: { label: null, domain: metrics, padding: 0.18 },
     x: { domain: ['2022', '2026'], axis: null },
     y: { label: '↑ % das candidatas APTO', tickFormat: (d) => `${d}%`, grid: true },
-    color: { domain: ['2022', '2026'], range: ['#9c8f7d', '#b4452f'], legend: true },
+    color: { domain: ['2022', '2026'], range: ['#FF7AE5', '#FCE34D'], legend: true },
     marks: [
       Plot.barY(compactRows, {
         fx: 'shortMetric',
@@ -55,7 +55,7 @@ export function renderH8Temporal(container, h8Data, { width = 700 } = {}) {
         y: 'pct',
         fill: 'year',
       }),
-      Plot.ruleY([0]),
+      Plot.ruleY([0], { stroke: 'rgba(255, 255, 255, 0.45)' }),
     ],
   });
 

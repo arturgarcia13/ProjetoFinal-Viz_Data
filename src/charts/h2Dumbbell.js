@@ -36,17 +36,17 @@ export function renderH2Dumbbell(container, h2Data, { width = 700, onSelectParty
     marginRight: 24,
     marginBottom: 42,
     marginLeft: 95,
-    style: { background: 'transparent', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px' },
+    style: { background: 'transparent', color: '#FFFFFF', fontFamily: 'Barlow, Inter, system-ui, sans-serif', fontSize: '12px' },
     x: { label: 'Receita mediana (R$ mil) →', grid: true },
     y: { label: null, domain: parties.map((p) => p.party) },
-    color: { domain: ['Mulheres', 'Homens'], range: ['#b4452f', '#3d5a80'], legend: true },
+    color: { domain: ['Mulheres', 'Homens'], range: ['#FCE34D', '#FF7AE5'], legend: true },
     marks: [
       Plot.link(parties, {
         x1: (d) => d.medF / 1000,
         x2: (d) => d.medM / 1000,
         y1: 'party',
         y2: 'party',
-        stroke: '#9b9183',
+        stroke: 'rgba(255, 255, 255, 0.55)',
         strokeWidth: 2,
       }),
       Plot.dot(dumbbellRows, {
@@ -136,12 +136,12 @@ export function renderH2Dumbbell(container, h2Data, { width = 700, onSelectParty
     marginRight: 24,
     marginBottom: 38,
     marginLeft: 95,
-    style: { background: 'transparent', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px' },
+    style: { background: 'transparent', color: '#FFFFFF', fontFamily: 'Barlow, Inter, system-ui, sans-serif', fontSize: '12px' },
     x: { label: 'Composição do financiamento (%) →', domain: [0, 100], tickFormat: (d) => `${d}%` },
     y: { label: null },
     color: {
       domain: ['FEFC', 'Fundo Partidário', 'Recursos Próprios', 'Doações Privadas/Outros'],
-      range: ['#b4452f', '#d97a4a', '#9c8f7d', '#3d5a80'],
+      range: ['#FCE34D', '#FF7AE5', '#FF5E2B', '#FFFFFF'],
       legend: true,
     },
     marks: [

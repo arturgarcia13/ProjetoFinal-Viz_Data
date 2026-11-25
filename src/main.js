@@ -142,6 +142,23 @@ function updateSummaryAndNarrative(rows, computed) {
     `${state.year} · ${CARGO_LABEL[state.cargo]} · ${state.uf ? UF_NAMES[state.uf] : 'Brasil (27 UFs)'}` +
     `${state.party ? ` · ${state.party}` : ''}${extraBrush} — ${rows.length.toLocaleString('pt-BR')} candidaturas registradas`;
 
+  const statsKicker = document.getElementById('hero-stats-kicker');
+  if (statsKicker) {
+    statsKicker.textContent =
+      `Panorama do recorte · ${state.year} · ${CARGO_LABEL[state.cargo]} · ${state.uf ? UF_NAMES[state.uf] : 'Brasil (27 UFs)'}` +
+      `${state.party ? ` · ${state.party}` : ''}${extraBrush}`;
+  }
+  const bigCand = document.getElementById('big-stat-cand');
+  const bigPub = document.getElementById('big-stat-pub');
+  const bigSeats = document.getElementById('big-stat-seats');
+  const bigSeatsLbl = document.getElementById('big-stat-seats-label');
+  if (bigCand) bigCand.textContent = fmtPct(h5.pctCandF);
+  if (bigPub) bigPub.textContent = fmtPct(h3.pctPubF);
+  if (bigSeats) bigSeats.textContent = fmtPct(h5.pctEleitasF);
+  if (bigSeatsLbl) {
+    bigSeatsLbl.textContent = `das cadeiras eleitas (${h5.elF.toLocaleString('pt-BR')} de ${(h5.elF + h5.elM).toLocaleString('pt-BR')}) foram ocupadas por mulheres na urna.`;
+  }
+
   renderVerdict('verdict-h1', h1.verdict);
   document.getElementById('stat-h1').textContent =
     `${fmtPct(h1.pctCompliant)} cumprem ≥30% no registro (${fmtPct(h1.pctFloorBand)} na faixa 30%–33,3%; ${fmtPct(h1.pctAbove40)} >40%). ${h1.droppedByInapto} chapas caíram abaixo de 30% após inaptidões.`;

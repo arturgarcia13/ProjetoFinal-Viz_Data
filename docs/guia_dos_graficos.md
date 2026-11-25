@@ -56,8 +56,8 @@ Compara lado a lado a distribuição das **chapas eleitorais** (`Federação ou 
 
 **Como ler o gráfico**
 - **Eixo vertical central (compartilhado):** 5 faixas limpas alinhadas à regra legal — `< 30%` (irregular), **`30%–33,3%`** (faixa crítica colada no piso legal), `33,4%–39%`, `40%–49%` e `50%+`.
-- **Linha horizontal tracejada em âmbar (`Piso legal: 30%`):** cruza o gráfico inteiro separando visualmente chapas irregulares (`< 30%`, abaixo) e chapas em conformidade (`≥ 30%`, acima).
-- **Lado esquerdo (`2022`, tom neutro) vs. Lado direito (`2026`, terracota):** escalas rigorosamente simétricas e travadas entre `Registradas` e `Aptas`, garantindo comparação visual fiel.
+- **Linha horizontal tracejada em laranja coral (`Piso legal: 30%`):** cruza o gráfico inteiro separando visualmente chapas irregulares (`< 30%`, abaixo) e chapas em conformidade (`≥ 30%`, acima).
+- **Lado esquerdo (`2022`, rosa vibrante) vs. Lado direito (`2026`, amarelo solar):** escalas rigorosamente simétricas e travadas entre `Registradas` e `Aptas`, garantindo comparação visual fiel.
 - **Controles no topo (`Registradas` / `Aptas`) e hover:** exibem 1 único rótulo limpo por barra (`%`); ao alternar para `Aptas`, observa-se a migração de chapas que caíram para `< 30%` após inaptidões; ao passar o mouse sobre qualquer barra/faixa, o tooltip exibe os percentuais de 2022 e 2026 e a variação em pontos percentuais (`Δ p.p.`).
 
 **Por que só chapas com `n ≥ 4`?**  
@@ -92,17 +92,17 @@ Em eleições, poucos candidatos arrecadam milhões e puxam a média para cima. 
 **Como ler o gráfico**
 - **Eixo horizontal (X):** receita mediana em **R$ mil**.
 - **Eixo vertical (Y):** os 12 partidos com mais candidaturas no recorte.
-- **Círculo terracota:** mediana das **Mulheres**.
-- **Círculo azul:** mediana dos **Homens**.
-- **Linha cinza ligando os dois círculos:** quanto maior a linha, maior a desigualdade dentro daquele partido. Se o círculo terracota está à **esquerda** do azul, a candidatura feminina típica recebeu menos que a masculina naquela legenda.
+- **Círculo amarelo solar:** mediana das **Mulheres**.
+- **Círculo rosa vibrante:** mediana dos **Homens**.
+- **Linha clara ligando os dois círculos:** quanto maior a linha, maior a desigualdade dentro daquele partido. Se o círculo amarelo está à **esquerda** do rosa, a candidatura feminina típica recebeu menos que a masculina naquela legenda.
 - **Interação:** use os botões **`2022` / `2026`** no topo do gráfico para alternar o ano de H2 sem alterar o restante da página; passe o mouse para ver os valores exatos e a razão `F/M`; **clique em qualquer círculo** para filtrar o site inteiro para aquele partido.
 
 #### Gráfico 2B (inferior) — Barras Empilhadas 100%: Composição das Fontes
 
 **O que está sendo medido**  
 Mostra de onde vem cada R$ 100 arrecadados por **Mulheres** e por **Homens**, divididos em 4 fontes:
-- **FEFC** (terracota) e **Fundo Partidário** (laranja): **dinheiro público**, sujeito à regra de cota mínima de 30% (ADI 5617).
-- **Recursos Próprios** (bege) e **Doações Privadas/Outros** (azul): **dinheiro privado**, que não tem cota legal.
+- **FEFC** (amarelo solar) e **Fundo Partidário** (rosa vibrante): **dinheiro público**, sujeito à regra de cota mínima de 30% (ADI 5617).
+- **Recursos Próprios** (laranja coral) e **Doações Privadas/Outros** (branco): **dinheiro privado**, que não tem cota legal.
 
 **O que os dados mostram**
 - Olhando só a mediana geral nacional, mulheres chegam a empatar ou superar homens (`R$ 49,7 mil` F vs. `R$ 42,5 mil` M em 2022; `R$ 73,3 mil` vs. `R$ 72,2 mil` em 2026) — mas isso acontece quase exclusivamente pela obrigatoriedade do **dinheiro público** (`91,0%` da receita feminina em 2022 e `90,6%` em 2026 vêm de FEFC+FP, contra `78,4%` e `76,9%` nos homens).
@@ -130,15 +130,15 @@ Testa se, quando um partido lança **mais do que 30% de mulheres**, ele repassa 
 Nos dados reais, cerca de **90% dos partidos** (que concentram mais de `99,9%` de todo o Fundo Público) ficam entre `32%` e `44%` de candidatas e entre `23%` e `55%` de verba pública feminina, enquanto 3 ou 4 micro-partidos extremos (como `UP`, `PCO`, `PSTU` e `NOVO` em 2022, ou `DEMOCRATA` em 2026) ficam isolados em `0%` ou `65%–81%`. Para manter a leitura proporcional imediata sem distorcer o miolo:
 - **Escala Linear (padrão):** facilita a leitura direta das proporções em pontos percentuais, especialmente no modo `Foco (≤46%)`, onde a amplitude é pequena.
 - **Modo `Foco (≤46%)` (padrão) vs. `Todos` + `Escala Log (Todos)`:** abre o quadro no miolo onde estão os grandes partidos (até `46%` em X e `15%–58%` em Y); todos os partidos fora desse recorte são listados explicitamente abaixo do gráfico e podem ser inspecionados clicando em **`Todos`** (com opção de **`Escala Log (Todos)`** para comprimir *outliers* extremos).
-- **Diagonal `Y = X` (rotacionada ao longo da reta):** acima dela (verde) o repasse é proporcional ou superior; abaixo dela (terracota) há **zona de subfinanciamento** relativo.
+- **Diagonal `Y = X` (rotacionada ao longo da reta):** acima dela (amarelo solar) o repasse é proporcional ou superior; abaixo dela (laranja coral) há **zona de subfinanciamento** relativo.
 
 **Como ler o gráfico**
 - **Cada bolha** é um partido com pelo menos `10` candidaturas `APTO` e algum Fundo Público, desenhada das maiores (ao fundo) para as menores (à frente), com preenchimento semitransparente (`75%`) e borda sólida para não ocultar partidos menores atrás de grandes legendas.
 - **Eixo horizontal (X):** `% de candidatas mulheres (APTO)` no partido.
 - **Eixo vertical (Y):** `% de todo o Fundo Público (FEFC + FP)` do partido que foi para mulheres.
-- **Micro-legenda (canto superior direito):** explica a **Cor** (`Y ≥ X` verde vs. `Y < X` terracota) e o **Tamanho** (área proporcional ao volume total de Fundo Público do partido em R$).
+- **Micro-legenda (canto superior direito):** explica a **Cor** (`Y ≥ X` amarelo solar vs. `Y < X` laranja coral) e o **Tamanho** (área proporcional ao volume total de Fundo Público do partido em R$).
 - **Rótulos fixos seletivos + repulsão:** exibe siglas fixas apenas para os **6 maiores partidos** por volume do Fundo e para os **extremos relevantes** (ex.: `PSOL` no topo e `PMB` abaixo de 25% em 2022), posicionadas com algoritmo de repulsão (`d3-force`) e linhas de chamada finas.
-- **Linhas pontilhadas vermelhas em `30%` (X e Y) e rótulos de quadrante:** marcam o piso mínimo legal e identificam a *Zona de subfinanciamento* (abaixo de `Y = X`) e o *Descumprimento da cota* (abaixo de `30%` no eixo Y).
+- **Linhas pontilhadas em rosa vibrante nos `30%` (X e Y) e rótulos de quadrante:** marcam o piso mínimo legal e identificam a *Zona de subfinanciamento* (abaixo de `Y = X`) e o *Descumprimento da cota* (abaixo de `30%` no eixo Y).
 - **Interação:** passe o cursor sobre qualquer bolha para revelar seu rótulo e tooltip completo enquanto as demais bolhas esmaecem; **clique em uma bolha** para filtrar o partido.
 
 **Como ler o cartão ao passar o mouse (tooltip)**  
@@ -149,15 +149,15 @@ Ao repousar o cursor sobre uma bolha, aparecem 4 linhas (exemplo real de `UNIÃO
 4. **`Proporcionalidade: 0,95× (-1,7 p.p. · abaixo do proporcional)`:** mede se o partido cumpre a regra de proporcionalidade da ADI 5617 do STF (se mulheres são `35%` da chapa, deveriam receber ao menos `35%` do Fundo Público). A conta divide o eixo Y pelo eixo X (`31,6% ÷ 33,3% = 0,95×`) e mostra também a diferença em pontos percentuais (`31,6% − 33,3% = -1,7 p.p.`).
    - **Leitura intuitiva:** pense como *"para cada R$ 1,00 de Fundo Público que seria proporcional ao peso feminino na chapa, quanto de fato chegou às mulheres?"*
    - **`1,00×` (`0,0 p.p.` · R$ 1,00):** repasse perfeitamente proporcional (em cima da diagonal `Y = X`) — em média, cada mulher recebeu o mesmo valor público que cada homem.
-   - **`< 1,00×` (negativo · bolha terracota):** mulheres receberam proporcionalmente **menos** que seu peso na chapa (ex.: `0,95×` = **R$ 0,95** para cada R$ 1,00 proporcional).
-   - **`> 1,00×` (positivo · bolha verde):** mulheres receberam proporcionalmente **mais** (ex.: `PT` em 2022 marca `1,09× · +3,3 p.p.` = **R$ 1,09** para cada R$ 1,00 proporcional).
+   - **`< 1,00×` (negativo · bolha laranja coral):** mulheres receberam proporcionalmente **menos** que seu peso na chapa (ex.: `0,95×` = **R$ 0,95** para cada R$ 1,00 proporcional).
+   - **`> 1,00×` (positivo · bolha amarelo solar):** mulheres receberam proporcionalmente **mais** (ex.: `PT` em 2022 marca `1,09× · +3,3 p.p.` = **R$ 1,09** para cada R$ 1,00 proporcional).
 
 **O que os dados mostram**
 - No agregado nacional (`Federal + Estadual`), a regra judicial do STF (ADI 5617) funciona: em **2022**, mulheres são `34,2%` das candidaturas `APTO` e recebem `34,4%` do Fundo Público (`razão 1,00×`; `18` partidos acima/sobre a diagonal e `14` abaixo; `PT` e `PSDB` aparecem claramente acima da linha, enquanto `UNIÃO`, `PP`, `PL`, `PSB` e `MDB` ficam abaixo; `NOVO` em `0%` e `UP`/`PSTU`/`PCO` aparecem na nota de extremos). Em **2026**, são `35,9%` das candidaturas e recebem `36,6%` (`razão 1,02×`; `16` acima e `12` abaixo, com `PT` em destaque acima e `PL`/`PDT` abaixo). → **A Cota Funciona** no agregado.
 
 **Por que há tantos partidos acima de `1,00×` — e o que muda ao filtrar por cargo?**  
-Ver várias bolhas verdes não é erro de cálculo nem enfraquece a pergunta principal; na prática, revela **dois mecanismos importantes**:
-1. **Mais bolhas verdes não significa mais dinheiro:** em `Federal + Estadual`, os partidos acima de `1,00×` são maioria em quantidade (`18/32` em 2022; `16/28` em 2026), mas tendem a ser menores — **os partidos abaixo da diagonal concentram mais da metade de todo o Fundo Público** (`51,5%` em 2022 e `52,9%` em 2026).
+Ver várias bolhas amarelas não é erro de cálculo nem enfraquece a pergunta principal; na prática, revela **dois mecanismos importantes**:
+1. **Mais bolhas amarelas não significa mais dinheiro:** em `Federal + Estadual`, os partidos acima de `1,00×` são maioria em quantidade (`18/32` em 2022; `16/28` em 2026), mas tendem a ser menores — **os partidos abaixo da diagonal concentram mais da metade de todo o Fundo Público** (`51,5%` em 2022 e `52,9%` em 2026).
 2. **Compensação entre cargos (`Federal` vs. `Estadual`):** como o TSE cobra os 30% sobre o bolo total do partido, muitas legendas pagam acima da proporção nas campanhas **Estaduais** (mais baratas) e subfinanciam mulheres nas campanhas **Federais** (mais caras e disputadas). Clique nos filtros de cargo no topo para ver a virada:
    - **Só Deputado Federal:** em 2022 cai para **`0,91×`** (`35,3%` cand. → `32,0%` Fundo Público, com **`76,9%`** do dinheiro em partidos abaixo da diagonal); em 2026 cai para **`0,90×`** (`37,3%` → `33,8%`, com **`87,8%`** do dinheiro abaixo da diagonal). → **Vaza nesta Etapa**.
    - **Só Deputado Estadual:** em 2022 sobe para **`1,17×`** (`33,6%` → `39,4%`); em 2026 sobe para **`1,24×`** (`35,0%` → `43,3%`).
@@ -177,12 +177,12 @@ Rastreia **para onde vai o dinheiro público gasto pelas campanhas** de mulheres
 **Como ler o gráfico**
 - Leia sempre da **esquerda para a direita** (a espessura de cada faixa é proporcional ao valor em **R$ milhões**):
   1. **Coluna esquerda:** `Fundo Público (FEFC+FP)` total efetivamente gasto.
-  2. **Coluna central:** divisão entre `Candidatas (F)` (terracota) e `Candidatos (M)` (azul).
+  2. **Coluna central:** divisão entre `Candidatas (F)` (amarelo solar) e `Candidatos (M)` (rosa vibrante).
   3. **Coluna direita (5 destinos):**
-     - **Campanha Direta (Exclusiva)** *(verde)*: fornecedores externos (gráficas, equipe local, motoristas, produtoras etc.) que atenderam **apenas 1 candidatura `APTO`** dentro daquela chapa naquele estado (`UF × Chapa`). Indica gasto em estrutura própria da campanha.
-     - **Fornecedor Compartilhado** *(laranja)*: fornecedores externos (mesmo CNPJ ou CPF) contratados por **2 ou mais candidaturas `APTO`** da mesma chapa no mesmo estado. Inclui casos totalmente legítimos (mesmo contador, advogado eleitoral, gráfica grande ou plataformas como Meta/Google), mas também é o canal monitorado para desvios indiretos (ex.: material "dobradinha" pago por candidatas para promover outro nome da chapa).
-     - **Direção Partidária** *(laranja)*: repasses/doações financeiras de volta para o partido.
-     - **Outras Candidaturas (M)** *(azul)* e **Outras Candidaturas (F/ND)** *(cinza)*: repasses de recursos para outros candidatos.
+     - **Campanha Direta (Exclusiva)** *(verde esmeralda)*: fornecedores externos (gráficas, equipe local, motoristas, produtoras etc.) que atenderam **apenas 1 candidatura `APTO`** dentro daquela chapa naquele estado (`UF × Chapa`). Indica gasto em estrutura própria da campanha.
+     - **Fornecedor Compartilhado** *(laranja coral)*: fornecedores externos (mesmo CNPJ ou CPF) contratados por **2 ou mais candidaturas `APTO`** da mesma chapa no mesmo estado. Inclui casos totalmente legítimos (mesmo contador, advogado eleitoral, gráfica grande ou plataformas como Meta/Google), mas também é o canal monitorado para desvios indiretos (ex.: material "dobradinha" pago por candidatas para promover outro nome da chapa).
+     - **Direção Partidária** *(laranja coral)*: repasses/doações financeiras de volta para o partido.
+     - **Outras Candidaturas (M)** *(rosa vibrante)* e **Outras Candidaturas (F/ND)** *(branco)*: repasses de recursos para outros candidatos.
 - **Cuidado na interpretação:** compartilhar fornecedor, por si só, **não é prova de fraude** — tanto homens quanto mulheres gastam fatia parecida em fornecedores compartilhados (`~31%–36%`). Por isso existe a segunda aba (**Rede de Hubs**), que filtra apenas os fornecedores compartilhados ligados a campanhas com baixíssima votação.
 - **Nota metodológica importante:** nos arquivos do TSE, a tabela de despesas contratadas não diz qual conta bancária (pública ou privada) pagou cada nota fiscal. Por isso, o Sankey atribui a parcela pública de cada despesa proporcionalmente à fração de Fundo Público na receita total da candidatura (`(FEFC + FP) / receita_total`).
 
@@ -200,13 +200,13 @@ Um fornecedor entra como **fornecedor-hub** somente se cumprir **duas condiçõe
 
 **Como ler o gráfico**
 - **Círculos pontilhados de fundo com rótulo (`Partido/UF`):** agrupam visualmente cada constelação conectada (um fornecedor-hub e suas candidaturas, ou vários hubs que compartilham candidaturas no mesmo partido/UF).
-- **Quadrados pretos:** fornecedores-hub (empresas ou fornecedores anonimizados; por LGPD, pessoas físicas e MEIs têm o nome civil mascarado).
+- **Quadrados brancos:** fornecedores-hub (empresas ou fornecedores anonimizados; por LGPD, pessoas físicas e MEIs têm o nome civil mascarado).
 - **Círculos:** candidaturas **anônimas** ligadas a esses hubs:
-  - **Terracota:** candidata mulher; **Azul:** candidato homem.
-  - **Círculo maior com borda preta grossa:** candidatura com **`< 20` votos** (sinal de atenção).
+  - **Amarelo solar:** candidata mulher; **Rosa vibrante:** candidato homem.
+  - **Círculo maior com borda coral grossa:** candidatura com **`< 20` votos** (sinal de atenção).
 - **Linhas (arestas):** ligam a candidatura ao fornecedor que ela contratou; **quanto mais grossa a linha**, maior a fração do orçamento daquela candidatura concentrada naquele único fornecedor.
 - **Legenda no rodapé:** resume os quatro símbolos diretamente no gráfico.
-- **Interação:** passe o cursor sobre um **quadrado preto** para destacar apenas aquela constelação e suas ligações em terracota, além de ver o resumo completo (nome/tipo do fornecedor, `Partido/UF`, total de candidaturas, quantas tiveram `< 20` votos e valor total); **clique no quadrado** para filtrar aquele partido.
+- **Interação:** passe o cursor sobre um **quadrado branco** para destacar apenas aquela constelação e suas ligações em amarelo solar, além de ver o resumo completo (nome/tipo do fornecedor, `Partido/UF`, total de candidaturas, quantas tiveram `< 20` votos e valor total); **clique no quadrado** para filtrar aquele partido.
 
 **O que os dados mostram**
 - Em **2022**, a base registra `157` fornecedores-hub ligando `595` candidaturas (`827` conexões). Em **2026**, são `60` hubs ligando `358` candidaturas (`528` conexões).
@@ -219,14 +219,14 @@ Um fornecedor entra como **fornecedor-hub** somente se cumprir **duas condiçõe
 
 **O que está sendo medido**  
 Mostra o "funil" de perda feminina nos **10 partidos que mais elegeram deputados** no recorte (partidos com `n ≥ 15` `APTO` e pelo menos `1` eleito), acompanhando a fatia de mulheres em três momentos consecutivos:
-1. **`1. Candidatas`** *(barra bege)*: `% de mulheres entre as candidaturas APTO do partido`.
-2. **`2. Votos nominais`** *(barra laranja)*: `% dos votos nominais válidos do partido que foram para mulheres`.
-3. **`3. Eleitas`** *(barra terracota)*: `% das cadeiras conquistadas pelo partido ocupadas por mulheres` (apenas eleitas por QP ou Média; suplentes não contam).
+1. **`1. Candidatas`** *(barra amarelo solar)*: `% de mulheres entre as candidaturas APTO do partido`.
+2. **`2. Votos nominais`** *(barra rosa vibrante)*: `% dos votos nominais válidos do partido que foram para mulheres`.
+3. **`3. Eleitas`** *(barra laranja coral)*: `% das cadeiras conquistadas pelo partido ocupadas por mulheres` (apenas eleitas por QP ou Média; suplentes não contam).
 
 **Como ler o gráfico**
 - **Eixo horizontal:** os 10 partidos, ordenados do maior para o menor número de cadeiras conquistadas.
 - **Eixo vertical (Y):** participação feminina em `%`.
-- **Linha horizontal verde tracejada:** referência dos **30%**.
+- **Linha horizontal branca tracejada:** referência dos **30%**.
 - **Como ler a "escadinha" de cada partido:**
   - Queda da **barra 1 → barra 2:** perda na **disputa por votos** (mulheres recebem menos votos médios que homens da mesma legenda).
   - Queda da **barra 2 → barra 3:** perda na **conversão de votos em cadeiras** (votos femininos ficam pulverizados em candidatas que não atingem o topo da lista do partido, enquanto poucos "puxadores" homens levam as vagas).
@@ -252,7 +252,7 @@ Os três gráficos deste ato investigam **sinais estatísticos compatíveis com 
 ### 6. H6 — Barras Agrupadas: Volume de Sinais Observáveis por Gênero
 
 **O que está sendo medido**  
-Compara a proporção de **Mulheres** (terracota) e **Homens** (azul) `APTO` que acumulam `0 sinais`, `1 sinal` ou `2 sinais (A+B ou A+C)`.
+Compara a proporção de **Mulheres** (amarelo solar) e **Homens** (rosa vibrante) `APTO` que acumulam `0 sinais`, `1 sinal` ou `2 sinais (A+B ou A+C)`.
 
 **Como ler o gráfico**
 - **3 grupos no eixo horizontal:** `0 sinais` (nenhum alerta), `1 sinal` (um indicador isolado, muito influenciado pelo Sinal C que também ocorre em compras/repasses coletivos legítimos) e **`2 sinais (A+B/C)`** (a coluna crítica: combina votação mínima **com** conta zerada ou pacote padronizado).
@@ -272,13 +272,13 @@ Este passo traz **dois gráficos** (Boxplot acima e Mapa do Brasil abaixo) para 
 #### Gráfico 7A (superior) — Boxplot: Taxa de Sinais (`≥ 2`) por Faixa de `% de Mulheres na Chapa`
 
 **O que está sendo medido**  
-Separa todas as chapas (`n ≥ 4`) em 4 grupos conforme o percentual de mulheres registradas: `< 30%`, **`30%–33,3%`** (destacada em terracota), `33,3%–40%` e `> 40%`. Para cada chapa, calcula qual `%` das suas candidatas mulheres tem `≥ 2 sinais`.
+Separa todas as chapas (`n ≥ 4`) em 4 grupos conforme o percentual de mulheres registradas: `< 30%`, **`30%–33,3%`** (destacada em laranja coral), `33,3%–40%` e `> 40%`. Para cada chapa, calcula qual `%` das suas candidatas mulheres tem `≥ 2 sinais`.
 
 **Como ler o gráfico**
 - **Eixo horizontal (X):** as 4 faixas de composição da chapa.
 - **Eixo vertical (Y):** `% de candidatas mulheres com ≥ 2 sinais` dentro de cada chapa (`0%` a `100%`).
-- **Boxplot (caixa e traços pretos):** mostra a dispersão entre chapas (a maioria das chapas tem `0%` de alertas, por isso a mediana fica colada no chão e os círculos soltos acima mostram chapas outliers com taxas altas).
-- **Círculo grande terracota com borda branca em cada faixa:** é o ponto mais importante para comparar os grupos — representa a **taxa agregada ponderada** (soma de todas as mulheres com `≥ 2 sinais` naquela faixa dividida por todas as mulheres daquela faixa). Passe o mouse sobre ele para ler os números exatos.
+- **Boxplot (caixa e traços brancos):** mostra a dispersão entre chapas (a maioria das chapas tem `0%` de alertas, por isso a mediana fica colada no chão e os círculos soltos acima mostram chapas outliers com taxas altas).
+- **Círculo grande amarelo solar com borda escura em cada faixa:** é o ponto mais importante para comparar os grupos — representa a **taxa agregada ponderada** (soma de todas as mulheres com `≥ 2 sinais` naquela faixa dividida por todas as mulheres daquela faixa). Passe o mouse sobre ele para ler os números exatos.
 
 **O que os dados mostram**
 - **2022:** nas chapas coladas no piso **`30%–33,3%`** (`571` chapas), **`3,4%`** das mulheres acumulam `≥ 2 sinais`, quase **4 vezes mais** do que nas chapas **`> 40%`** (`0,9%` em `141` chapas). → **Vaza nesta Etapa**.
@@ -290,8 +290,8 @@ Separa todas as chapas (`n ≥ 4`) em 4 grupos conforme o percentual de mulheres
 Mostra, estado por estado, qual percentual das candidatas mulheres `APTO` acumulou **`≥ 2 sinais`**.
 
 **Como ler o gráfico**
-- **Escala de cor contínua (amarelo → laranja → vermelho escuro):** vai de `0%` até `≥ 12%` de candidatas com `≥ 2 sinais`. Quanto mais vermelho o estado, maior a concentração de alertas.
-- **Cinza claro:** estado `Inconclusivo` (menos de 10 mulheres ou menos de 70% de entregas `FINAL` no recorte filtrado).
+- **Escala de cor contínua (verde esmeralda → amarelo solar → laranja coral):** vai de `0%` até `≥ 12%` de candidatas com `≥ 2 sinais`. Quanto mais próximo de laranja coral o estado, maior a concentração de alertas.
+- **Verde-escuro fosco:** estado `Inconclusivo` (menos de 10 mulheres ou menos de 70% de entregas `FINAL` no recorte filtrado).
 - **Interação:** passe o mouse para ver a taxa e a contagem exata (ex.: em **2022**, lideram **SP** com `11,4%` [`122/1.069`], **RR** com `5,9%` e **MA** com `4,6%`; em **2026**, **RR** `7,1%`, **AL** `4,8%` e **PB** `3,7%`). **Clique em qualquer UF** para filtrar o painel inteiro para aquele estado.
 
 ---
@@ -302,7 +302,7 @@ Mostra, estado por estado, qual percentual das candidatas mulheres `APTO` acumul
 Testa a hipótese de **adaptação tática** após o endurecimento da jurisprudência (Súmula 73 do TSE): os partidos pararam de entregar "contas zeradas" óbvias e passaram a registrar despesas/repasses padronizados em lote?
 
 **Como ler o gráfico**
-- Compara **sempre os dois anos lado a lado** (**2022** em bege/cinza vs. **2026** em terracota) sobre o universo de **candidatas mulheres `APTO`** (respeitando filtros de Cargo, UF, Partido e Limiar A).
+- Compara **sempre os dois anos lado a lado** (**2022** em rosa vibrante vs. **2026** em amarelo solar) sobre o universo de **candidatas mulheres `APTO`** (respeitando filtros de Cargo, UF, Partido e Limiar A).
 - **4 pares de barras no eixo horizontal:**
   1. **`Zerada (B)`:** `%` de candidatas com conta declarada zerada (`r = 0` e `e = 0`).
   2. **`Padronizada (C)`:** `%` de candidatas inseridas em lote padronizado de despesa externa ou repasse público (`≥ 3` no mesmo partido/UF).
@@ -334,13 +334,13 @@ Para cada UF ou partido, o sistema calcula 5 indicadores na mesma lógica (quant
 
 **O que está sendo medido**  
 Para cada estado, o algoritmo compara os 5 scores acima e identifica qual etapa teve a **menor pontuação relativa** (desde que abaixo de `0,95`), pintando o estado com a cor daquele gargalo:
-- **Marrom:** `Papel`
-- **Laranja:** `Dinheiro`
-- **Terracota/vermelho:** `Urna (Votos)`
-- **Vinho/bordô:** `Urna (Cadeiras)`
-- **Mostarda:** `Integridade`
-- **Verde:** `Sem Vazamento Crítico` (todas as etapas ≥ `0,95`)
-- **Cinza claro:** `Inconclusivo` (amostra `< 10` `APTO`, `FINAL < 70%` ou menos de 3 eixos disponíveis)
+- **Branco:** `Papel`
+- **Amarelo solar:** `Dinheiro`
+- **Laranja coral:** `Urna (Votos)`
+- **Rosa vibrante:** `Urna (Cadeiras)`
+- **Âmbar:** `Integridade`
+- **Verde esmeralda claro:** `Sem Vazamento Crítico`
+- **Verde-escuro fosco:** `Inconclusivo` (amostra `< 10` `APTO`, `FINAL < 70%` ou menos de 3 eixos disponíveis)
 
 **O que os dados mostram**
 - Em **2022**, **23 UFs** têm o pior gargalo em **`Urna (Votos)`** e **4 UFs** (**DF, MT, SC e TO**) perdem proporcionalmente mais na etapa **`Urna (Cadeiras)`**.

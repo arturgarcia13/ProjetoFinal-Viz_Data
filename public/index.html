@@ -5,22 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>A Cota de Gênero Leva Mulheres ao Poder ou Apenas ao Papel? (2022–2026)</title>
   <meta name="description" content="Narrativa interativa em scrollytelling investigando onde a cota de gênero de 30% funciona ou vaza nas eleições proporcionais brasileiras (2022 vs. 2026).">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f6f2ea'/%3E%3Cpath d='M14 48V18h10v30zm16 0V28h10v20zm16 0V14h10v34z' fill='%23b4452f'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2300805A'/%3E%3Cpath d='M12 50V18h11v32z' fill='%23FCE34D'/%3E%3Cpath d='M27 50V28h11v22z' fill='%23FF7AE5'/%3E%3Cpath d='M42 50V14h11v36z' fill='%23FF5E2B'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="masthead">
-    <div class="container">
-      <p class="eyebrow">UFC · Visualização de Dados · Microdados Oficiais do TSE (2022 vs. 2026)</p>
-      <h1>A Cota de Gênero Leva Mulheres ao Poder <em>ou Apenas ao Papel?</em></h1>
-      <p class="deck">Uma investigação em cinco atos — registro de chapas, financiamento, urnas, sinais de integridade e geografia — comparando o baseline consolidado de <strong>2022</strong> com o pleito de <strong>2026</strong> sob a mesma regra de federações partidárias.</p>
-      <div class="masthead-meta">
-        <span>Recorte: Deputadas/os Federais e Estaduais (27 UFs)</span>
-        <span>Baseline 2022 · Comparativo direto 2026 (2018 auxiliar)</span>
-        <span>Privacidade: dados 100% anonimizados (LGPD)</span>
+    <div class="container hero-split">
+      <div class="hero-art" aria-hidden="true">
+        <!-- Silhuetas em camadas chapadas (Rosa ao fundo, Laranja no meio, Amarelo na frente) com sangria inferior-esquerda -->
+        <svg class="hero-silhouettes" viewBox="0 0 460 390" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMax meet">
+          <!-- Camada 3 (fundo): Rosa Vibrante #FF7AE5 -->
+          <path fill="#FF7AE5" d="M-12 390V214c12-16 26-28 48-34 8-34-10-58-2-90 7-28 32-48 64-50 38-2 66 20 74 52 7 28-6 52 14 70 6 5 11 12 8 19-4 8-14 8-16 14-2 6 8 11 7 19-1 9-12 10-12 18 0 11 10 20 8 34-2 16-14 27-26 36l48 88H-12Z"/>
+          <!-- Camada 2 (meio): Laranja Coral #FF5E2B -->
+          <path fill="#FF5E2B" d="M36 390c4-46 22-86 58-102 6-14 4-28-4-42-16-26-14-64 8-88 18-20 48-28 76-22 30 6 50 28 54 58 2 14-2 26 2 35 6 12 18 19 20 28 2 8-8 14-12 19-2 3 4 9 2 15-2 7-11 9-11 15 0 8 9 12 7 23-3 15-20 22-37 22-14 0-24-4-32-10-4 16 12 32 32 49H36Z"/>
+          <!-- Camada 1 (frente): Amarelo Solar #FCE34D -->
+          <path fill="#FCE34D" d="M126 390c6-38 22-68 56-84 10-5 16-14 14-25-24-12-38-38-36-68 2-34 24-60 58-66 10-18 32-24 50-16 18 8 28 26 24 45 14 12 22 30 22 50 0 14-3 24 4 33 7 9 20 17 21 25 1 7-9 12-13 17-2 3 4 9 2 14-3 6-11 8-11 14 0 8 7 13 4 23-4 13-22 18-40 16-12-1-22-5-30-10-2 12 10 22 24 32H126Z"/>
+        </svg>
+      </div>
+
+      <div class="hero-copy">
+        <span class="brand-star" aria-hidden="true">
+          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/>
+          </svg>
+        </span>
+        <p class="eyebrow">Pesquisa · UFC · Visualização de Dados · Microdados Oficiais do TSE (2022 vs. 2026)</p>
+        <h1>A Cota de Gênero Leva Mulheres ao Poder <em>ou Apenas ao Papel?</em></h1>
+        <p class="deck">Uma investigação em cinco atos — registro de chapas, financiamento, urnas, sinais de integridade e geografia — comparando o baseline consolidado de <strong>2022</strong> com o pleito de <strong>2026</strong> sob a mesma regra de federações partidárias.</p>
+        <div class="masthead-meta">
+          <span>Deputadas/os Federais e Estaduais (27 UFs)</span>
+          <span>Baseline 2022 · Comparativo direto 2026</span>
+          <span>Dados 100% anonimizados (LGPD)</span>
+        </div>
+        <div class="hero-actions">
+          <a href="#ato-1" class="btn-primary">Leia a investigação</a>
+          <a href="#ato-5" class="btn-ghost">Explore o mapa por UF</a>
+        </div>
       </div>
     </div>
   </header>
+
+  <!-- Bloco 02 do Brandbook: Faixa de Big Numbers reativa aos filtros -->
+  <section class="stats-band" aria-label="Panorama quantitativo do recorte atual">
+    <div class="container">
+      <p class="stats-kicker" id="hero-stats-kicker">Panorama do recorte · 2022 · Federal + Estadual</p>
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="big-stat-cand">—</div>
+          <p class="stat-label" id="big-stat-cand-label">das candidaturas aptas são de mulheres no recorte selecionado.</p>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="big-stat-pub">—</div>
+          <p class="stat-label" id="big-stat-pub-label">do Fundo Público (FEFC + FP) foi destinado às candidatas.</p>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="big-stat-seats">—</div>
+          <p class="stat-label" id="big-stat-seats-label">das cadeiras eleitas foram ocupadas por mulheres na urna.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <div class="filter-bar" id="filter-bar">
     <div class="container filter-row">
@@ -65,7 +109,10 @@
     <div class="narrative-pane" id="narrative-pane">
       <!-- ATO 1 -->
       <section id="ato-1" class="act-marker" tabindex="-1">
-        <p class="act-kicker">Ato 01 · No Papel (P1)</p>
+        <div class="act-kicker-row">
+          <svg class="act-star" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/></svg>
+          <p class="act-kicker">Ato 01 · No Papel (P1)</p>
+        </div>
         <h2>As chapas cumprem a cota — ou transformam o piso de 30% em teto?</h2>
       </section>
 
@@ -81,7 +128,10 @@
 
       <!-- ATO 2 -->
       <section id="ato-2" class="act-marker" tabindex="-1">
-        <p class="act-kicker">Ato 02 · No Dinheiro (P2)</p>
+        <div class="act-kicker-row">
+          <svg class="act-star" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/></svg>
+          <p class="act-kicker">Ato 02 · No Dinheiro (P2)</p>
+        </div>
         <h2>O financiamento gera campanhas competitivas ou apenas cumpre a lei?</h2>
       </section>
 
@@ -116,7 +166,10 @@
 
       <!-- ATO 3 -->
       <section id="ato-3" class="act-marker" tabindex="-1">
-        <p class="act-kicker">Ato 03 · Na Urna (P3)</p>
+        <div class="act-kicker-row">
+          <svg class="act-star" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/></svg>
+          <p class="act-kicker">Ato 03 · Na Urna (P3)</p>
+        </div>
         <h2>A candidatura vira voto nominal e cadeira parlamentar?</h2>
       </section>
 
@@ -131,7 +184,10 @@
 
       <!-- ATO 4 -->
       <section id="ato-4" class="act-marker" tabindex="-1">
-        <p class="act-kicker">Ato 04 · A Fraude Oculta (P4)</p>
+        <div class="act-kicker-row">
+          <svg class="act-star" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/></svg>
+          <p class="act-kicker">Ato 04 · A Fraude Oculta (P4)</p>
+        </div>
         <h2>Sinais estatísticos compatíveis com candidaturas fictícias</h2>
       </section>
 
@@ -166,13 +222,16 @@
 
       <!-- ATO 5 -->
       <section id="ato-5" class="act-marker" tabindex="-1">
-        <p class="act-kicker">Ato 05 · Geografia da Exclusão (P5)</p>
+        <div class="act-kicker-row">
+          <svg class="act-star" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/></svg>
+          <p class="act-kicker">Ato 05 · Geografia da Exclusão (P5)</p>
+        </div>
         <h2>Onde o sistema falha mais em cada UF e partido?</h2>
       </section>
 
       <article class="story-step" data-step="h9" data-act="5" tabindex="0">
         <div class="step-head">
-          <span class="step-tag">H9 · Mapa Crítico por UF & Coordenadas Paralelas</span>
+          <span class="step-tag">H9 · Mapa Crítico por UF &amp; Coordenadas Paralelas</span>
           <div class="verdict-slot" id="verdict-h9"></div>
         </div>
         <p>Cada UF e cada partido apresenta um ponto crítico distinto ao longo dos cinco eixos: inclusão no papel, equidade de FEFC, rendimento na urna, sucesso em cadeiras e integridade. UFs ou recortes sem amostra mínima exibem estado <strong>Inconclusivo</strong>.</p>

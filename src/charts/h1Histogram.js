@@ -2,15 +2,18 @@ import * as d3 from 'd3';
 import { createChartTooltip, fmtInt, fmtPct, fmtSignedPP } from './tooltip.js';
 
 const PALETTE = {
-  y2022: '#8b7e74',
-  y2026: '#b4452f',
-  warn: '#8c6a1f',
-  warnBg: '#f6eedb',
-  warnBorder: '#d7c28e',
-  ink: '#1b1a17',
-  muted: '#5d574d',
-  grid: '#e6dfd3',
-  axis: '#bfb4a3',
+  y2022: '#FF7AE5',
+  y2026: '#FCE34D',
+  warn: '#FF5E2B',
+  warnText: '#001A12',
+  floorBg: '#005C40',
+  floorPill: '#FCE34D',
+  floorPillText: '#003D2B',
+  ink: '#FFFFFF',
+  muted: 'rgba(255, 255, 255, 0.84)',
+  zero: 'rgba(255, 255, 255, 0.72)',
+  grid: 'rgba(255, 255, 255, 0.14)',
+  axis: 'rgba(255, 255, 255, 0.42)',
 };
 
 function niceAxisMax(rawMax) {
@@ -146,6 +149,7 @@ export function renderH1Histogram(
     .attr('width', width)
     .attr('height', height)
     .attr('role', 'img')
+    .style('font-family', 'Barlow, Inter, system-ui, sans-serif')
     .attr(
       'aria-label',
       `Histograma espelhado comparando % de mulheres por chapa em 2022 e 2026 (${isApto ? 'Aptas' : 'Registradas'})`,
@@ -206,8 +210,8 @@ export function renderH1Histogram(
       .attr('width', width - 8)
       .attr('height', barH + 10)
       .attr('rx', 6)
-      .attr('fill', PALETTE.warnBg)
-      .attr('fill-opacity', 0.55);
+      .attr('fill', PALETTE.floorBg)
+      .attr('fill-opacity', 0.85);
   }
 
   // Tooltip comparativo flutuante compartilhado
@@ -272,7 +276,7 @@ export function renderH1Histogram(
       .attr('text-anchor', 'end')
       .attr('font-size', isCompact ? 10.5 : 11.5)
       .attr('font-weight', 600)
-      .attr('fill', n22 > 0 ? PALETTE.y2022 : '#a99e8e')
+      .attr('fill', n22 > 0 ? PALETTE.y2022 : PALETTE.zero)
       .text(n22 > 0 ? fmtPct(p22) : '0');
 
     // Coluna central (faixa)
@@ -284,9 +288,7 @@ export function renderH1Histogram(
         .attr('height', barH - 2)
         .attr('rx', 11)
         .attr('ry', 11)
-        .attr('fill', PALETTE.warnBg)
-        .attr('stroke', PALETTE.warnBorder)
-        .attr('stroke-width', 1);
+        .attr('fill', PALETTE.floorPill);
     }
     rowG.append('text')
       .attr('class', 'h1-center-label')
@@ -295,7 +297,7 @@ export function renderH1Histogram(
       .attr('text-anchor', 'middle')
       .attr('font-size', isCompact ? 10.5 : 11.5)
       .attr('font-weight', bin.zone === 'floor' ? 700 : 600)
-      .attr('fill', bin.zone === 'floor' ? PALETTE.warn : (bin.zone === 'below' ? PALETTE.muted : PALETTE.ink))
+      .attr('fill', bin.zone === 'floor' ? PALETTE.floorPillText : (bin.zone === 'below' ? PALETTE.muted : PALETTE.ink))
       .text(bin.label);
 
     // Barra direita (2026)
@@ -318,7 +320,7 @@ export function renderH1Histogram(
       .attr('text-anchor', 'start')
       .attr('font-size', isCompact ? 10.5 : 11.5)
       .attr('font-weight', 600)
-      .attr('fill', n26 > 0 ? PALETTE.y2026 : '#a99e8e')
+      .attr('fill', n26 > 0 ? PALETTE.y2026 : PALETTE.zero)
       .text(n26 > 0 ? fmtPct(p26) : '0');
 
     // Interações hover + foco
@@ -361,9 +363,7 @@ export function renderH1Histogram(
     .attr('height', 19)
     .attr('rx', 9.5)
     .attr('ry', 9.5)
-    .attr('fill', PALETTE.warnBg)
-    .attr('stroke', PALETTE.warn)
-    .attr('stroke-width', 1);
+    .attr('fill', PALETTE.warn);
 
   quotaG.append('text')
     .attr('x', centerX)
@@ -371,7 +371,7 @@ export function renderH1Histogram(
     .attr('text-anchor', 'middle')
     .attr('font-size', isCompact ? 9.5 : 10.5)
     .attr('font-weight', 700)
-    .attr('fill', PALETTE.warn)
+    .attr('fill', PALETTE.warnText)
     .text('Piso legal: 30%');
 
   // Eixos inferiores espelhados simétricos

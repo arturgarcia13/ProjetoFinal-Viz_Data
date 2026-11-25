@@ -49,11 +49,11 @@ export function renderH6Signals(container, h6Data, { width = 700 } = {}) {
     marginRight: 32,
     marginBottom: 44,
     marginLeft: 50,
-    style: { background: 'transparent', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px' },
+    style: { background: 'transparent', color: '#FFFFFF', fontFamily: 'Barlow, Inter, system-ui, sans-serif', fontSize: '12px' },
     fx: { label: 'Volume de sinais observáveis (máximo = 2)', domain: ['0 sinais', '1 sinal', '2 sinais (A+B/C)'], padding: 0.2 },
     x: { domain: ['Mulheres', 'Homens'], axis: null },
     y: { label: '↑ % das candidaturas APTO', tickFormat: (d) => `${d}%`, grid: true },
-    color: { domain: ['Mulheres', 'Homens'], range: ['#b4452f', '#3d5a80'], legend: true },
+    color: { domain: ['Mulheres', 'Homens'], range: ['#FCE34D', '#FF7AE5'], legend: true },
     marks: [
       Plot.barY(rows, {
         fx: 'sinais',
@@ -61,7 +61,7 @@ export function renderH6Signals(container, h6Data, { width = 700 } = {}) {
         y: 'pct',
         fill: 'genero',
       }),
-      Plot.ruleY([0]),
+      Plot.ruleY([0], { stroke: 'rgba(255, 255, 255, 0.45)' }),
     ],
   });
 

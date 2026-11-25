@@ -36,7 +36,7 @@ export function renderH5Conversion(container, h5Data, { width = 700, onSelectPar
     marginRight: 18,
     marginBottom: 46,
     marginLeft: 48,
-    style: { background: 'transparent', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px' },
+    style: { background: 'transparent', color: '#FFFFFF', fontFamily: 'Barlow, Inter, system-ui, sans-serif', fontSize: '12px' },
     fx: { label: null, domain: topParties.map((p) => p.party), padding: 0.16 },
     x: { domain: stageOrder, axis: null },
     y: {
@@ -47,7 +47,7 @@ export function renderH5Conversion(container, h5Data, { width = 700, onSelectPar
     },
     color: {
       domain: stageOrder,
-      range: ['#c7b8a1', '#d97a4a', '#b4452f'],
+      range: ['#FCE34D', '#FF7AE5', '#FF5E2B'],
       legend: true,
     },
     marks: [
@@ -57,8 +57,8 @@ export function renderH5Conversion(container, h5Data, { width = 700, onSelectPar
         y: 'pct',
         fill: 'stage',
       }),
-      Plot.ruleY([30], { stroke: '#2f6f5e', strokeDasharray: '4,3', strokeWidth: 1.5 }),
-      Plot.ruleY([0]),
+      Plot.ruleY([30], { stroke: '#FFFFFF', strokeDasharray: '4,3', strokeWidth: 1.5 }),
+      Plot.ruleY([0], { stroke: 'rgba(255, 255, 255, 0.45)' }),
     ],
   });
 

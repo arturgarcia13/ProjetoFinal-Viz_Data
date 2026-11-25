@@ -10,13 +10,13 @@ import {
 } from './tooltip.js';
 
 const STAGE_COLOR = {
-  'Papel': '#7f5539',
-  'Dinheiro': '#d97a4a',
-  'Urna (Votos)': '#b4452f',
-  'Urna (Cadeiras)': '#6d2e46',
-  'Integridade': '#c9971b',
-  'Sem Vazamento Crítico': '#2f6f5e',
-  'Inconclusivo': '#cbc3b6',
+  'Papel': '#FFFFFF',
+  'Dinheiro': '#FCE34D',
+  'Urna (Votos)': '#FF5E2B',
+  'Urna (Cadeiras)': '#FF7AE5',
+  'Integridade': '#FFB020',
+  'Sem Vazamento Crítico': '#00B884',
+  'Inconclusivo': '#245B49',
 };
 
 function bottleneckTone(bottleneck) {
@@ -42,14 +42,15 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
   const svg = d3.select(tipCtrl.wrap).append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', width)
-    .attr('height', height);
+    .attr('height', height)
+    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
 
   const projection = d3.geoMercator().fitExtent([[16, 10], [width - 16, height - 56]], brUfGeo);
   const path = d3.geoPath(projection);
 
   const h9ByUf = new Map(h9Data.ufRows.map((u) => [u.key, u]));
   const h7ByUf = new Map(h7Data.byUf.map((u) => [u.uf, u]));
-  const h7Scale = d3.scaleSequential(d3.interpolateYlOrRd).domain([0, 0.12]);
+  const h7Scale = d3.scaleSequential(d3.interpolateRgbBasis(['#00805A', '#FCE34D', '#FF5E2B'])).domain([0, 0.12]);
 
   const ufPaths = svg.append('g')
     .selectAll('path')
@@ -73,7 +74,7 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
     })
     .attr('stroke', (d) => {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
-      return selectedUF === uf ? '#1b1a17' : '#fffdf9';
+      return selectedUF === uf ? '#FFFFFF' : '#003D2B';
     })
     .attr('stroke-width', (d) => {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
@@ -153,12 +154,12 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
       {
         onEnter: () => {
           d3.select(this)
-            .attr('stroke', '#1b1a17')
+            .attr('stroke', '#FFFFFF')
             .attr('stroke-width', isSelected ? 2.5 : 1.9);
         },
         onLeave: () => {
           d3.select(this)
-            .attr('stroke', isSelected ? '#1b1a17' : '#fffdf9')
+            .attr('stroke', isSelected ? '#FFFFFF' : '#003D2B')
             .attr('stroke-width', isSelected ? 2.5 : 1);
         },
       },
@@ -185,8 +186,8 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
       yOff += 18;
     }
     const g = leg.append('g').attr('transform', `translate(${xOff}, ${yOff})`);
-    g.append('rect').attr('width', 11).attr('height', 11).attr('rx', 2).attr('fill', color);
-    g.append('text').attr('x', 15).attr('y', 9.5).attr('font-size', 10.5).attr('fill', '#1b1a17').text(label);
+    g.append('rect').attr('width', 11).attr('height', 11).attr('rx', 2).attr('fill', color).attr('stroke', 'rgba(255, 255, 255, 0.25)').attr('stroke-width', 0.6);
+    g.append('text').attr('x', 15).attr('y', 9.5).attr('font-size', 10.5).attr('fill', '#FFFFFF').text(label);
     xOff += itemW + 8;
   });
 }
@@ -232,7 +233,8 @@ export function renderParallelCoordinates(container, h9Data, {
   const svg = d3.select(tipCtrl.wrap).append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', width)
-    .attr('height', height);
+    .attr('height', height)
+    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
 
   const x = d3.scalePoint()
     .domain(axes.map((a) => a.key))
@@ -339,7 +341,7 @@ export function renderParallelCoordinates(container, h9Data, {
     .attr('text-anchor', 'middle')
     .attr('font-size', 10.5)
     .attr('font-weight', '600')
-    .attr('fill', '#1b1a17')
+    .attr('fill', '#FFFFFF')
     .text((d) => d.label);
 
   let restoring = false;

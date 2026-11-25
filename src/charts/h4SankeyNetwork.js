@@ -53,7 +53,8 @@ export function renderH4Sankey(container, h4Data, { width = 700 } = {}) {
   const svg = d3.select(tipCtrl.wrap).append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', width)
-    .attr('height', height);
+    .attr('height', height)
+    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
 
   const layout = d3Sankey()
     .nodeWidth(16)
@@ -66,11 +67,11 @@ export function renderH4Sankey(container, h4Data, { width = 700 } = {}) {
   });
 
   const nodeColor = (name) => {
-    if (name.includes('(F)')) return '#b4452f';
-    if (name.includes('(M)')) return '#3d5a80';
-    if (name.includes('Compartilhado') || name.includes('Partidária')) return '#d97a4a';
-    if (name.includes('Direta')) return '#2f6f5e';
-    return '#5c554c';
+    if (name.includes('(F)')) return '#FCE34D';
+    if (name.includes('(M)')) return '#FF7AE5';
+    if (name.includes('Compartilhado') || name.includes('Partidária')) return '#FF5E2B';
+    if (name.includes('Direta')) return '#00B884';
+    return '#FFFFFF';
   };
 
   const linkSel = svg.append('g')
@@ -79,8 +80,8 @@ export function renderH4Sankey(container, h4Data, { width = 700 } = {}) {
     .data(graph.links)
     .join('path')
     .attr('d', sankeyLinkHorizontal())
-    .attr('stroke', (d) => (d.source.name.includes('(F)') ? '#b4452f' : d.source.name.includes('(M)') ? '#3d5a80' : '#9c8f7d'))
-    .attr('stroke-opacity', 0.35)
+    .attr('stroke', (d) => (d.source.name.includes('(F)') ? '#FCE34D' : d.source.name.includes('(M)') ? '#FF7AE5' : '#FFFFFF'))
+    .attr('stroke-opacity', 0.42)
     .attr('stroke-width', (d) => Math.max(1.5, d.width))
     .style('cursor', 'pointer');
 
@@ -100,8 +101,8 @@ export function renderH4Sankey(container, h4Data, { width = 700 } = {}) {
         ],
       }),
       {
-        onEnter: () => linkSel.attr('stroke-opacity', (l) => (l === d ? 0.85 : 0.14)),
-        onLeave: () => linkSel.attr('stroke-opacity', 0.35),
+        onEnter: () => linkSel.attr('stroke-opacity', (l) => (l === d ? 0.9 : 0.14)),
+        onLeave: () => linkSel.attr('stroke-opacity', 0.42),
       },
     );
   });
@@ -139,7 +140,12 @@ export function renderH4Sankey(container, h4Data, { width = 700 } = {}) {
     .attr('dy', '0.35em')
     .attr('text-anchor', (d) => (d.x0 < width / 2 ? 'start' : 'end'))
     .attr('font-size', 11)
-    .attr('fill', '#1b1a17')
+    .attr('font-weight', 600)
+    .attr('fill', '#FFFFFF')
+    .attr('stroke', '#003D2B')
+    .attr('stroke-width', 3.5)
+    .attr('stroke-linejoin', 'round')
+    .attr('paint-order', 'stroke')
     .style('pointer-events', 'none')
     .text((d) => `${d.name} (${(d.value / 1e6).toFixed(1)}M)`);
 }
@@ -301,7 +307,8 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
   const svg = d3.select(tipCtrl.wrap).append('svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', width)
-    .attr('height', height);
+    .attr('height', height)
+    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
 
   // Moldura suave de agrupamento por componente (facilita identificar cada cluster partido/UF)
   svg.append('g')
@@ -312,10 +319,10 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
     .attr('cx', (c) => c.x * scale + offX)
     .attr('cy', (c) => c.y * scale + offY)
     .attr('r', (c) => Math.max(18, (c.r - 4) * scale))
-    .attr('fill', '#ebe4d8')
-    .attr('fill-opacity', 0.28)
-    .attr('stroke', '#d7cdbc')
-    .attr('stroke-width', 0.8)
+    .attr('fill', '#005C40')
+    .attr('fill-opacity', 0.55)
+    .attr('stroke', 'rgba(255, 255, 255, 0.24)')
+    .attr('stroke-width', 0.9)
     .attr('stroke-dasharray', '3,3');
 
   const linkEl = svg.append('g')
@@ -326,8 +333,8 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
     .attr('y1', (d) => d.source.py)
     .attr('x2', (d) => d.target.px)
     .attr('y2', (d) => d.target.py)
-    .attr('stroke', '#8d8375')
-    .attr('stroke-opacity', 0.48)
+    .attr('stroke', 'rgba(255, 255, 255, 0.42)')
+    .attr('stroke-opacity', 0.52)
     .attr('stroke-width', (d) => Math.max(0.9, Math.min(4.2, d.share * 5.2)));
 
   const nodeEl = svg.append('g')
@@ -339,9 +346,9 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
   const candCircles = nodeEl.filter((d) => d.kind === 'cand')
     .append('circle')
     .attr('r', (d) => (d.v < 20 ? 5.2 : 3.6))
-    .attr('fill', (d) => (d.g === 'F' ? '#b4452f' : '#3d5a80'))
-    .attr('stroke', (d) => (d.v < 20 ? '#1b1a17' : '#fffdf9'))
-    .attr('stroke-width', (d) => (d.v < 20 ? 1.5 : 0.7))
+    .attr('fill', (d) => (d.g === 'F' ? '#FCE34D' : '#FF7AE5'))
+    .attr('stroke', (d) => (d.v < 20 ? '#FF5E2B' : '#003D2B'))
+    .attr('stroke-width', (d) => (d.v < 20 ? 1.8 : 0.8))
     .style('cursor', 'pointer');
 
   candCircles.each(function (d) {
@@ -364,9 +371,9 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
   const hubRects = nodeEl.filter((d) => d.kind === 'hub')
     .append('rect')
     .attr('x', -6.5).attr('y', -6.5).attr('width', 13).attr('height', 13).attr('rx', 2.2)
-    .attr('fill', '#1b1a17')
-    .attr('stroke', '#fffdf9')
-    .attr('stroke-width', 1.3)
+    .attr('fill', '#FFFFFF')
+    .attr('stroke', '#003D2B')
+    .attr('stroke-width', 1.4)
     .style('cursor', 'pointer')
     .on('click', (_, d) => {
       if (onSelectParty) onSelectParty(d.p);
@@ -391,11 +398,11 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
         onEnter: () => {
           linkEl
             .attr('stroke-opacity', (l) => (l.target.id === d.id ? 0.95 : 0.08))
-            .attr('stroke', (l) => (l.target.id === d.id ? '#b4452f' : '#8d8375'));
+            .attr('stroke', (l) => (l.target.id === d.id ? '#FCE34D' : 'rgba(255, 255, 255, 0.42)'));
           nodeEl.attr('opacity', (n) => (n.compId === d.compId ? 1 : 0.22));
         },
         onLeave: () => {
-          linkEl.attr('stroke-opacity', 0.48).attr('stroke', '#8d8375');
+          linkEl.attr('stroke-opacity', 0.52).attr('stroke', 'rgba(255, 255, 255, 0.42)');
           nodeEl.attr('opacity', 1);
         },
       },
@@ -414,8 +421,8 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
     .attr('text-anchor', 'middle')
     .attr('font-size', 9.2)
     .attr('font-weight', '600')
-    .attr('fill', '#3b362f')
-    .attr('stroke', '#fffdf9')
+    .attr('fill', '#FFFFFF')
+    .attr('stroke', '#003D2B')
     .attr('stroke-width', 2.8)
     .attr('paint-order', 'stroke')
     .text((c) => `${c.mainHub.p}/${c.mainHub.uf}`);
@@ -423,10 +430,10 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
   // Legenda clara no rodapé do SVG
   const leg = svg.append('g').attr('transform', `translate(14, ${height - (isNarrow ? 40 : 20)})`);
   const legendItems = [
-    { kind: 'square', fill: '#1b1a17', stroke: '#fffdf9', label: 'Fornecedor-Hub (clique filtra partido)' },
-    { kind: 'circle', fill: '#b4452f', stroke: '#fffdf9', sw: 0.8, label: 'Candidata (F)' },
-    { kind: 'circle', fill: '#3d5a80', stroke: '#fffdf9', sw: 0.8, label: 'Candidato (M)' },
-    { kind: 'circle', fill: '#b4452f', stroke: '#1b1a17', sw: 1.8, label: '< 20 votos (borda preta)' },
+    { kind: 'square', fill: '#FFFFFF', stroke: '#003D2B', label: 'Fornecedor-Hub (clique filtra partido)' },
+    { kind: 'circle', fill: '#FCE34D', stroke: '#003D2B', sw: 0.8, label: 'Candidata (F)' },
+    { kind: 'circle', fill: '#FF7AE5', stroke: '#003D2B', sw: 0.8, label: 'Candidato (M)' },
+    { kind: 'circle', fill: '#FCE34D', stroke: '#FF5E2B', sw: 2.0, label: '< 20 votos (borda coral)' },
   ];
   let lx = 0;
   let ly = 0;
@@ -444,7 +451,7 @@ export function renderH4Network(container, networkYear, filters = {}, { width = 
       g.append('circle').attr('cx', 5).attr('cy', 0).attr('r', 4.5)
         .attr('fill', item.fill).attr('stroke', item.stroke).attr('stroke-width', item.sw);
     }
-    g.append('text').attr('x', 14).attr('y', 3.5).attr('font-size', 10.5).attr('fill', '#3b362f').text(item.label);
+    g.append('text').attr('x', 14).attr('y', 3.5).attr('font-size', 10.5).attr('fill', '#FFFFFF').text(item.label);
     lx += itemW + 10;
   }
 }

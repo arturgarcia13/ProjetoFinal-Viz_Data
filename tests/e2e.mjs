@@ -48,6 +48,36 @@ page.on('console', (m) => {
 
 await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'networkidle0' });
 await page.waitForSelector('#stage-canvas svg');
+await page.evaluate(() => document.fonts.ready);
+
+// 0. Brandbook tokens, tipografia e faixa de Big Numbers reativa
+const brandCheck = await page.evaluate(() => {
+  const bodyS = getComputedStyle(document.body);
+  const h1S = getComputedStyle(document.querySelector('h1'));
+  const bigCand = document.getElementById('big-stat-cand')?.textContent?.trim() || '';
+  const bigPub = document.getElementById('big-stat-pub')?.textContent?.trim() || '';
+  const bigSeats = document.getElementById('big-stat-seats')?.textContent?.trim() || '';
+  return {
+    bodyBg: bodyS.backgroundColor,
+    bodyFont: bodyS.fontFamily,
+    h1Color: h1S.color,
+    h1Font: h1S.fontFamily,
+    bigCand,
+    bigPub,
+    bigSeats,
+  };
+});
+if (
+  brandCheck.bodyBg !== 'rgb(0, 128, 90)'
+  || brandCheck.h1Color !== 'rgb(252, 227, 77)'
+  || !brandCheck.h1Font.includes('Anton')
+  || !brandCheck.bodyFont.includes('Barlow')
+  || !brandCheck.bigCand.endsWith('%')
+  || !brandCheck.bigPub.endsWith('%')
+  || !brandCheck.bigSeats.endsWith('%')
+) {
+  throw new Error(`Brandbook/Big Numbers inválido: ${JSON.stringify(brandCheck)}`);
+}
 
 // 1. Layout split-screen em desktop
 const layout = await page.evaluate(() => {

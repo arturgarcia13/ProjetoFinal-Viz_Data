@@ -26,26 +26,26 @@ export function renderH7Boxplot(container, h7Data, { width = 700 } = {}) {
     marginRight: 24,
     marginBottom: 42,
     marginLeft: 52,
-    style: { background: 'transparent', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '12px' },
+    style: { background: 'transparent', color: '#FFFFFF', fontFamily: 'Barlow, Inter, system-ui, sans-serif', fontSize: '12px' },
     x: { label: 'Faixa de % de mulheres na chapa →', domain: h7Data.bandOrder },
     y: { label: '↑ % de candidatas com ≥2 sinais na chapa', domain: [0, 100], tickFormat: (d) => `${d}%`, grid: true },
     marks: [
       Plot.boxY(pts, {
         x: 'band',
         y: 'ratePct',
-        fill: (d) => (d.band === '30%–33,3%' ? '#b4452f' : '#9c8f7d'),
-        fillOpacity: 0.4,
-        stroke: '#1b1a17',
+        fill: (d) => (d.band === '30%–33,3%' ? '#FF5E2B' : '#FF7AE5'),
+        fillOpacity: 0.55,
+        stroke: '#FFFFFF',
       }),
       Plot.dot(h7Data.bandStats, {
         x: 'band',
         y: (d) => d.aggRate * 100,
         r: 6,
-        fill: '#b4452f',
-        stroke: '#fffdf9',
+        fill: '#FCE34D',
+        stroke: '#003D2B',
         strokeWidth: 1.5,
       }),
-      Plot.ruleY([0]),
+      Plot.ruleY([0], { stroke: 'rgba(255, 255, 255, 0.45)' }),
     ],
   });
 

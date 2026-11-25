@@ -273,7 +273,7 @@ export function renderH3Scatter(
     .attr('height', height)
     .attr('role', 'img')
     .attr('aria-label', 'Dispersão entre percentual de candidatas mulheres e percentual do Fundo Público por partido')
-    .style('font-family', 'Inter, system-ui, sans-serif');
+    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
 
   // 1. Grade e eixos
   const xTicks = isLog
@@ -289,7 +289,7 @@ export function renderH3Scatter(
     gridG.append('line')
       .attr('x1', x).attr('x2', x)
       .attr('y1', plotTop).attr('y2', plotBottom)
-      .attr('stroke', '#ebe4d8')
+      .attr('stroke', 'rgba(255, 255, 255, 0.14)')
       .attr('stroke-width', 1);
   }
   for (const t of yTicks) {
@@ -297,7 +297,7 @@ export function renderH3Scatter(
     gridG.append('line')
       .attr('x1', plotLeft).attr('x2', plotRight)
       .attr('y1', y).attr('y2', y)
-      .attr('stroke', '#ebe4d8')
+      .attr('stroke', 'rgba(255, 255, 255, 0.14)')
       .attr('stroke-width', 1);
   }
 
@@ -308,13 +308,13 @@ export function renderH3Scatter(
     .attr('width', plotRight - plotLeft)
     .attr('height', plotBottom - plotTop)
     .attr('fill', 'none')
-    .attr('stroke', '#ddd4c5')
+    .attr('stroke', 'rgba(255, 255, 255, 0.28)')
     .attr('stroke-width', 1);
 
-  const axisG = svg.append('g').attr('aria-label', 'axes').attr('font-size', 11).attr('fill', '#5d574d');
+  const axisG = svg.append('g').attr('aria-label', 'axes').attr('font-size', 11).attr('fill', 'rgba(255, 255, 255, 0.85)');
   for (const t of xTicks) {
     const x = xScale(t);
-    axisG.append('line').attr('x1', x).attr('x2', x).attr('y1', plotBottom).attr('y2', plotBottom + 4).attr('stroke', '#bfb4a3');
+    axisG.append('line').attr('x1', x).attr('x2', x).attr('y1', plotBottom).attr('y2', plotBottom + 4).attr('stroke', 'rgba(255, 255, 255, 0.45)');
     axisG.append('text')
       .attr('x', x)
       .attr('y', plotBottom + 17)
@@ -323,7 +323,7 @@ export function renderH3Scatter(
   }
   for (const t of yTicks) {
     const y = yScale(t);
-    axisG.append('line').attr('x1', plotLeft - 4).attr('x2', plotLeft).attr('y1', y).attr('y2', y).attr('stroke', '#bfb4a3');
+    axisG.append('line').attr('x1', plotLeft - 4).attr('x2', plotLeft).attr('y1', y).attr('y2', y).attr('stroke', 'rgba(255, 255, 255, 0.45)');
     axisG.append('text')
       .attr('x', plotLeft - 8)
       .attr('y', y + 3.5)
@@ -338,7 +338,7 @@ export function renderH3Scatter(
     .attr('text-anchor', 'middle')
     .attr('font-size', 11.5)
     .attr('font-weight', 600)
-    .attr('fill', '#1b1a17')
+    .attr('fill', '#FFFFFF')
     .text(isLog ? '% de candidatas mulheres (APTO · escala log₁₀) →' : '% de candidatas mulheres (APTO) →');
 
   axisG.append('text')
@@ -346,7 +346,7 @@ export function renderH3Scatter(
     .attr('text-anchor', 'middle')
     .attr('font-size', 11.5)
     .attr('font-weight', 600)
-    .attr('fill', '#1b1a17')
+    .attr('fill', '#FFFFFF')
     .text(isLog ? '% do Fundo Público p/ mulheres (log₁₀)' : '% do Fundo Público (FEFC + FP) p/ mulheres');
 
   // 2. Linhas de referência: corte legal 30% e diagonal Y = X
@@ -359,20 +359,20 @@ export function renderH3Scatter(
     rulesG.append('line')
       .attr('x1', x30).attr('x2', x30)
       .attr('y1', plotTop).attr('y2', plotBottom)
-      .attr('stroke', '#b4452f')
+      .attr('stroke', '#FF7AE5')
       .attr('stroke-dasharray', '3,3')
-      .attr('stroke-opacity', 0.65)
-      .attr('stroke-width', 1.2);
+      .attr('stroke-opacity', 0.78)
+      .attr('stroke-width', 1.25);
   }
   if (hasRuleY30) {
     const y30 = yScale(30);
     rulesG.append('line')
       .attr('x1', plotLeft).attr('x2', plotRight)
       .attr('y1', y30).attr('y2', y30)
-      .attr('stroke', '#b4452f')
+      .attr('stroke', '#FF7AE5')
       .attr('stroke-dasharray', '3,3')
-      .attr('stroke-opacity', 0.65)
-      .attr('stroke-width', 1.2);
+      .attr('stroke-opacity', 0.78)
+      .attr('stroke-width', 1.25);
   }
 
   const diagLo = Math.max(xMin, yMin);
@@ -388,7 +388,7 @@ export function renderH3Scatter(
     rulesG.append('line')
       .attr('x1', px1).attr('y1', py1)
       .attr('x2', px2).attr('y2', py2)
-      .attr('stroke', '#5d574d')
+      .attr('stroke', 'rgba(255, 255, 255, 0.72)')
       .attr('stroke-dasharray', '5,4')
       .attr('stroke-width', 1.5);
 
@@ -409,8 +409,8 @@ export function renderH3Scatter(
       .attr('text-anchor', 'end')
       .attr('font-size', 10.5)
       .attr('font-weight', 600)
-      .attr('fill', '#554f46')
-      .attr('stroke', '#fffdf9')
+      .attr('fill', '#FFFFFF')
+      .attr('stroke', '#003D2B')
       .attr('stroke-width', 3)
       .attr('paint-order', 'stroke')
       .style('pointer-events', 'none')
@@ -419,17 +419,17 @@ export function renderH3Scatter(
 
   // 3. Anotações sutis de quadrantes (camada de fundo)
   const quadG = svg.append('g').attr('aria-label', 'h3-quadrants').style('pointer-events', 'none');
-  const quadText = (x, y, text, { anchor = 'start', color = '#5d574d' } = {}) => {
+  const quadText = (x, y, text, { anchor = 'start', color = 'rgba(255, 255, 255, 0.88)' } = {}) => {
     quadG.append('text')
       .attr('x', x)
       .attr('y', y)
       .attr('text-anchor', anchor)
       .attr('font-size', isCompact ? 9.5 : 10.5)
       .attr('font-style', 'italic')
-      .attr('font-weight', 500)
+      .attr('font-weight', 600)
       .attr('fill', color)
-      .attr('fill-opacity', 0.85)
-      .attr('stroke', '#fffdf9')
+      .attr('fill-opacity', 0.92)
+      .attr('stroke', '#003D2B')
       .attr('stroke-width', 2.8)
       .attr('paint-order', 'stroke')
       .text(text);
@@ -439,7 +439,7 @@ export function renderH3Scatter(
     plotLeft + 10,
     plotTop + 15,
     isCompact ? 'Y ≥ X · Proporcional ou acima' : 'Acima de Y = X · Proporcional ou superior',
-    { anchor: 'start', color: '#2f6f5e' },
+    { anchor: 'start', color: '#FCE34D' },
   );
 
   if (xMax > 35) {
@@ -450,7 +450,7 @@ export function renderH3Scatter(
       plotRight - 10,
       subY,
       isCompact ? 'Zona de subfinanciamento (Y < X)' : 'Zona de subfinanciamento (abaixo de Y = X)',
-      { anchor: 'end', color: '#b4452f' },
+      { anchor: 'end', color: '#FF8A65' },
     );
   }
 
@@ -459,7 +459,7 @@ export function renderH3Scatter(
       plotRight - 10,
       plotBottom - 9,
       isCompact ? 'Descumprimento da cota (< 30%)' : 'Descumprimento da cota (< 30% do Fundo)',
-      { anchor: 'end', color: '#8f3624' },
+      { anchor: 'end', color: '#FF7AE5' },
     );
   }
 
@@ -476,18 +476,18 @@ export function renderH3Scatter(
     .attr('width', legW)
     .attr('height', legH)
     .attr('rx', 6)
-    .attr('fill', '#fffdf9')
-    .attr('stroke', '#ddd4c5')
+    .attr('fill', '#005C40')
+    .attr('stroke', 'rgba(255, 255, 255, 0.25)')
     .attr('stroke-width', 1);
 
   // Linha 1: Cor (acima vs. abaixo da proporcionalidade)
   const row1Y = legY + (isCompact ? 14 : 13);
-  legG.append('circle').attr('cx', legX + 12).attr('cy', row1Y - 3).attr('r', 4).attr('fill', '#2f6f5e').attr('fill-opacity', 0.85).attr('stroke', '#1b1a17').attr('stroke-width', 0.8);
-  legG.append('text').attr('x', legX + 20).attr('y', row1Y).attr('font-size', isCompact ? 9.5 : 10).attr('fill', '#1b1a17').text('Y ≥ X (proporcional)');
+  legG.append('circle').attr('cx', legX + 12).attr('cy', row1Y - 3).attr('r', 4).attr('fill', '#FCE34D').attr('fill-opacity', 0.9).attr('stroke', '#FFFFFF').attr('stroke-width', 0.8);
+  legG.append('text').attr('x', legX + 20).attr('y', row1Y).attr('font-size', isCompact ? 9.5 : 10).attr('fill', '#FFFFFF').text('Y ≥ X (proporcional)');
 
   const col2X = legX + (isCompact ? 132 : 148);
-  legG.append('circle').attr('cx', col2X).attr('cy', row1Y - 3).attr('r', 4).attr('fill', '#b4452f').attr('fill-opacity', 0.85).attr('stroke', '#1b1a17').attr('stroke-width', 0.8);
-  legG.append('text').attr('x', col2X + 8).attr('y', row1Y).attr('font-size', isCompact ? 9.5 : 10).attr('fill', '#1b1a17').text('Y < X (subfinanciado)');
+  legG.append('circle').attr('cx', col2X).attr('cy', row1Y - 3).attr('r', 4).attr('fill', '#FF5E2B').attr('fill-opacity', 0.9).attr('stroke', '#FFFFFF').attr('stroke-width', 0.8);
+  legG.append('text').attr('x', col2X + 8).attr('y', row1Y).attr('font-size', isCompact ? 9.5 : 10).attr('fill', '#FFFFFF').text('Y < X (subfinanciado)');
 
   // Linha 2: Tamanho (Volume total do Fundo em R$)
   const row2Y = legY + (isCompact ? 34 : 31);
@@ -498,9 +498,9 @@ export function renderH3Scatter(
       .attr('cx', cxCursor + sr)
       .attr('cy', row2Y - 3.5)
       .attr('r', sr)
-      .attr('fill', '#d7cfc2')
-      .attr('fill-opacity', 0.5)
-      .attr('stroke', '#5d574d')
+      .attr('fill', 'rgba(255, 255, 255, 0.2)')
+      .attr('fill-opacity', 0.7)
+      .attr('stroke', 'rgba(255, 255, 255, 0.75)')
       .attr('stroke-width', 0.9);
     cxCursor += sr * 2 + 4;
   }
@@ -508,7 +508,7 @@ export function renderH3Scatter(
     .attr('x', cxCursor + 4)
     .attr('y', row2Y)
     .attr('font-size', isCompact ? 9.5 : 10)
-    .attr('fill', '#5d574d')
+    .attr('fill', 'rgba(255, 255, 255, 0.88)')
     .text(`Tamanho: Fundo Público total (até ${fmtCompactBrl(maxPub)})`);
 
   // 5. Bolhas (ordenadas da maior para a menor — Z-index correto)
@@ -519,9 +519,9 @@ export function renderH3Scatter(
     .attr('cx', (d) => d.cx)
     .attr('cy', (d) => d.cy)
     .attr('r', (d) => d.r)
-    .attr('fill', (d) => (d.yPct >= d.xPct ? '#2f6f5e' : '#b4452f'))
+    .attr('fill', (d) => (d.yPct >= d.xPct ? '#FCE34D' : '#FF5E2B'))
     .attr('fill-opacity', 0.75)
-    .attr('stroke', '#1b1a17')
+    .attr('stroke', '#FFFFFF')
     .attr('stroke-opacity', 1)
     .attr('stroke-width', 1.1)
     .attr('data-party', (d) => d.party)
@@ -565,7 +565,7 @@ export function renderH3Scatter(
         .attr('y1', startY.toFixed(1))
         .attr('x2', anchorRectPt.x.toFixed(1))
         .attr('y2', anchorRectPt.y.toFixed(1))
-        .attr('stroke', '#7c7366')
+        .attr('stroke', 'rgba(255, 255, 255, 0.58)')
         .attr('stroke-width', 0.9)
         .attr('stroke-opacity', 0.78)
         .style('transition', 'opacity 140ms ease');
@@ -578,8 +578,8 @@ export function renderH3Scatter(
       .attr('text-anchor', 'middle')
       .attr('font-size', 10)
       .attr('font-weight', 600)
-      .attr('fill', '#1b1a17')
-      .attr('stroke', '#fffdf9')
+      .attr('fill', '#FFFFFF')
+      .attr('stroke', '#003D2B')
       .attr('stroke-width', 3.2)
       .attr('stroke-linejoin', 'round')
       .attr('paint-order', 'stroke')
@@ -615,8 +615,8 @@ export function renderH3Scatter(
         .attr('text-anchor', 'middle')
         .attr('font-size', 10.5)
         .attr('font-weight', 700)
-        .attr('fill', '#1b1a17')
-        .attr('stroke', '#fffdf9')
+        .attr('fill', '#FCE34D')
+        .attr('stroke', '#003D2B')
         .attr('stroke-width', 3.5)
         .attr('stroke-linejoin', 'round')
         .attr('paint-order', 'stroke')
@@ -691,7 +691,6 @@ export function renderH3Scatter(
   if (omitted.length > 0) {
     const note = document.createElement('p');
     note.className = 'chart-note';
-    note.style.cssText = 'margin:6px 0 0;font-size:11.5px;color:#5c554c;line-height:1.45;';
     const list = omitted
       .map((p) => `${p.party} (${p.xPct.toFixed(1).replace('.', ',')}% / ${p.yPct.toFixed(1).replace('.', ',')}%)`)
       .join(' · ');

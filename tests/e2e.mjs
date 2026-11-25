@@ -79,14 +79,36 @@ if (
   throw new Error(`Brandbook/Big Numbers inválido: ${JSON.stringify(brandCheck)}`);
 }
 
-// 1. Layout split-screen em desktop
-const layout = await page.evaluate(() => {
+// 1. Layout split-screen em desktop + Acessibilidade (.skip-link) + ChapterNav 2 camadas
+const shellCheck = await page.evaluate(() => {
+  const skip = document.querySelector('a.skip-link');
+  const firstChild = document.body.firstElementChild;
   const left = document.getElementById('narrative-pane').getBoundingClientRect();
   const right = document.querySelector('.stage-pane').getBoundingClientRect();
-  return { leftX: left.left, rightX: right.left, overflowX: document.documentElement.scrollWidth > window.innerWidth };
+  const filterRect = document.getElementById('filter-bar').getBoundingClientRect();
+  const subLinks = [...document.querySelectorAll('#chapter-subnav a')].map((a) => a.textContent.trim());
+  const actLinks = [...document.querySelectorAll('.act-nav a')].map((a) => a.dataset.act);
+  return {
+    skipHref: skip?.getAttribute('href'),
+    skipIsFirst: firstChild === skip,
+    leftX: left.left,
+    rightX: right.left,
+    filterH: filterRect.height,
+    subLinks,
+    actLinks,
+    overflowX: document.documentElement.scrollWidth > window.innerWidth,
+  };
 });
-if (layout.rightX <= layout.leftX || layout.overflowX) {
-  throw new Error(`Layout split-screen inválido: ${JSON.stringify(layout)}`);
+if (
+  shellCheck.skipHref !== '#main-content'
+  || !shellCheck.skipIsFirst
+  || shellCheck.rightX <= shellCheck.leftX
+  || shellCheck.overflowX
+  || shellCheck.subLinks.length < 2
+  || !shellCheck.actLinks.includes('synthesis')
+  || !shellCheck.actLinks.includes('methods')
+) {
+  throw new Error(`Shell/Acessibilidade/Split-screen inválido: ${JSON.stringify(shellCheck)}`);
 }
 
 // Helper para validar hover padronizado (modelo H1) e ausência de <title> / Plot tip nativos
@@ -123,14 +145,79 @@ async function assertUnifiedHover(targetSelector, containerSelector = '#stage-ca
   }
 }
 
-// 2. Percorre os 9 passos (H1–H9) e testa hover padronizado + click-to-filter
-const steps = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9'];
+// 2. Percorre todos os passos (Macro->Micro + H1–H9 + Divergente), Context Switch, Popover e Hover padronizado
+const steps = ['escala-macro', 'escala-micro', 'h1', 'h2', 'h2-div', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9'];
+const observedModalities = new Set();
 for (const s of steps) {
   await page.$eval(`.story-step[data-step="${s}"]`, (el) => el.scrollIntoView({ behavior: 'instant', block: 'center' }));
   await page.click(`.story-step[data-step="${s}"]`);
   await page.waitForSelector('#stage-canvas svg');
+  const modality = await page.$eval('#stage-context-modality', (el) => el.textContent.trim());
+  if (modality) observedModalities.add(modality);
   const kicker = await page.$eval('#stage-kicker', (el) => el.textContent);
-  if (!kicker.toUpperCase().includes(s.toUpperCase())) {
+  if (s === 'escala-macro') {
+    const macroCheck = await page.evaluate(() => ({
+      tiles: document.querySelectorAll('#stage-canvas .mosaic-tile').length,
+      dimmed: document.querySelectorAll('#stage-canvas .mosaic-tile.is-dimmed').length,
+      subnavText: document.getElementById('chapter-subnav')?.textContent || '',
+    }));
+    if (macroCheck.tiles !== 48 || macroCheck.dimmed !== 0 || !macroCheck.subnavText.includes('Mosaico em Escala')) {
+      throw new Error(`Estado Macro inválido: ${JSON.stringify(macroCheck)}`);
+    }
+    await assertUnifiedHover('#stage-canvas .mosaic-tile', '#stage-canvas', 0);
+  }
+  if (s === 'escala-micro') {
+    const microCheck = await page.evaluate(() => {
+      const tiles = [...document.querySelectorAll('#stage-canvas .mosaic-tile')];
+      const dimmed = tiles.filter((t) => t.classList.contains('is-dimmed'));
+      const featured = tiles.filter((t) => t.classList.contains('is-featured'));
+      const dimmedOpacity = dimmed[0] ? getComputedStyle(dimmed[0]).opacity : null;
+      const pullOutCards = document.querySelectorAll('#stage-secondary .evidence-card').length;
+      return { tilesCount: tiles.length, dimmedCount: dimmed.length, featuredCount: featured.length, dimmedOpacity, pullOutCards };
+    });
+    if (
+      microCheck.tilesCount !== 48
+      || microCheck.dimmedCount !== 44
+      || microCheck.featuredCount !== 4
+      || Number(microCheck.dimmedOpacity) > 0.2
+      || microCheck.pullOutCards !== 4
+    ) {
+      throw new Error(`Estado Micro (Pull-Out) inválido: ${JSON.stringify(microCheck)}`);
+    }
+    await assertUnifiedHover('#stage-canvas .mosaic-tile.is-featured', '#stage-canvas', 0);
+  }
+  if (s === 'h2-div') {
+    const divCheck = await page.evaluate(() => {
+      const svg = document.querySelector('#stage-canvas svg.divergent-svg');
+      const dirTxt = [...(svg?.querySelectorAll('.div-direction-labels text') || [])].map((e) => e.textContent.trim());
+      const ticks = [...(svg?.querySelectorAll('.div-grid text') || [])].map((e) => e.textContent.trim());
+      const bars = svg?.querySelectorAll('.div-bar').length || 0;
+      return { dirTxt, ticks, bars };
+    });
+    if (
+      divCheck.bars < 10
+      || !divCheck.dirTxt.some((t) => t.includes('←'))
+      || !divCheck.dirTxt.some((t) => t.includes('→'))
+      || !divCheck.ticks.includes('Igual')
+      || !divCheck.ticks.includes('5×')
+      || !divCheck.ticks.includes('15×')
+    ) {
+      throw new Error(`DivergentChart incompleto: ${JSON.stringify(divCheck)}`);
+    }
+    await assertUnifiedHover('#stage-canvas .div-bar', '#stage-canvas', 0);
+    // Alterna para Fundo Público e volta para Privado/Próprio
+    await page.click('#stage-controls button:nth-child(2)');
+    const pubActive = await page.$eval('#stage-controls button:nth-child(2)', (el) => el.getAttribute('aria-pressed'));
+    if (pubActive !== 'true') throw new Error('Alternância para Fundo Público falhou em h2-div');
+    await page.click('#stage-controls button:nth-child(1)');
+    // Click-to-filter no DivergentChart
+    await page.click('#stage-canvas .div-bar');
+    const selectedParty = await page.$eval('#filter-party', (el) => el.value);
+    if (!selectedParty) throw new Error('Click-to-filter falhou em h2-div');
+    await page.click('#reset-filters');
+    await page.click('.story-step[data-step="h2-div"]');
+  }
+  if (/^h[1-9]$/.test(s) && !kicker.toUpperCase().includes(s.toUpperCase())) {
     throw new Error(`Stage kicker não atualizou para ${s}: ${kicker}`);
   }
   if (s === 'h1') {
@@ -360,6 +447,31 @@ for (const s of steps) {
   }
 }
 
+// 2b. Verifica troca de rótulos de contexto, popover de gráficos, Síntese e Progressive Disclosure em Métodos
+if (observedModalities.size < 5) {
+  throw new Error(`Poucas modalidades de troca de contexto observadas: ${[...observedModalities]}`);
+}
+await page.click('.btn-jump-charts');
+const popoverOpen = await page.$eval('#chart-jump-popover', (el) => el.matches(':popover-open') || el.classList.contains('is-open'));
+if (!popoverOpen) throw new Error('Popover de acesso direto aos gráficos não abriu');
+await page.click('#chart-jump-popover a[data-jump-step="h3"]');
+await page.waitForFunction(() => document.getElementById('stage-kicker').textContent.includes('H3'));
+
+// Progressive disclosure: clique em .method-escape deve abrir o <details> alvo
+await page.click('a.method-escape[href="#metodo-h6"]');
+const methodOpen = await page.$eval('#metodo-h6', (el) => el.open);
+if (!methodOpen) throw new Error('Progressive disclosure não abriu #metodo-h6');
+
+const tailCheck = await page.evaluate(() => ({
+  synthesisCards: document.querySelectorAll('#synthesis-cards .synthesis-card').length,
+  scorecardItems: document.querySelectorAll('#synthesis-scorecard .scorecard-item').length,
+  readingCards: document.querySelectorAll('#leituras .reading-card').length,
+  coverageRows: document.querySelectorAll('#methods-coverage-table tbody tr').length,
+}));
+if (tailCheck.synthesisCards !== 3 || tailCheck.scorecardItems !== 9 || tailCheck.readingCards !== 4 || tailCheck.coverageRows < 4) {
+  throw new Error(`Seções Síntese/Métodos incompletas: ${JSON.stringify(tailCheck)}`);
+}
+
 // 3. Testa troca de ano 2022 -> 2026 e presença de partidos de 2026 (PCDOB, PRD, MOBILIZA)
 await page.click('[data-year="2026"]');
 await page.waitForFunction(() => document.getElementById('scope-summary').textContent.includes('2026'));
@@ -378,7 +490,8 @@ const filteredText = await page.$eval('#scope-summary', (el) => el.textContent);
 await page.click('#reset-filters');
 await page.waitForFunction(() => document.getElementById('scope-summary').textContent.includes('2022'));
 
-// 4. Testa mobile 390x844 sem colisão de filter-bar sobre stage-pane após scroll
+// 4. Testa reduced-motion e mobile 390x844 sem colisão de filter-bar sobre stage-pane após scroll
+await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
 await page.setViewport({ width: 390, height: 844 });
 await page.evaluate(() => window.scrollTo(0, 600));
 const mobileCheck = await page.evaluate(() => {
@@ -395,7 +508,18 @@ if (mobileCheck.overlap || mobileCheck.overflowX) {
   throw new Error(`Falha de layout mobile 390px: ${JSON.stringify(mobileCheck)}`);
 }
 
-console.log('E2E OK:', { filteredText, mobileCheck, errors });
+await page.evaluate(() => document.querySelector('.story-step[data-step="escala-micro"]').scrollIntoView({ behavior: 'instant', block: 'center' }));
+await page.click('.story-step[data-step="escala-micro"]');
+const mobileMicro = await page.evaluate(() => ({
+  stagePos: getComputedStyle(document.querySelector('.stage-pane')).position,
+  dimmedOp: getComputedStyle(document.querySelector('#stage-canvas .mosaic-tile.is-dimmed')).opacity,
+  overflowX: document.documentElement.scrollWidth > window.innerWidth,
+}));
+if (mobileMicro.stagePos !== 'sticky' || Number(mobileMicro.dimmedOp) > 0.2 || mobileMicro.overflowX) {
+  throw new Error(`Falha mobile sticky/reduced-motion em escala-micro: ${JSON.stringify(mobileMicro)}`);
+}
+
+console.log('E2E OK:', { shellCheck, filteredText, mobileCheck, mobileMicro, errors });
 await browser.close();
 server.close();
 if (errors.length > 0) process.exit(1);

@@ -773,7 +773,7 @@ export function computeH7(candidates, { voteThreshold = 10, coverageYear = null 
 /**
  * H8 — Comparativo Temporal 2022 vs. 2026 (Contas zeradas brutas vs. Movimentações padronizadas em lote)
  */
-export function computeH8(allCandidates, { cargo = 'all', uf = null, party = null, voteThreshold = 10 } = {}) {
+export function computeH8(allCandidates, { cargo = 'all', uf = null, party = null, parties = null, ufs = null, voteThreshold = 10 } = {}) {
   const rows = [];
   const byYear = {};
 
@@ -783,6 +783,8 @@ export function computeH8(allCandidates, { cargo = 'all', uf = null, party = nul
       if (cargo && cargo !== 'all' && c.cargo !== cargo) return false;
       if (uf && c.uf !== uf) return false;
       if (party && c.p !== party) return false;
+      if (parties && parties.size > 0 && !parties.has(c.p)) return false;
+      if (ufs && ufs.size > 0 && !ufs.has(c.uf)) return false;
       return c.apto && c.g === 'F';
     });
 
@@ -943,5 +945,258 @@ export function computeH9AndParallel(candidates, { voteThreshold = 10 } = {}) {
     partyRows,
     stageCounts,
     verdict,
+  };
+}
+
+function classifyMosaicBand(pctReg) {
+  if (pctReg < 0.3) return 'below';
+  if (pctReg <= 0.3334) return 'floor';
+  if (pctReg <= 0.4) return 'mid';
+  return 'high';
+}
+
+/**
+ * Mosaico em Escala (Macro → Micro / Grid to Pull-Out) sobre chapas reais (n >= 4).
+ * Seleciona até maxTiles chapas proporcionalmente às faixas de cota e extrai 4 casos emblemáticos.
+ */
+export function computeScaleMosaic(candidates, h1Data, { voteThreshold = 10, maxTiles = 48 } = {}) {
+  const slates = h1Data?.slates || [];
+  if (slates.length === 0) {
+    return {
+      totalSlates: 0,
+      bandCounts: { below: 0, floor: 0, mid: 0, high: 0 },
+      tiles: [],
+      pullOuts: [],
+      voteThreshold,
+    };
+  }
+
+  const bySlate = groupBy(
+    candidates.filter((c) => c.apto && c.g === 'F'),
+    (c) => c.slateKey || `${c.y}|${c.uf}|${c.cargo}|${c.chapa}`,
+  );
+
+  const enriched = slates.map((s) => {
+    const aptoF = bySlate.get(s.key) || [];
+    const twoPlusF = aptoF.filter((c) => countSignals(c, voteThreshold).total >= 2).length;
+    const band = classifyMosaicBand(s.pctReg);
+    const droppedByInapto = s.pctReg >= 0.3 && s.nApto >= 4 && s.pctApto < 0.3;
+    return {
+      ...s,
+      band,
+      twoPlusF,
+      twoPlusRate: safeDiv(twoPlusF, s.fApto || aptoF.length),
+      droppedByInapto,
+      pullOutRole: null,
+      pullOutIndex: null,
+    };
+  });
+
+  const bandCounts = { below: 0, floor: 0, mid: 0, high: 0 };
+  for (const s of enriched) bandCounts[s.band] += 1;
+
+  // Seleciona 4 casos emblemáticos (deduplicados por chave de chapa)
+  const pickedKeys = new Set();
+  const pickBest = (list, cmpFn) => {
+    const avail = list.filter((s) => !pickedKeys.has(s.key)).sort(cmpFn);
+    if (avail.length === 0) return null;
+    pickedKeys.add(avail[0].key);
+    return avail[0];
+  };
+
+  const roleDefs = [
+    {
+      role: 'dropped',
+      label: 'Queda por inaptidão',
+      pick: () =>
+        pickBest(
+          enriched.filter((s) => s.droppedByInapto),
+          (a, b) => (b.fReg - b.fApto) - (a.fReg - a.fApto) || b.nReg - a.nReg,
+        ) || pickBest(enriched.filter((s) => s.band === 'floor'), (a, b) => a.pctApto - b.pctApto || b.nReg - a.nReg),
+    },
+    {
+      role: 'signals',
+      label: 'Piso 30%–33,3% com sinais',
+      pick: () =>
+        pickBest(
+          enriched.filter((s) => s.band === 'floor' && s.twoPlusF > 0),
+          (a, b) => b.twoPlusF - a.twoPlusF || b.twoPlusRate - a.twoPlusRate || b.nReg - a.nReg,
+        ) || pickBest(enriched.filter((s) => s.band === 'floor'), (a, b) => b.nReg - a.nReg),
+    },
+    {
+      role: 'below',
+      label: 'Abaixo do piso (< 30%)',
+      pick: () =>
+        pickBest(
+          enriched.filter((s) => s.band === 'below'),
+          (a, b) => b.nReg - a.nReg || a.pctReg - b.pctReg,
+        ) || pickBest(enriched.filter((s) => s.band === 'floor'), (a, b) => b.nReg - a.nReg),
+    },
+    {
+      role: 'contrast',
+      label: 'Acima de 40% (contraste)',
+      pick: () =>
+        pickBest(
+          enriched.filter((s) => s.band === 'high'),
+          (a, b) => b.nReg - a.nReg || b.pctReg - a.pctReg,
+        ) || pickBest(enriched, (a, b) => b.pctReg - a.pctReg || b.nReg - a.nReg),
+    },
+  ];
+
+  const pullOuts = [];
+  for (const def of roleDefs) {
+    const chosen = def.pick() || pickBest(enriched, (a, b) => b.nReg - a.nReg);
+    if (!chosen) continue;
+    chosen.pullOutRole = def.role;
+    chosen.pullOutLabel = def.label;
+    chosen.pullOutIndex = pullOuts.length + 1;
+    pullOuts.push(chosen);
+  }
+
+  let tiles;
+  if (enriched.length <= maxTiles) {
+    tiles = [...enriched];
+  } else {
+    const selected = new Map(pullOuts.map((s) => [s.key, s]));
+    const bands = ['below', 'floor', 'mid', 'high'];
+    const targets = {};
+    let allocated = 0;
+    for (const b of bands) {
+      const share = Math.round((bandCounts[b] / enriched.length) * maxTiles);
+      targets[b] = Math.min(bandCounts[b], Math.max(bandCounts[b] > 0 ? 1 : 0, share));
+      allocated += targets[b];
+    }
+    while (allocated > maxTiles) {
+      const largest = bands.slice().sort((a, b) => targets[b] - targets[a])[0];
+      if (targets[largest] <= 1) break;
+      targets[largest] -= 1;
+      allocated -= 1;
+    }
+    while (allocated < maxTiles) {
+      const candidateBand = bands.find((b) => targets[b] < bandCounts[b]);
+      if (!candidateBand) break;
+      targets[candidateBand] += 1;
+      allocated += 1;
+    }
+
+    for (const b of bands) {
+      const pool = enriched
+        .filter((s) => s.band === b)
+        .sort((a, bItem) => bItem.nReg - a.nReg || a.key.localeCompare(bItem.key));
+      const existingInBand = [...selected.values()].filter((s) => s.band === b).length;
+      let needed = Math.max(0, targets[b] - existingInBand);
+      if (pool.length <= needed) {
+        for (const item of pool) selected.set(item.key, item);
+      } else {
+        const avail = pool.filter((s) => !selected.has(s.key));
+        const step = Math.max(1, avail.length / Math.max(1, needed));
+        for (let i = 0; i < needed && i < avail.length; i += 1) {
+          const idx = Math.min(avail.length - 1, Math.floor(i * step));
+          const item = avail[idx];
+          if (item) selected.set(item.key, item);
+        }
+      }
+    }
+
+    // Completa se deduplicação deixou abaixo de maxTiles
+    if (selected.size < maxTiles) {
+      for (const item of enriched) {
+        if (selected.size >= maxTiles) break;
+        if (!selected.has(item.key)) selected.set(item.key, item);
+      }
+    }
+    tiles = [...selected.values()].slice(0, maxTiles);
+  }
+
+  const bandOrder = { below: 0, floor: 1, mid: 2, high: 3 };
+  tiles.sort((a, b) => bandOrder[a.band] - bandOrder[b.band] || a.pctReg - b.pctReg || b.nReg - a.nReg);
+
+  return {
+    totalSlates: enriched.length,
+    bandCounts,
+    tiles,
+    pullOuts,
+    voteThreshold,
+  };
+}
+
+/**
+ * H2 Divergente — Disparidade relativa entre Mulheres e Homens ancorada na paridade (1× = 0).
+ * Escala log2 simétrica com teto padrão de 15× (← Mais para Homens | Igual | Mais para Mulheres →).
+ */
+export function computeDivergentDisparity(h2Data, { mode = 'priv', limit = 12, cap = 15 } = {}) {
+  const parties = (h2Data?.byParty || []).slice(0, limit);
+  const maxLog = Math.log2(cap);
+
+  const pickVals = (p) => {
+    if (mode === 'pub') return { valF: p.medPubF, valM: p.medPubM };
+    if (mode === 'total') return { valF: p.medF, valM: p.medM };
+    return { valF: p.medPrivF, valM: p.medPrivM };
+  };
+
+  const rows = parties.map((p) => {
+    const { valF, valM } = pickVals(p);
+    let factor = 1;
+    let signedLog = 0;
+    let direction = 'equal';
+    let capped = false;
+    let zeroSide = null;
+
+    if (valF === 0 && valM === 0) {
+      direction = 'equal';
+    } else if (valM > 0 && valF === 0) {
+      factor = cap;
+      signedLog = -maxLog;
+      direction = 'M';
+      capped = true;
+      zeroSide = 'F';
+    } else if (valF > 0 && valM === 0) {
+      factor = cap;
+      signedLog = maxLog;
+      direction = 'F';
+      capped = true;
+      zeroSide = 'M';
+    } else {
+      const ratioFM = valF / valM;
+      const clamped = Math.max(1 / cap, Math.min(cap, ratioFM));
+      signedLog = Math.log2(clamped);
+      factor = ratioFM >= 1 ? ratioFM : 1 / ratioFM;
+      capped = ratioFM > cap || ratioFM < 1 / cap;
+      if (Math.abs(ratioFM - 1) < 0.05) direction = 'equal';
+      else direction = ratioFM > 1 ? 'F' : 'M';
+    }
+
+    return {
+      party: p.party,
+      total: p.total,
+      nF: p.nF,
+      nM: p.nM,
+      valF,
+      valM,
+      factor,
+      signedLog,
+      direction,
+      capped,
+      zeroSide,
+    };
+  });
+
+  rows.sort((a, b) => a.signedLog - b.signedLog || b.total - a.total);
+
+  const globalMedF = mode === 'pub' ? (h2Data?.medPubF || 0) : (mode === 'total' ? (h2Data?.medF || 0) : (h2Data?.medPrivF || 0));
+  const globalMedM = mode === 'pub' ? (h2Data?.medPubM || 0) : (mode === 'total' ? (h2Data?.medM || 0) : (h2Data?.medPrivM || 0));
+
+  return {
+    mode,
+    cap,
+    rows,
+    summary: {
+      favoringM: rows.filter((r) => r.direction === 'M').length,
+      favoringF: rows.filter((r) => r.direction === 'F').length,
+      nearEqual: rows.filter((r) => r.direction === 'equal').length,
+      globalMedF,
+      globalMedM,
+      globalRatio: safeDiv(globalMedF, globalMedM),
+    },
   };
 }

@@ -9,16 +9,17 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="masthead">
+  <!-- Acessibilidade Inicial: link de salto imediato antes da navegação -->
+  <a class="skip-link" href="#main-content">Pular para o conteúdo principal</a>
+
+  <!-- ETAPA 1 DO FUNIL COGNITIVO: ANEDOTA & ABERTURA EDITORIAL -->
+  <header class="masthead" id="intro">
     <div class="container hero-split">
       <div class="hero-art" aria-hidden="true">
         <!-- Silhuetas em camadas chapadas (Rosa ao fundo, Laranja no meio, Amarelo na frente) com sangria inferior-esquerda -->
         <svg class="hero-silhouettes" viewBox="0 0 460 390" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMax meet">
-          <!-- Camada 3 (fundo): Rosa Vibrante #FF7AE5 -->
           <path fill="#FF7AE5" d="M-12 390V214c12-16 26-28 48-34 8-34-10-58-2-90 7-28 32-48 64-50 38-2 66 20 74 52 7 28-6 52 14 70 6 5 11 12 8 19-4 8-14 8-16 14-2 6 8 11 7 19-1 9-12 10-12 18 0 11 10 20 8 34-2 16-14 27-26 36l48 88H-12Z"/>
-          <!-- Camada 2 (meio): Laranja Coral #FF5E2B -->
           <path fill="#FF5E2B" d="M36 390c4-46 22-86 58-102 6-14 4-28-4-42-16-26-14-64 8-88 18-20 48-28 76-22 30 6 50 28 54 58 2 14-2 26 2 35 6 12 18 19 20 28 2 8-8 14-12 19-2 3 4 9 2 15-2 7-11 9-11 15 0 8 9 12 7 23-3 15-20 22-37 22-14 0-24-4-32-10-4 16 12 32 32 49H36Z"/>
-          <!-- Camada 1 (frente): Amarelo Solar #FCE34D -->
           <path fill="#FCE34D" d="M126 390c6-38 22-68 56-84 10-5 16-14 14-25-24-12-38-38-36-68 2-34 24-60 58-66 10-18 32-24 50-16 18 8 28 26 24 45 14 12 22 30 22 50 0 14-3 24 4 33 7 9 20 17 21 25 1 7-9 12-13 17-2 3 4 9 2 14-3 6-11 8-11 14 0 8 7 13 4 23-4 13-22 18-40 16-12-1-22-5-30-10-2 12 10 22 24 32H126Z"/>
         </svg>
       </div>
@@ -38,9 +39,16 @@
           <span>Dados 100% anonimizados (LGPD)</span>
         </div>
         <div class="hero-actions">
-          <a href="#ato-1" class="btn-primary">Leia a investigação</a>
+          <a href="#escala" class="btn-primary">Leia a investigação</a>
           <a href="#ato-5" class="btn-ghost">Explore o mapa por UF</a>
         </div>
+      </div>
+    </div>
+
+    <div class="anecdote-strip">
+      <div class="container anecdote-inner">
+        <span class="anecdote-label">Abertura concreta</span>
+        <p>No papel, <strong>95,9%</strong> das chapas estaduais e federais de 2022 bateram a meta de 30%. Mas em <strong>64 chapas</strong>, perder uma única candidata por inaptidão bastou para romper o piso — e na urna, <strong>34,2%</strong> de candidaturas femininas viraram apenas <strong>17,9%</strong> das cadeiras.</p>
       </div>
     </div>
   </header>
@@ -66,6 +74,7 @@
     </div>
   </section>
 
+  <!-- SHELL DE NAVEGAÇÃO HIERÁRQUICA (ChapterNav 2 Camadas) + FILTROS GLOBAIS -->
   <div class="filter-bar" id="filter-bar">
     <div class="container filter-row">
       <div class="filter-group" role="group" aria-label="Ano eleitoral">
@@ -91,22 +100,96 @@
       </label>
       <button id="reset-filters" class="btn-reset" type="button">Limpar</button>
     </div>
+
     <div class="container filter-subrow">
       <p id="scope-summary" class="scope-summary">Carregando base validada...</p>
-      <nav class="act-nav" id="act-nav" aria-label="Navegação pelos cinco atos">
-        <a href="#ato-1" data-act="1">01 Papel</a>
-        <a href="#ato-2" data-act="2">02 Dinheiro</a>
-        <a href="#ato-3" data-act="3">03 Urna</a>
-        <a href="#ato-4" data-act="4">04 Fraude Oculta</a>
-        <a href="#ato-5" data-act="5">05 Geografia</a>
-      </nav>
+      <div class="chapter-nav-shell">
+        <nav class="act-nav" id="act-nav" aria-label="Navegação por capítulos (Camada 1)">
+          <a href="#escala" data-act="0">Intro</a>
+          <a href="#ato-1" data-act="1">01 Papel</a>
+          <a href="#ato-2" data-act="2">02 Dinheiro</a>
+          <a href="#ato-3" data-act="3">03 Urna</a>
+          <a href="#ato-4" data-act="4">04 Fraude</a>
+          <a href="#ato-5" data-act="5">05 Geografia</a>
+          <a href="#sintese" data-act="synthesis">Síntese</a>
+          <a href="#metodologia" data-act="methods">Métodos</a>
+        </nav>
+        <button type="button" class="btn-jump-charts" popovertarget="chart-jump-popover">Gráficos ▾</button>
+      </div>
     </div>
+
+    <div class="container chapter-subrow">
+      <nav class="chapter-subnav" id="chapter-subnav" aria-label="Sub-âncoras do capítulo (Camada 2)"></nav>
+    </div>
+
     <div class="container chips-row" id="active-chips"></div>
   </div>
 
-  <main class="container scrolly-layout">
-    <!-- Coluna esquerda: Painel de leitura narrativo -->
+  <!-- Popover de Acesso Direto aos Gráficos Exploratórios -->
+  <nav id="chart-jump-popover" popover aria-label="Acesso direto aos gráficos e seções">
+    <p class="popover-title">Ir direto para a visualização</p>
+    <div class="popover-grid">
+      <a href="#escala" data-jump-step="escala-macro">Mosaico · 48 Chapas</a>
+      <a href="#escala" data-jump-step="escala-micro">Pull-Out · 4 Casos Reais</a>
+      <a href="#ato-1" data-jump-step="h1">H1 · Histograma Espelhado</a>
+      <a href="#ato-2" data-jump-step="h2">H2 · Medianas &amp; Fontes</a>
+      <a href="#ato-2" data-jump-step="h2-div">H2 · Gráfico Divergente</a>
+      <a href="#ato-2" data-jump-step="h3">H3 · % Cand. × Fundo Público</a>
+      <a href="#ato-2" data-jump-step="h4">H4 · Sankey &amp; Rede de Hubs</a>
+      <a href="#ato-3" data-jump-step="h5">H5 · Funil de Conversão</a>
+      <a href="#ato-4" data-jump-step="h6">H6 · Sinais por Gênero</a>
+      <a href="#ato-4" data-jump-step="h7">H7 · Boxplot &amp; Mapa Sinais</a>
+      <a href="#ato-4" data-jump-step="h8">H8 · Adaptação 2022→2026</a>
+      <a href="#ato-5" data-jump-step="h9">H9 · Mapa UF &amp; Paralelas</a>
+      <a href="#sintese">Síntese dos 5 Atos</a>
+      <a href="#metodo-geral">Dados &amp; Métodos</a>
+    </div>
+  </nav>
+
+  <!-- ETAPAS 2 e 3: EVIDÊNCIA VISUAL EM ESCALA (MACRO -> MICRO) + ANÁLISE QUANTITATIVA -->
+  <main id="main-content" tabindex="-1" class="container scrolly-layout">
+    <!-- Coluna esquerda: Painel de leitura narrativo (StepCards) -->
     <div class="narrative-pane" id="narrative-pane">
+
+      <!-- ATO 00: EVIDÊNCIA VISUAL EM ESCALA (MACRO -> MICRO) -->
+      <section id="escala" class="act-marker" tabindex="-1">
+        <div class="act-kicker-row">
+          <svg class="act-star" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/></svg>
+          <p class="act-kicker">Panorama em Escala · Macro → Micro</p>
+        </div>
+        <h2>Milhares de candidaturas, um mesmo desenho nas chapas</h2>
+      </section>
+
+      <article class="story-step active" data-step="escala-macro" data-act="0" tabindex="0">
+        <div class="step-head">
+          <span class="step-tag">00A · Visão Macro (Mosaico Proporcional)</span>
+          <span class="verdict-slot"><span class="verdict-tag verdict-pill-neutral">Escala Real</span></span>
+        </div>
+        <p>Antes dos gráficos agregados, observe uma amostra proporcional de <strong>48 chapas reais</strong> (<code>Federação/Partido × UF × Cargo</code>, com <code>n ≥ 4</code>). O amarelo domina o mosaico: são chapas comprimidas exatamente no piso legal de <strong>30% a 33,3%</strong>.</p>
+        <p class="live-stat" id="stat-escala-macro">—</p>
+        <p class="step-note">Micro-chapas (<code>n &lt; 4</code>) ficam fora do cálculo percentual e estão documentadas na seção metodológica. <a class="method-escape" href="#metodo-h1">Ver nos métodos ↓</a></p>
+      </article>
+
+      <article class="story-step" data-step="escala-micro" data-act="0" tabindex="0">
+        <div class="step-head">
+          <span class="step-tag">00B · Pull-Out (4 Chapas em Foco)</span>
+          <span class="verdict-slot"><span class="verdict-tag verdict-pill-warn">Evidência Direta</span></span>
+        </div>
+        <p>Ao aproximar a lente do mosaico, <strong>quatro casos reais</strong> saem do anonimato estatístico da multidão — revelando chapas que caíram abaixo de 30% após inaptidões, chapas no piso com sinais acumulados e o contraste das listas acima de 40%.</p>
+        <p class="live-stat" id="stat-escala-micro">—</p>
+        <!-- Mídia Nativa Contextualizada: recorte visual estilizado de ata/registro TSE anonimizado -->
+        <figure class="tse-artifact" aria-label="Recorte contextualizado de registro de chapa no TSE (anonimizado)">
+          <figcaption>Recorte estrutural · Registro de Chapa TSE (2022 · Deputado Estadual)</figcaption>
+          <div class="artifact-row">
+            <span class="artifact-badge">REPUBLICANOS/SP</span>
+            <span>Registro: <strong>31/95 (32,6%)</strong></span>
+            <span aria-hidden="true">→</span>
+            <span class="artifact-alert">APTO: <strong>26/90 (28,9%)</strong></span>
+          </div>
+          <p class="artifact-note">Sem margem de folga além dos 30%, 5 inaptidões femininas derrubaram a chapa inteira abaixo da cota legal.</p>
+        </figure>
+      </article>
+
       <!-- ATO 1 -->
       <section id="ato-1" class="act-marker" tabindex="-1">
         <div class="act-kicker-row">
@@ -116,14 +199,15 @@
         <h2>As chapas cumprem a cota — ou transformam o piso de 30% em teto?</h2>
       </section>
 
-      <article class="story-step active" data-step="h1" data-act="1" tabindex="0">
+      <article class="story-step" data-step="h1" data-act="1" tabindex="0">
         <div class="step-head">
           <span class="step-tag">H1 · Registro e Teto Burocrático</span>
           <div class="verdict-slot" id="verdict-h1"></div>
         </div>
-        <p>A legislação eleitoral obriga cada partido ou federação a lançar ao menos <strong>30% de candidaturas de cada gênero</strong> por UF e cargo. Olhar apenas o cumprimento formal esconde o desenho da distribuição.</p>
+        <p>A legislação eleitoral obriga cada partido ou federação a lançar ao menos <strong>30% de candidaturas de cada gênero</strong> por UF e cargo. Comparando 2022 e 2026 lado a lado, o piso vira teto operacional.</p>
         <p class="live-stat" id="stat-h1">—</p>
-        <p class="step-note">Micro-chapas (1–3 candidaturas) permanecem nos totais individuais e ficam fora da distribuição percentual por chapa (<em>n ≥ 4</em>), evitando distorções discretas (0%/50%/100%).</p>
+        <div id="ev-h1" class="inline-evidence-slot"></div>
+        <p class="step-note">Micro-chapas (<code>1–3</code> candidaturas) permanecem nos totais individuais e ficam fora da distribuição percentual por chapa (<code>n ≥ 4</code>). <a class="method-escape" href="#metodo-h1">Ver corte n≥4 nos métodos ↓</a></p>
       </article>
 
       <!-- ATO 2 -->
@@ -142,6 +226,16 @@
         </div>
         <p>Com a ADI 5617, o Fundo Público (FEFC + Fundo Partidário) passou a ter piso proporcional de 30%. Mas quando abrimos por legenda e separamos dinheiro público de doações privadas/próprias, a assimetria reaparece dentro dos maiores partidos e no recurso privado.</p>
         <p class="live-stat" id="stat-h2">—</p>
+        <div id="ev-h2" class="inline-evidence-slot"></div>
+      </article>
+
+      <article class="story-step" data-step="h2-div" data-act="2" tabindex="0">
+        <div class="step-head">
+          <span class="step-tag">H2B · Gráfico Divergente (← Homens | Mulheres →)</span>
+          <div class="verdict-slot" id="verdict-h2-div"></div>
+        </div>
+        <p>Quanto maior a distância do eixo central <strong>Igual (1×)</strong>, maior a vantagem de um gênero sobre o outro na mediana por partido. No financiamento privado, quase todas as barras apontam para a esquerda.</p>
+        <p class="live-stat" id="stat-h2-div">—</p>
       </article>
 
       <article class="story-step" data-step="h3" data-act="2" tabindex="0">
@@ -151,7 +245,7 @@
         </div>
         <p>Quando uma legenda lança acima de 30% de mulheres, a verba pública acompanha na proporção (diagonal <code>Y = X</code>) ou trava no mínimo legal? Pontos abaixo da diagonal indicam subfinanciamento relativo ao peso feminino na chapa.</p>
         <p class="live-stat" id="stat-h3">—</p>
-        <p class="step-note">Dica de leitura: embora mais partidos apareçam acima de <code>1,00×</code> no agregado, os grandes partidos abaixo da diagonal concentram mais da metade do Fundo Público — e ao alternar o filtro no topo para <strong>Federal</strong>, o cenário vira subfinanciamento (compensado nas campanhas <strong>Estaduais</strong>, mais baratas).</p>
+        <p class="step-note">Dica de leitura: grandes legendas abaixo da diagonal concentram mais da metade do Fundo Público — e ao filtrar para <strong>Federal</strong> no topo, o cenário vira subfinanciamento direto.</p>
       </article>
 
       <article class="story-step" data-step="h4" data-act="2" tabindex="0">
@@ -159,9 +253,9 @@
           <span class="step-tag">H4 · Fluxo da Verba Pública e Fornecedores-Hub</span>
           <div class="verdict-slot" id="verdict-h4"></div>
         </div>
-        <p>Para além do quanto entra, para onde vai o recurso contratado? O Sankey compara o destino proporcional do Fundo Público (campanha direta, fornecedores compartilhados, partido e outras candidaturas) e a rede bipartida mapeia fornecedores ligados a campanhas de baixíssima votação.</p>
+        <p>Para além do quanto entra, para onde vai o recurso contratado? O Sankey compara o destino proporcional do Fundo Público (campanha direta, fornecedores compartilhados, partido e outras candidaturas) e a rede mapeia fornecedores ligados a campanhas de baixíssima votação.</p>
         <p class="live-stat" id="stat-h4">—</p>
-        <p class="step-note">Nota metodológica: despesas contratadas não trazem vínculo direto com fonte na base do TSE; o Sankey aloca proporcionalmente pela fração pública da receita. A rede usa IDs anônimos.</p>
+        <p class="step-note">A alocação pública no Sankey usa proporção pela receita e a rede oculta nomes civis/MEIs por LGPD. <a class="method-escape" href="#metodo-h4">Ver metodologia nos métodos ↓</a></p>
       </article>
 
       <!-- ATO 3 -->
@@ -180,6 +274,7 @@
         </div>
         <p>Comparando <strong>% de Candidatas → % dos Votos Nominais → % de Eleitas</strong> dentro dos mesmos partidos, identificamos exatamente onde ocorre a maior perda: na conquista de votos na urna ou na conversão matemática das sobras partidárias.</p>
         <p class="live-stat" id="stat-h5">—</p>
+        <div id="ev-h5" class="inline-evidence-slot"></div>
       </article>
 
       <!-- ATO 4 -->
@@ -196,9 +291,20 @@
           <span class="step-tag">H6 · Sinais Acumulados por Gênero</span>
           <div class="verdict-slot" id="verdict-h6"></div>
         </div>
-        <p>Monitoramos três sinais objetivos nos microdados: <strong>Sinal A</strong> (votação válida ≤ limiar ajustável), <strong>Sinal B</strong> (prestação declarada com receita e despesa zeradas) e <strong>Sinal C</strong> (pacote padronizado de despesa/repasse em ≥3 candidaturas do mesmo partido/UF).</p>
+        <p>Monitoramos três sinais objetivos nos microdados: <strong>Sinal A</strong> (votação válida ≤ limiar ajustável), <strong>Sinal B</strong> (prestação com receita e despesa zeradas) e <strong>Sinal C</strong> (pacote padronizado de despesa/repasse em ≥3 candidaturas do mesmo partido/UF).</p>
         <p class="live-stat" id="stat-h6">—</p>
-        <p class="step-note"><strong>Salvaguarda jurídica (Súmula 73 do TSE):</strong> a ausência efetiva de atos de campanha não consta nos arquivos do TSE, e os Sinais B (zerada) e C (lote positivo) são mutuamente exclusivos por construção (máximo observável simultâneo = 2 sinais: A+B ou A+C). Os sinais indicam padrões estatísticos compatíveis, nunca prova de fraude individual.</p>
+        <figure class="tse-artifact" aria-label="Comparação estrutural entre Sinal B e Sinal C na prestação de contas">
+          <figcaption>Artefato contábil · Sinais mutuamente exclusivos (máx. = 2)</figcaption>
+          <div class="artifact-row">
+            <span class="artifact-badge">Sinal B</span>
+            <span>Receita = <strong>R$ 0</strong> &amp; Despesa = <strong>R$ 0</strong></span>
+            <span aria-hidden="true">|</span>
+            <span class="artifact-badge artifact-badge-warn">Sinal C</span>
+            <span>Lote idêntico em <strong>≥3 cand.</strong> (Partido/UF)</span>
+          </div>
+          <p class="artifact-note">Súmula 73 do TSE exige também prova de ausência de atos de campanha — ausente nos microdados numéricos.</p>
+        </figure>
+        <p class="step-note">Estes indicadores apontam padrões estatísticos de risco, nunca prova de fraude individual. <a class="method-escape" href="#metodo-h6">Ver salvaguarda da Súmula 73 nos métodos ↓</a></p>
       </article>
 
       <article class="story-step" data-step="h7" data-act="4" tabindex="0">
@@ -217,7 +323,8 @@
         </div>
         <p>Com a consolidação da Súmula 73 e fiscalização sobre contas zeradas, comparamos diretamente <strong>2022 e 2026</strong>: caem as contas zeradas brutas ou crescem as movimentações padronizadas em lote?</p>
         <p class="live-stat" id="stat-h8">—</p>
-        <p class="step-note">Ambos os anos já possuem cobertura ≥97% de prestações <code>FINAL</code> entre candidaturas <code>APTO</code> (extrato 20/11/2026); contas de 2026 ainda aguardam julgamento judicial. Nota sobre votação de 2026: o arquivo <code>votacao_munzona_2026</code> é de 19/10/2026, deixando 232 candidaturas <code>APTO</code> (1,3%) sem linha de votação (assumem 0 votos por ausência de linha).</p>
+        <div id="ev-h8" class="inline-evidence-slot"></div>
+        <p class="step-note">Cobertura ≥97% de prestações <code>FINAL</code> nos dois anos; votação 2026 de 19/10/2026 deixa 1,3% sem linha. <a class="method-escape" href="#metodo-h8">Ver detalhes de cobertura nos métodos ↓</a></p>
       </article>
 
       <!-- ATO 5 -->
@@ -240,23 +347,133 @@
       </article>
     </div>
 
-    <!-- Coluna direita: Área principal fixa de visualização -->
+    <!-- Coluna direita: ReactiveStage fixo na viewport -->
     <aside class="stage-pane" aria-label="Área principal de visualização">
       <div class="stage-card">
+        <!-- Rótulo de Troca de Contexto -->
+        <div class="context-switch-bar" id="stage-context-bar" aria-live="polite">
+          <span class="context-pill" id="stage-context-modality">NO REGISTRO</span>
+          <span class="context-meta" id="stage-context-source">consulta_cand · 2022/2026</span>
+          <span class="context-universe" id="stage-context-universe">Chapas n ≥ 4</span>
+        </div>
+
         <div class="stage-head">
           <div>
-            <p class="fig-kicker" id="stage-kicker">Ato 01 · Fig. 1</p>
-            <h3 id="stage-title">Distribuição de % de Mulheres por Chapa</h3>
+            <p class="fig-kicker" id="stage-kicker">Evidência em Escala · Mosaico</p>
+            <h3 id="stage-title">Mosaico Proporcional de Chapas</h3>
             <p class="stage-subtitle" id="stage-subtitle" hidden></p>
           </div>
           <div id="stage-controls" class="stage-controls"></div>
         </div>
+
         <div id="stage-canvas" class="stage-canvas"></div>
+        <p class="stage-secondary-kicker" id="stage-secondary-kicker" hidden></p>
         <div id="stage-secondary" class="stage-secondary"></div>
         <p id="stage-caption" class="stage-caption"></p>
       </div>
     </aside>
   </main>
+
+  <!-- ETAPA 4 DO FUNIL COGNITIVO: SÍNTESE & LEITURAS COMPLEMENTARES -->
+  <section id="sintese" class="synthesis-band" aria-label="Síntese dos achados e leituras complementares">
+    <div class="container">
+      <div class="section-intro">
+        <p class="eyebrow">Síntese da Investigação · Por que isso importa</p>
+        <h2>O que os dados confirmam — e onde a cota ainda precisa avançar</h2>
+        <p class="section-lead">Quando olhamos o sistema inteiro do registro à cadeira eleita, a lei de 30% alterou a entrada formal e a fatia pública agregada, mas ainda esbarra em tetos informais, concentração privada e disputa desigual nas urnas.</p>
+      </div>
+
+      <div class="synthesis-grid" id="synthesis-cards"></div>
+
+      <div class="scorecard-wrap">
+        <h3 class="subsection-title">Placar ao vivo das 9 hipóteses (clique para saltar à etapa)</h3>
+        <div class="scorecard-grid" id="synthesis-scorecard"></div>
+      </div>
+
+      <div id="leituras" class="readings-wrap">
+        <h3 class="subsection-title">Para ir além · Fontes primárias e marcos legais</h3>
+        <div class="reading-grid">
+          <article class="reading-card">
+            <span class="reading-kicker">Base Oficial</span>
+            <h4>Portal de Dados Abertos do TSE</h4>
+            <p>Repositório público com os arquivos de candidaturas, votação por zona e prestações de contas usados neste ensaio.</p>
+            <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener noreferrer">Acessar dados abertos ↗︎</a>
+          </article>
+          <article class="reading-card">
+            <span class="reading-kicker">Jurisprudência</span>
+            <h4>STF · ADI 5617 (Piso de 30% no Fundo)</h4>
+            <p>Decisão que vinculou o mínimo de 30% das candidaturas femininas à distribuição proporcional de FEFC e Fundo Partidário.</p>
+            <a href="https://portal.stf.jus.br/processos/detalhe.asp?incidente=5090801" target="_blank" rel="noopener noreferrer">Consultar processo STF ↗︎</a>
+          </article>
+          <article class="reading-card">
+            <span class="reading-kicker">Integridade</span>
+            <h4>TSE · Súmula 73 (Fraude à Cota)</h4>
+            <p>Consolida os critérios objetivos e contextuais para apuração de candidaturas fictícias e nulidade do DRAP.</p>
+            <a href="https://www.tse.jus.br/legislacao/compilada/sumula-tse" target="_blank" rel="noopener noreferrer">Ler súmulas do TSE ↗︎</a>
+          </article>
+          <article class="reading-card">
+            <span class="reading-kicker">Auditoria Pública</span>
+            <h4>DivulgaCandContas (TSE)</h4>
+            <p>Ferramenta oficial para conferência individual de receitas, fornecedores, despesas contratadas e situação eleitoral.</p>
+            <a href="https://divulgacandcontas.tse.jus.br/" target="_blank" rel="noopener noreferrer">Abrir DivulgaCandContas ↗︎</a>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ETAPA 5 DO FUNIL COGNITIVO: DADOS & MÉTODOS (DIVULGAÇÃO PROGRESSIVA) -->
+  <section id="metodologia" class="methods-band" aria-label="Dados e Metodologia">
+    <div class="container">
+      <div class="section-intro">
+        <p class="eyebrow">Transparência Metodológica · Divulgação Progressiva</p>
+        <h2>Dados &amp; Métodos</h2>
+        <p class="section-lead">Todos os indicadores são calculados deterministicamente no navegador sobre microdados agregados e anonimizados do TSE, com cobertura e totais auditados por pipeline Python/DuckDB.</p>
+      </div>
+
+      <div class="methods-accordion">
+        <details class="method-item" id="metodo-geral">
+          <summary>1. População analisada, unidade legal de chapa e privacidade (LGPD)</summary>
+          <div class="method-body">
+            <p>O escopo compreende exclusivamente <strong>Deputado Federal (CD_CARGO = 6)</strong> e <strong>Deputado Estadual (CD_CARGO = 7)</strong> nas 27 Unidades da Federação (Deputado Distrital é excluído). A unidade legal de chapa em 2022 e 2026 é a <strong>Federação partidária</strong> (<code>NR_FEDERACAO != -1</code>) ou o <strong>Partido Isolado</strong> por <code>(UF, Cargo)</code>, garantindo que filtros por legenda federada não quebrem a chapa original.</p>
+            <p>Em conformidade com a LGPD e a Res. TSE 23.729/2024, os arquivos JSON publicados não contêm nomes de candidatas/os, CPFs, e-mails ou identificação civil de fornecedores pessoas físicas/MEIs (substituídos por identificadores anônimos determinísticos).</p>
+          </div>
+        </details>
+
+        <details class="method-item" id="metodo-h1">
+          <summary>2. Corte n ≥ 4 nas chapas, Registradas vs. APTO e micro-chapas</summary>
+          <div class="method-body">
+            <p>Chapas com menos de 4 candidaturas (<em>micro-chapas</em>) só podem assumir percentuais discretos extremos (0%, 33%, 50%, 67%, 100%). Para evitar ruído visual nos gráficos por chapa (Mosaico, H1 e H7), aplica-se o corte <code>n ≥ 4</code>; porém todas as candidaturas individuais seguem integralmente contabilizadas nos indicadores de financiamento, votação e sinais (H2–H6, H8 e Big Numbers).</p>
+            <p>Em H1, <strong>Registradas</strong> mede todas as candidaturas protocoladas, enquanto <strong>Aptas</strong> filtra apenas quem chegou com situação <code>APTO</code> à disputa, revelando quantas chapas caem abaixo de 30% após indeferimentos ou renúncias.</p>
+          </div>
+        </details>
+
+        <details class="method-item" id="metodo-h4">
+          <summary>3. Alocação proporcional do Sankey e critério dos Fornecedores-Hub (H4)</summary>
+          <div class="method-body">
+            <p>Como a tabela <code>despesas_contratadas</code> do TSE não vincula diretamente cada nota fiscal à conta bancária de origem (pública ou privada), o Sankey multiplica o gasto de cada candidatura pela sua parcela pública na receita total (<code>(FEFC + FP) / receita_total</code>).</p>
+            <p>Um fornecedor é classificado como <strong>Fornecedor-Hub</strong> somente quando atende <code>≥ 2</code> candidaturas <code>APTO</code> do mesmo partido e UF e concentra <code>&gt; 15%</code> da despesa de pelo menos uma candidatura com menos de 20 votos.</p>
+          </div>
+        </details>
+
+        <details class="method-item" id="metodo-h6">
+          <summary>4. Sinais estatísticos e salvaguarda jurídica da Súmula 73 (H6–H8)</summary>
+          <div class="method-body">
+            <p>O sistema observa três indicadores numéricos objetivos: <strong>Sinal A</strong> (<code>votos_validos ≤ limiar</code>, padrão 10), <strong>Sinal B</strong> (prestação entregue com receita e despesa iguais a R$ 0) e <strong>Sinal C</strong> (lote idêntico de fornecedor/valor/data ou repasse FEFC/FP em <code>≥ 3</code> candidaturas do mesmo partido e UF).</p>
+            <p><strong>Salvaguarda jurídica:</strong> Sinais B e C são mutuamente exclusivos por construção contábil (máximo observável simultâneo = 2 sinais), e a ausência efetiva de atos de campanha exigida pela Súmula 73 do TSE não é observável nos CSVs. Os sinais indicam padrões agregados de atenção, jamais prova ou acusação individual.</p>
+          </div>
+        </details>
+
+        <details class="method-item" id="metodo-h8">
+          <summary>5. Cobertura das fontes e comparabilidade 2022 vs. 2026</summary>
+          <div class="method-body">
+            <p>Ambos os pleitos apresentam cobertura superior a 97% de prestações <code>FINAL</code> entre candidaturas <code>APTO</code>. Em 2026, as prestações de contas ainda aguardam julgamento judicial definitivo, e o arquivo de votação municipal/zona é de 19/10/2026 (232 candidaturas <code>APTO</code>, ou 1,3%, sem linha no arquivo assumem 0 votos por ausência de registro).</p>
+            <div class="coverage-table-wrap" id="methods-coverage-table"></div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
 
   <footer class="site-footer">
     <div class="container footer-grid">

@@ -6,9 +6,10 @@ Este guia explica, em linguagem direta, **o que cada gráfico da aplicação mos
 
 ## 0. Antes de começar: como ler a interface
 
-A página funciona em **duas colunas (Scrollytelling split-screen)**:
-- **Coluna esquerda (narrativa):** apresenta os 5 atos da investigação, as 9 hipóteses (**H1** a **H9**), um resumo numérico dinâmico e um **selo de diagnóstico** para cada etapa.
-- **Coluna direita (palco fixo):** mostra automaticamente o gráfico correspondente ao bloco em leitura (você pode rolar a página ou clicar diretamente em qualquer cartão à esquerda).
+A página segue o funil narrativo **Anedota → Evidência Visual em Escala (Macro → Micro) → Análise Quantitativa → Síntese → Dados & Métodos**, em **duas colunas (Scrollytelling split-screen)**:
+- **Coluna esquerda (narrativa):** apresenta a abertura concreta, o panorama em escala (Mosaico + Pull-Out de 4 chapas reais), os 5 atos da investigação (**H1** a **H9** + **H2B Divergente**), cartões de evidência inline com metadados (`EvidenceCard`) e um **selo de diagnóstico** para cada etapa.
+- **Coluna direita (`ReactiveStage`):** palco fixo na viewport com **rótulos de troca de contexto** (`NO REGISTRO`, `NAS CONTAS`, `NAS DESPESAS`, `NAS URNAS`, `CRUZAMENTO DE SINAIS`, `SÍNTESE MULTI-EIXO`) indicando mudança de fonte de dados a cada ato.
+- **Navegação hierárquica (`ChapterNav` em 2 camadas) + acesso direto (`Gráficos ▾`):** permite ler linearmente ou saltar direto para qualquer visualização, além de link de acessibilidade inicial (`Pular para o conteúdo principal`) e seção final `Dados & Métodos` com divulgação progressiva.
 
 ### Filtros globais (barra no topo)
 Qualquer ajuste na barra superior recalcula todos os gráficos e veredictos em tempo real:
@@ -35,8 +36,10 @@ Cada hipótese recebe automaticamente um selo calculado sobre o recorte ativo:
 
 | Ato | Passo | Gráfico(s) na tela | Pergunta central que responde | Interação no gráfico |
 | :---: | :---: | :--- | :--- | :--- |
+| **00** | **00A / 00B** | **Mosaico em Escala (48 chapas) → Pull-Out (4 casos reais)** | Como a compressão no piso de 30%–33,3% aparece em escala real e em casos concretos? | Alternar `Visão Macro (48)` / `Pull-Out (4 casos)`, hover nos blocos, clique filtra UF |
 | **01** | **H1** | Histograma espelhado (*Butterfly Chart*) 2022 vs. 2026 (5 faixas) | As chapas cumprem 30% ou estacionam coladas no piso (30%–33,3%), e como 2022 compara com 2026? | Alternar `Registradas`/`Aptas` + hover comparativo (`Δ p.p.`) |
 | **02** | **H2** | Dumbbell de medianas por partido + Barras empilhadas 100% por fonte | Mulheres recebem menos dinheiro que homens dentro dos partidos e no recurso privado? | Alternar `2022` / `2026` no gráfico + clique nos círculos filtra o partido + hover |
+| **02** | **H2B** | **Gráfico Divergente (`← Homens | Igual 1× | Mulheres →`)** | Quantas vezes (`2×`, `5×`, `10×`, `15×`) a mediana favorece um gênero por partido? | Alternar `Privado/Próprio` / `Fundo Público` / `Total` + clique filtra partido + hover |
 | **02** | **H3** | Dispersão (bolhas, escala linear padrão) `% Candidatas × % Fundo Público` | Quando um partido lança mais de 30% de mulheres, o Fundo Público acompanha? | Alternar `Foco (≤46%)` / `Todos` e `Escala Linear` / `Escala Log (Todos)` + hover destaca partido e esmaece demais + clique filtra |
 | **02** | **H4** | Diagrama de Sankey + Grafo de Rede Bipartida (Hubs) | Para onde vai o dinheiro público? Ele volta para o partido ou se concentra em fornecedores-hub? | Alternar `Sankey` / `Rede de Hubs`, hover no hub destaca ligações, clique filtra partido |
 | **03** | **H5** | Barras agrupadas em 3 etapas (Funil de conversão) | Onde as mulheres mais perdem: para conquistar votos ou para converter votos em cadeiras? | Clique nas barras filtra o partido + hover |

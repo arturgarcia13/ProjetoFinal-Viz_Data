@@ -206,3 +206,60 @@ def test_h2_by_year_2022_and_2026_top12():
     assert len(res26["byParty"]) >= 12
     assert len(res22["sources"]) == 2
     assert len(res26["sources"]) == 2
+
+
+def test_scale_mosaic_and_divergent_disparity():
+    script = """
+    import fs from 'node:fs';
+    import { decodeAnalyticalBase, filterCandidates } from './src/data.js';
+    import {
+      computeH1, computeH2, computeScaleMosaic, computeDivergentDisparity,
+    } from './src/indicators.js';
+
+    const raw = JSON.parse(fs.readFileSync('data/analytical_base.json', 'utf8'));
+    const { candidates } = decodeAnalyticalBase(raw);
+    const rows22 = filterCandidates(candidates, { year: 2022, cargo: 'all' });
+    const h1 = computeH1(rows22);
+    const h2 = computeH2(rows22);
+    const mosaic = computeScaleMosaic(rows22, h1, { voteThreshold: 10, maxTiles: 48 });
+    const divPriv = computeDivergentDisparity(h2, { mode: 'priv', limit: 12, cap: 15 });
+    const divZeroCheck = computeDivergentDisparity({
+      medPrivF: 0,
+      medPrivM: 1000,
+      byParty: [
+        { party: 'EQ', total: 50, nF: 20, nM: 30, medPrivF: 500, medPrivM: 500, medPubF: 1000, medPubM: 1000, medF: 1500, medM: 1500 },
+        { party: 'ZEROF', total: 40, nF: 15, nM: 25, medPrivF: 0, medPrivM: 2000, medPubF: 1000, medPubM: 1000, medF: 1000, medM: 3000 },
+      ],
+    }, { mode: 'priv', cap: 15 });
+
+    console.log(JSON.stringify({
+      totalSlates: mosaic.totalSlates,
+      tileCount: mosaic.tiles.length,
+      pullOutCount: mosaic.pullOuts.length,
+      uniquePullOuts: new Set(mosaic.pullOuts.map((p) => p.key)).size,
+      pullOutKeysInTiles: mosaic.pullOuts.every((p) => mosaic.tiles.some((t) => t.key === p.key)),
+      divCount: divPriv.rows.length,
+      favoringM: divPriv.summary.favoringM,
+      eqLog: divZeroCheck.rows.find((r) => r.party === 'EQ').signedLog,
+      zeroFDir: divZeroCheck.rows.find((r) => r.party === 'ZEROF').direction,
+      zeroFFactor: divZeroCheck.rows.find((r) => r.party === 'ZEROF').factor,
+    }));
+    """
+    proc = subprocess.run(
+        ["node", "--input-type=module", "-e", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    out = json.loads(proc.stdout)
+    assert out["totalSlates"] == 1060
+    assert out["tileCount"] == 48
+    assert out["pullOutCount"] == 4
+    assert out["uniquePullOuts"] == 4
+    assert out["pullOutKeysInTiles"] is True
+    assert out["divCount"] == 12
+    assert out["favoringM"] >= 10
+    assert out["eqLog"] == 0
+    assert out["zeroFDir"] == "M"
+    assert out["zeroFFactor"] == 15

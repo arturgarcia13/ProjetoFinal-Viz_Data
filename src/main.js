@@ -2,16 +2,12 @@ import { loadAppData, filterCandidates, UF_NAMES, CARGO_LABEL } from './data.js'
 import {
   computeH1, computeH1Comparison, computeH2, computeH3, computeH4, computeH5,
   computeH6, computeH7, computeH8, computeH9AndParallel,
+  computeScaleMosaic, computeDivergentDisparity,
 } from './indicators.js';
-import { renderH1Histogram } from './charts/h1Histogram.js';
-import { renderH2Dumbbell } from './charts/h2Dumbbell.js';
-import { renderH3Scatter } from './charts/h3Scatter.js';
-import { renderH4Sankey, renderH4Network } from './charts/h4SankeyNetwork.js';
-import { renderH5Conversion } from './charts/h5Conversion.js';
-import { renderH6Signals } from './charts/h6Signals.js';
-import { renderH7Boxplot } from './charts/h7Boxplot.js';
-import { renderH8Temporal } from './charts/h8Temporal.js';
-import { renderUFMap, renderParallelCoordinates } from './charts/h9MapAndParallel.js';
+import { createScrollyContainer } from './components/scrollyContainer.js';
+import { createChapterNav } from './components/chapterNav.js';
+import { renderReactiveStage } from './components/reactiveStage.js';
+import { renderEvidenceSlot } from './components/evidenceCard.js';
 
 const state = {
   year: 2022,
@@ -19,9 +15,10 @@ const state = {
   uf: '',
   party: '',
   threshold: 10,
-  activeStep: 'h1',
+  activeStep: 'escala-macro',
   h1Mode: 'reg',
   h2Year: 2022,
+  h2DivMode: 'priv',
   h3Scale: 'linear',
   h3Zoom: 'focus',
   h4Tab: 'sankey',
@@ -33,6 +30,8 @@ const state = {
 };
 
 let APP_DATA = null;
+let scrollyCtrl = null;
+let chapterNavCtrl = null;
 
 function fmtPct(v) {
   return `${(v * 100).toFixed(1).replace('.', ',')}%`;
@@ -81,6 +80,13 @@ function getScopedRows({ ignoreUF = false, year = state.year } = {}) {
   return rows;
 }
 
+function syncFilterHeightVar() {
+  const fb = document.getElementById('filter-bar');
+  if (fb) {
+    document.documentElement.style.setProperty('--filter-h', `${Math.ceil(fb.getBoundingClientRect().height) + 12}px`);
+  }
+}
+
 function renderChips() {
   const chips = document.getElementById('active-chips');
   chips.innerHTML = '';
@@ -107,31 +113,158 @@ function renderChips() {
     btn.addEventListener('click', handler);
     chips.appendChild(btn);
   }
+  syncFilterHeightVar();
 }
 
-function buildStageControls(buttons) {
-  const ctrl = document.getElementById('stage-controls');
-  ctrl.innerHTML = '';
-  if (!buttons || buttons.length === 0) return;
-  const groups = Array.isArray(buttons[0]) ? buttons : [buttons];
-  for (const groupButtons of groups) {
-    const grp = document.createElement('div');
-    grp.className = 'filter-group';
-    for (const { label, active, onClick } of groupButtons) {
+function renderInlineEvidenceCards(computed, covYear) {
+  const { h1, h2, h5, h8 } = computed;
+  const dtCand = covYear?.dt_geracao?.consulta_cand || 'extrato oficial';
+  const dtRec = covYear?.dt_geracao?.receitas || 'extrato oficial';
+  const dtVote = covYear?.dt_geracao?.votacao || 'extrato oficial';
+
+  renderEvidenceSlot('ev-h1', {
+    meta: `TSE ${state.year} · consulta_cand · ${dtCand}`,
+    linkLabel: 'Fonte TSE ↗︎',
+    linkHref: `https://dadosabertos.tse.jus.br/dataset/candidatos-${state.year}`,
+    htmlText: `<mark class="ev-highlight">${fmtPct(h1.pctFloorBand)}</mark> das chapas ficam entre 30% e 33,3%, e <mark class="ev-highlight">${h1.droppedByInapto}</mark> caíram abaixo do piso após inaptidões.`,
+    tag: 'Registro vs. APTO',
+    tagTone: h1.verdict.status === 'vaza' ? 'below' : 'above',
+  });
+
+  renderEvidenceSlot('ev-h2', {
+    meta: `TSE ${state.year} · receitas_candidatos · ${dtRec}`,
+    linkLabel: 'Contas TSE ↗︎',
+    linkHref: 'https://divulgacandcontas.tse.jus.br/',
+    htmlText: `No recurso privado/próprio, a mediana feminina é <mark class="ev-highlight">${fmtBrl(h2.medPrivF)}</mark> frente a <mark class="ev-highlight">${fmtBrl(h2.medPrivM)}</mark> entre homens.`,
+    tag: 'Assimetria Privada',
+    tagTone: h2.verdict.status === 'vaza' ? 'below' : 'above',
+  });
+
+  renderEvidenceSlot('ev-h5', {
+    meta: `TSE ${state.year} · votacao_munzona · ${dtVote}`,
+    linkLabel: 'Resultados TSE ↗︎',
+    linkHref: `https://dadosabertos.tse.jus.br/dataset/resultados-${state.year}`,
+    htmlText: `Conversão eleitoral: <mark class="ev-highlight">${fmtPct(h5.pctCandF)}</mark> candidatas viram <mark class="ev-highlight">${fmtPct(h5.pctVotosF)}</mark> dos votos e <mark class="ev-highlight">${fmtPct(h5.pctEleitasF)}</mark> das cadeiras.`,
+    tag: 'Funil Eleitoral',
+    tagTone: h5.verdict.status === 'vaza' ? 'below' : 'above',
+  });
+
+  renderEvidenceSlot('ev-h8', {
+    meta: 'Série TSE 2022→2026 · Súmula 73',
+    linkLabel: 'Súmula 73 TSE ↗︎',
+    linkHref: 'https://www.tse.jus.br/legislacao/compilada/sumula-tse',
+    htmlText: `Contas zeradas passaram de <mark class="ev-highlight">${fmtPct(h8.byYear[2022].pctZero)}</mark> para <mark class="ev-highlight">${fmtPct(h8.byYear[2026].pctZero)}</mark>, enquanto lotes padronizados variaram de <mark class="ev-highlight">${fmtPct(h8.byYear[2022].pctStd)}</mark> para <mark class="ev-highlight">${fmtPct(h8.byYear[2026].pctStd)}</mark>.`,
+    tag: 'Evolução Tática',
+    tagTone: h8.verdict.status === 'vaza' ? 'floor' : 'above',
+  });
+}
+
+function renderSynthesisSection(computed) {
+  const { h1, h2, h3, h4, h5, h6, h7, h8, h9 } = computed;
+  const cardsEl = document.getElementById('synthesis-cards');
+  if (cardsEl) {
+    cardsEl.innerHTML = `
+      <article class="synthesis-card">
+        <span class="synthesis-kicker">1. Entrada e Dinheiro Público</span>
+        <h4>Cota formal e FEFC funcionam como piso, não como impulso</h4>
+        <p><strong>${fmtPct(h1.pctCompliant)}</strong> das chapas cumprem ≥30% no registro e mulheres recebem <strong>${fmtPct(h3.pctPubF)}</strong> do Fundo Público (razão <strong>${h3.equityRatio.toFixed(2).replace('.', ',')}×</strong>).</p>
+      </article>
+      <article class="synthesis-card">
+        <span class="synthesis-kicker">2. Onde o sistema vaza</span>
+        <h4>Recurso privado, urnas e chapas no limite</h4>
+        <p>A mediana privada feminina (<strong>${fmtBrl(h2.medPrivF)}</strong>) fica atrás da masculina (<strong>${fmtBrl(h2.medPrivM)}</strong>), e na urna <strong>${fmtPct(h5.pctCandF)}</strong> das candidaturas geram <strong>${fmtPct(h5.pctEleitasF)}</strong> das cadeiras.</p>
+      </article>
+      <article class="synthesis-card">
+        <span class="synthesis-kicker">3. Sinais e Território</span>
+        <h4>Deslocamento de contas zeradas e gargalo regional</h4>
+        <p>Entre 2022 e 2026, contas zeradas foram de <strong>${fmtPct(h8.byYear[2022].pctZero)}</strong> a <strong>${fmtPct(h8.byYear[2026].pctZero)}</strong> e lotes padronizados de <strong>${fmtPct(h8.byYear[2022].pctStd)}</strong> a <strong>${fmtPct(h8.byYear[2026].pctStd)}</strong>.</p>
+      </article>
+    `;
+  }
+
+  const scorecardEl = document.getElementById('synthesis-scorecard');
+  if (scorecardEl) {
+    const items = [
+      ['h1', 'H1 · Registro', h1.verdict],
+      ['h2', 'H2 · Medianas', h2.verdict],
+      ['h3', 'H3 · Fundo Público', h3.verdict],
+      ['h4', 'H4 · Fluxo & Hubs', h4.verdict],
+      ['h5', 'H5 · Urna & Cadeiras', h5.verdict],
+      ['h6', 'H6 · Sinais (Gênero)', h6.verdict],
+      ['h7', 'H7 · Piso vs. >40%', h7.verdict],
+      ['h8', 'H8 · 2022 → 2026', h8.verdict],
+      ['h9', 'H9 · Geografia (UFs)', h9.verdict],
+    ];
+    scorecardEl.innerHTML = '';
+    for (const [stepId, title, verdict] of items) {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = `seg${active ? ' active' : ''}`;
-      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-      btn.textContent = label;
-      btn.addEventListener('click', onClick);
-      grp.appendChild(btn);
+      btn.className = `scorecard-item verdict-${verdict.status}`;
+      btn.innerHTML = `
+        <span class="scorecard-title">${title}</span>
+        <span class="verdict-tag">${verdict.label}</span>
+      `;
+      btn.addEventListener('click', () => setActiveStep(stepId, { scroll: true }));
+      scorecardEl.appendChild(btn);
     }
-    ctrl.appendChild(grp);
   }
 }
 
+function renderCoverageTable(coverage) {
+  const el = document.getElementById('methods-coverage-table');
+  if (!el || !coverage?.years) return;
+  const y22 = coverage.years['2022'];
+  const y26 = coverage.years['2026'];
+  if (!y22 || !y26) return;
+
+  const pctFinal = (y) => {
+    const fin = y.tp_prestacao_apto?.FINAL || 0;
+    const tot = y.population?.apto_cands || 1;
+    return fmtPct(fin / tot);
+  };
+
+  el.innerHTML = `
+    <table class="coverage-table">
+      <thead>
+        <tr>
+          <th>Métrica de Cobertura</th>
+          <th>2022 (Baseline)</th>
+          <th>2026 (Comparativo)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Candidaturas registradas (Fed + Est)</td>
+          <td>${y22.population.total_cands.toLocaleString('pt-BR')}</td>
+          <td>${y26.population.total_cands.toLocaleString('pt-BR')}</td>
+        </tr>
+        <tr>
+          <td>Candidaturas APTO</td>
+          <td>${y22.population.apto_cands.toLocaleString('pt-BR')}</td>
+          <td>${y26.population.apto_cands.toLocaleString('pt-BR')}</td>
+        </tr>
+        <tr>
+          <td>Prestações FINAL entre APTO</td>
+          <td>${pctFinal(y22)} (${y22.dt_geracao.receitas})</td>
+          <td>${pctFinal(y26)} (${y26.dt_geracao.receitas})</td>
+        </tr>
+        <tr>
+          <td>Chapas n ≥ 4 / Micro-chapas (&lt;4)</td>
+          <td>${(y22.population.chapas_reg.total - y22.population.chapas_reg.micro_lt4).toLocaleString('pt-BR')} / ${y22.population.chapas_reg.micro_lt4}</td>
+          <td>${(y26.population.chapas_reg.total - y26.population.chapas_reg.micro_lt4).toLocaleString('pt-BR')} / ${y26.population.chapas_reg.micro_lt4}</td>
+        </tr>
+        <tr>
+          <td>Fornecedores-Hub mapeados (H4)</td>
+          <td>${y22.hubs_summary.hubs_count} hubs (${y22.hubs_summary.links_count} elos)</td>
+          <td>${y26.hubs_summary.hubs_count} hubs (${y26.hubs_summary.links_count} elos)</td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+}
+
 function updateSummaryAndNarrative(rows, computed) {
-  const { h1, h2, h3, h4, h5, h6, h7, h8, h9 } = computed;
+  const { scaleMosaic, h1, h2, divergent, h3, h4, h5, h6, h7, h8, h9 } = computed;
   const covYear = APP_DATA.coverage?.years?.[String(state.year)] || null;
 
   const extraBrush = state.pcAllowedParties
@@ -159,6 +292,22 @@ function updateSummaryAndNarrative(rows, computed) {
     bigSeatsLbl.textContent = `das cadeiras eleitas (${h5.elF.toLocaleString('pt-BR')} de ${(h5.elF + h5.elM).toLocaleString('pt-BR')}) foram ocupadas por mulheres na urna.`;
   }
 
+  if (scaleMosaic) {
+    const statMacro = document.getElementById('stat-escala-macro');
+    const statMicro = document.getElementById('stat-escala-micro');
+    if (statMacro) {
+      const floorPct = scaleMosaic.totalSlates > 0
+        ? scaleMosaic.bandCounts.floor / scaleMosaic.totalSlates
+        : 0;
+      statMacro.textContent =
+        `${scaleMosaic.tiles.length} blocos representam ${scaleMosaic.totalSlates.toLocaleString('pt-BR')} chapas (n ≥ 4) em ${state.year}: ${fmtPct(floorPct)} estão espremidas no piso 30%–33,3%.`;
+    }
+    if (statMicro) {
+      statMicro.textContent =
+        `${scaleMosaic.pullOuts.length} casos reais em destaque (incluindo ${h1.droppedByInapto} chapas derrubadas por inaptidões no recorte).`;
+    }
+  }
+
   renderVerdict('verdict-h1', h1.verdict);
   document.getElementById('stat-h1').textContent =
     `${fmtPct(h1.pctCompliant)} cumprem ≥30% no registro (${fmtPct(h1.pctFloorBand)} na faixa 30%–33,3%; ${fmtPct(h1.pctAbove40)} >40%). ${h1.droppedByInapto} chapas caíram abaixo de 30% após inaptidões.`;
@@ -166,6 +315,18 @@ function updateSummaryAndNarrative(rows, computed) {
   renderVerdict('verdict-h2', h2.verdict);
   document.getElementById('stat-h2').textContent =
     `Mediana total: ${fmtBrl(h2.medF)} (F) vs. ${fmtBrl(h2.medM)} (M) · Privado/próprio: ${fmtBrl(h2.medPrivF)} (F) vs. ${fmtBrl(h2.medPrivM)} (M).`;
+
+  if (divergent) {
+    const divStatEl = document.getElementById('stat-h2-div');
+    const divVerdict = divergent.summary.favoringM >= Math.ceil(divergent.rows.length * 0.6)
+      ? { status: 'vaza', label: 'Vaza no Privado', reason: `${divergent.summary.favoringM} de ${divergent.rows.length} partidos favorecem homens na mediana privada.` }
+      : { status: 'funcionou', label: 'Próximo à Paridade', reason: 'Distribuição equilibrada entre legendas.' };
+    renderVerdict('verdict-h2-div', divVerdict);
+    if (divStatEl) {
+      divStatEl.textContent =
+        `No recurso privado/próprio (${state.year}), ${divergent.summary.favoringM} de ${divergent.rows.length} maiores partidos têm mediana maior para homens (global: ${fmtBrl(divergent.summary.globalMedF)} F vs. ${fmtBrl(divergent.summary.globalMedM)} M).`;
+    }
+  }
 
   renderVerdict('verdict-h3', h3.verdict);
   document.getElementById('stat-h3').textContent =
@@ -196,250 +357,14 @@ function updateSummaryAndNarrative(rows, computed) {
   renderVerdict('verdict-h9', h9.verdict);
   document.getElementById('stat-h9').textContent = h9.verdict.reason;
 
+  renderInlineEvidenceCards(computed, covYear);
+  renderSynthesisSection(computed);
+
   if (covYear) {
     const fin = covYear.tp_prestacao_apto?.FINAL || 0;
     const tot = covYear.population?.apto_cands || 1;
     document.getElementById('footer-coverage').textContent =
       `${state.year}: ${tot.toLocaleString('pt-BR')} candidaturas APTO (${((fin / tot) * 100).toFixed(1).replace('.', ',')}% com prestação FINAL; extração ${covYear.dt_geracao?.receitas || '—'}).`;
-  }
-}
-
-function renderStage(computed) {
-  const canvas = document.getElementById('stage-canvas');
-  const secondary = document.getElementById('stage-secondary');
-  const kicker = document.getElementById('stage-kicker');
-  const title = document.getElementById('stage-title');
-  const subtitle = document.getElementById('stage-subtitle');
-  const caption = document.getElementById('stage-caption');
-
-  secondary.innerHTML = '';
-  if (subtitle) {
-    subtitle.textContent = '';
-    subtitle.hidden = true;
-  }
-  const w = Math.min(720, Math.max(300, canvas.clientWidth || 640));
-  const { h1Comparison, h2Stage, h3, h4, h5, h6, h7, h8, h9, mapH9, mapH7 } = computed;
-
-  switch (state.activeStep) {
-    case 'h1': {
-      kicker.textContent = 'Ato 01 · No Papel (H1)';
-      title.textContent = 'Histograma Espelhado: % de Mulheres por Chapa (2022 vs. 2026)';
-      buildStageControls([
-        { label: 'Registradas', active: state.h1Mode === 'reg', onClick: () => { state.h1Mode = 'reg'; update(); } },
-        { label: 'Aptas', active: state.h1Mode === 'apto', onClick: () => { state.h1Mode = 'apto'; update(); } },
-      ]);
-      renderH1Histogram(canvas, h1Comparison, {
-        width: w,
-        mode: state.h1Mode,
-        activeYear: state.year,
-      });
-      const y22 = h1Comparison.byYear[2022];
-      const y26 = h1Comparison.byYear[2026];
-      caption.textContent = state.h1Mode === 'apto'
-        ? `Exibindo apenas chapas aptas (n ≥ 4) com a mesma escala travada de Registradas. Ao retirar inaptidões, ${y22.droppedByInapto} chapas em 2022 e ${y26.droppedByInapto} em 2026 migram de ≥30% para <30%.`
-        : `Exibindo chapas registradas (n ≥ 4). Micro-chapas (<4 cand.) fora do percentual: ${y22.microSlatesReg} em 2022 (${y22.microCandsReg} pessoas) e ${y26.microSlatesReg} em 2026 (${y26.microCandsReg} pessoas). Alterne para "Aptas" ou passe o mouse sobre uma faixa para comparar 2022 vs. 2026.`;
-      break;
-    }
-
-    case 'h2':
-      kicker.textContent = 'Ato 02 · No Dinheiro (H2)';
-      title.textContent = `Mediana de Receitas por Partido (F vs. M) e Fontes · ${state.h2Year}`;
-      buildStageControls([
-        { label: '2022', active: state.h2Year === 2022, onClick: () => { state.h2Year = 2022; update(); } },
-        { label: '2026', active: state.h2Year === 2026, onClick: () => { state.h2Year = 2026; update(); } },
-      ]);
-      renderH2Dumbbell(canvas, h2Stage, { width: w, onSelectParty: toggleParty });
-      caption.textContent = `Exibindo ${state.h2Year} no gráfico (seletor independente do filtro global). Clique em qualquer círculo para filtrar o partido; barras inferiores comparam composição Pública (FEFC+FP) vs. Privada/Própria.`;
-      break;
-
-    case 'h3':
-      kicker.textContent = 'Ato 02 · No Dinheiro (H3)';
-      title.textContent = '% de Candidatas × % do Fundo Público (FEFC + FP)';
-      if (subtitle) {
-        subtitle.textContent = 'Partidos acima da linha diagonal destinaram proporcionalmente mais recursos às mulheres do que o peso delas nas candidaturas.';
-        subtitle.hidden = false;
-      }
-      buildStageControls([
-        [
-          {
-            label: 'Foco (≤46%)',
-            active: state.h3Zoom === 'focus',
-            onClick: () => {
-              state.h3Zoom = 'focus';
-              state.h3Scale = 'linear';
-              update();
-            },
-          },
-          {
-            label: 'Todos',
-            active: state.h3Zoom === 'all',
-            onClick: () => {
-              state.h3Zoom = 'all';
-              update();
-            },
-          },
-        ],
-        [
-          {
-            label: 'Escala Linear',
-            active: state.h3Zoom === 'focus' || state.h3Scale === 'linear',
-            onClick: () => {
-              state.h3Scale = 'linear';
-              update();
-            },
-          },
-          {
-            label: 'Escala Log (Todos)',
-            active: state.h3Zoom === 'all' && state.h3Scale === 'log',
-            onClick: () => {
-              state.h3Zoom = 'all';
-              state.h3Scale = 'log';
-              update();
-            },
-          },
-        ],
-      ]);
-      renderH3Scatter(canvas, h3, {
-        width: w,
-        scale: state.h3Zoom === 'focus' ? 'linear' : state.h3Scale,
-        zoom: state.h3Zoom,
-        onSelectParty: toggleParty,
-      });
-      caption.textContent = state.h3Zoom === 'all' && state.h3Scale === 'log'
-        ? 'Partidos com n ≥ 10 APTO na visão "Todos" em escala log₁₀. Passe o cursor sobre qualquer bolha para destacar o partido ou clique para filtrar.'
-        : 'Partidos com n ≥ 10 APTO em escala linear (padrão). Passe o cursor sobre qualquer bolha para destacar o partido e ver detalhes, ou clique para filtrar.';
-      break;
-
-    case 'h4':
-      kicker.textContent = 'Ato 02 · Fluxo e Rede (H4)';
-      title.textContent = state.h4Tab === 'sankey'
-        ? 'Fluxo Proporcional do Fundo Público por Destino'
-        : 'Rede Bipartida: Candidaturas Anônimas × Fornecedores-Hub';
-      buildStageControls([
-        { label: 'Sankey', active: state.h4Tab === 'sankey', onClick: () => { state.h4Tab = 'sankey'; update(); } },
-        { label: 'Rede de Hubs', active: state.h4Tab === 'network', onClick: () => { state.h4Tab = 'network'; update(); } },
-      ]);
-      if (state.h4Tab === 'sankey') {
-        renderH4Sankey(canvas, h4, { width: w });
-        caption.textContent = 'Alocação proporcional pela parcela pública da receita. Passe o cursor nas faixas para ver os montantes em R$ milhões.';
-      } else {
-        renderH4Network(canvas, APP_DATA.networkHubs?.years?.[String(state.year)], {
-          uf: state.uf || null,
-          party: state.party || null,
-          cargo: state.cargo,
-        }, { width: w, onSelectParty: toggleParty });
-        caption.textContent = 'Quadrados: fornecedores-hub (≥2 candidaturas no partido/UF e >15% da despesa de candidatura <20 votos). Círculos: candidaturas anônimas.';
-      }
-      break;
-
-    case 'h5':
-      kicker.textContent = 'Ato 03 · Na Urna (H5)';
-      title.textContent = 'Funil em 3 Etapas (% Candidatas → % Votos → % Eleitas)';
-      buildStageControls([]);
-      renderH5Conversion(canvas, h5, { width: w, onSelectParty: toggleParty });
-      caption.textContent = 'Top 10 partidos por cadeiras eleitas no recorte. A linha tracejada marca o piso de 30%. Clique nas barras para filtrar o partido.';
-      break;
-
-    case 'h6':
-      kicker.textContent = 'Ato 04 · A Fraude Oculta (H6)';
-      title.textContent = `Volume de Sinais Observáveis por Gênero (Limiar A ≤ ${state.threshold} votos)`;
-      buildStageControls([]);
-      renderH6Signals(canvas, h6, { width: w });
-      caption.textContent = 'Sinais B (zerada) e C (lote positivo) são mutuamente exclusivos; máximo observável simultâneo = 2 sinais (A+B ou A+C).';
-      break;
-
-    case 'h7':
-      kicker.textContent = 'Ato 04 · A Fraude Oculta (H7)';
-      title.textContent = 'Taxa de Sinais (≥2) por Faixa de Chapa e por UF';
-      buildStageControls([]);
-      renderH7Boxplot(canvas, h7, { width: w });
-      renderUFMap(secondary, APP_DATA.brUf, mapH9, mapH7, {
-        width: w,
-        mode: 'h7',
-        selectedUF: state.uf,
-        allowedUFs: state.pcAllowedUFs,
-        onSelectUF: toggleUF,
-      });
-      caption.textContent = 'Acima: boxplot das chapas (n ≥ 4). Abaixo: mapa por UF da taxa de candidatas com ≥2 sinais (clique para filtrar).';
-      break;
-
-    case 'h8':
-      kicker.textContent = 'Ato 04 · Adaptação Tática (H8)';
-      title.textContent = 'Comparativo 2022 vs. 2026: Contas Zeradas × Pacotes Padronizados';
-      buildStageControls([]);
-      renderH8Temporal(canvas, h8, { width: w });
-      caption.textContent = 'Compara candidatas APTO de 2022 e 2026 no mesmo recorte de cargo/UF/partido.';
-      break;
-
-    case 'h9':
-    default:
-      kicker.textContent = 'Ato 05 · Geografia da Exclusão (H9)';
-      title.textContent = 'Mapa Crítico por UF e Coordenadas Paralelas (5 Eixos)';
-      buildStageControls([
-        { label: 'Mapa H9 (Etapa)', active: state.mapMode === 'h9', onClick: () => { state.mapMode = 'h9'; update(); } },
-        { label: 'Mapa H7 (Sinais)', active: state.mapMode === 'h7', onClick: () => { state.mapMode = 'h7'; update(); } },
-        { label: 'Eixos: Partidos', active: state.pcUnit === 'party', onClick: () => { state.pcUnit = 'party'; clearBrushState(); update(); } },
-        { label: 'Eixos: UFs', active: state.pcUnit === 'uf', onClick: () => { state.pcUnit = 'uf'; clearBrushState(); update(); } },
-      ]);
-      renderUFMap(canvas, APP_DATA.brUf, mapH9, mapH7, {
-        width: w,
-        mode: state.mapMode,
-        selectedUF: state.uf,
-        allowedUFs: state.pcAllowedUFs,
-        onSelectUF: toggleUF,
-      });
-      renderParallelCoordinates(secondary, state.pcUnit === 'uf' ? mapH9 : h9, {
-        width: w,
-        unit: state.pcUnit,
-        selectedEntity: state.pcUnit === 'uf' ? state.uf : state.party,
-        initialRanges: state.pcRanges,
-        onSelectEntity: (key, unit) => (unit === 'uf' ? toggleUF(key) : toggleParty(key)),
-        onBrushFilter: (allowedSet, rangesMap) => {
-          state.pcRanges = rangesMap;
-          if (state.pcUnit === 'party') {
-            state.pcAllowedParties = allowedSet;
-            state.pcAllowedUFs = null;
-          } else {
-            state.pcAllowedUFs = allowedSet;
-            state.pcAllowedParties = null;
-          }
-          renderChips();
-          const brushedRows = getScopedRows();
-          const brushedMapRows = getScopedRows({ ignoreUF: true });
-          const nextComputed = {
-            h1: computeH1(brushedRows),
-            h2: computeH2(brushedRows),
-            h3: computeH3(brushedRows),
-            h4: computeH4(brushedRows),
-            h5: computeH5(brushedRows),
-            h6: computeH6(brushedRows, { voteThreshold: state.threshold }),
-            h7: computeH7(brushedRows, { voteThreshold: state.threshold }),
-            h8: computeH8(APP_DATA.candidates, {
-              cargo: state.cargo,
-              uf: state.uf || null,
-              party: state.party || null,
-              voteThreshold: state.threshold,
-            }),
-            h9: computeH9AndParallel(brushedRows, { voteThreshold: state.threshold }),
-          };
-          updateSummaryAndNarrative(brushedRows, nextComputed);
-          renderUFMap(
-            canvas,
-            APP_DATA.brUf,
-            computeH9AndParallel(brushedMapRows, { voteThreshold: state.threshold }),
-            computeH7(brushedMapRows, { voteThreshold: state.threshold }),
-            {
-              width: w,
-              mode: state.mapMode,
-              selectedUF: state.uf,
-              allowedUFs: state.pcAllowedUFs,
-              onSelectUF: toggleUF,
-            },
-          );
-        },
-      });
-      caption.textContent = 'Clique em uma UF para filtrar o painel; alterne os eixos entre Partidos e UFs ou arraste verticalmente nos eixos para filtrar.';
-      break;
   }
 }
 
@@ -449,8 +374,11 @@ function update() {
   const h2StageRows = getScopedRows({ year: state.h2Year });
   const mapRows = getScopedRows({ ignoreUF: true });
 
+  const h1 = computeH1(rows);
+  const h2 = computeH2(rows);
   const computed = {
-    h1: computeH1(rows),
+    h1,
+    scaleMosaic: computeScaleMosaic(rows, h1, { voteThreshold: state.threshold, maxTiles: 48 }),
     h1Comparison: computeH1Comparison(APP_DATA.candidates, {
       cargo: state.cargo,
       uf: state.uf || null,
@@ -458,8 +386,10 @@ function update() {
       parties: state.pcAllowedParties,
       ufs: state.pcAllowedUFs,
     }),
-    h2: computeH2(rows),
+    h2,
     h2Stage: computeH2(h2StageRows),
+    divergent: computeDivergentDisparity(h2, { mode: 'priv', limit: 12, cap: 15 }),
+    divergentStage: computeDivergentDisparity(h2, { mode: state.h2DivMode, limit: 12, cap: 15 }),
     h3: computeH3(rows),
     h4: computeH4(rows),
     h5: computeH5(rows),
@@ -469,6 +399,8 @@ function update() {
       cargo: state.cargo,
       uf: state.uf || null,
       party: state.party || null,
+      parties: state.pcAllowedParties,
+      ufs: state.pcAllowedUFs,
       voteThreshold: state.threshold,
     }),
     h9: computeH9AndParallel(rows, { voteThreshold: state.threshold }),
@@ -478,7 +410,21 @@ function update() {
 
   updateSummaryAndNarrative(rows, computed);
   renderChips();
-  renderStage(computed);
+  renderReactiveStage({
+    state,
+    appData: APP_DATA,
+    computed,
+    getScopedRows,
+    actions: {
+      update,
+      setActiveStep,
+      toggleParty,
+      toggleUF,
+      clearBrushState,
+      renderChips,
+      updateSummaryAndNarrative,
+    },
+  });
 }
 
 function setActiveStep(stepId, { scroll = false } = {}) {
@@ -487,50 +433,13 @@ function setActiveStep(stepId, { scroll = false } = {}) {
   state.activeStep = stepId;
   document.querySelectorAll('.story-step').forEach((el) => el.classList.toggle('active', el === stepEl));
   const act = stepEl.dataset.act;
-  document.querySelectorAll('.act-nav a').forEach((a) => {
-    if (a.dataset.act === act) a.setAttribute('aria-current', 'true');
-    else a.removeAttribute('aria-current');
-  });
-  if (scroll) stepEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  update();
-}
-
-function setupScrollyObserver() {
-  const steps = document.querySelectorAll('.story-step');
-  let manualLockUntil = 0;
-
-  steps.forEach((step) => {
-    step.addEventListener('click', () => {
-      manualLockUntil = Date.now() + 500;
-      setActiveStep(step.dataset.step);
-    });
-    step.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        manualLockUntil = Date.now() + 500;
-        setActiveStep(step.dataset.step);
-      }
-    });
-  });
-
-  if (typeof IntersectionObserver !== 'undefined') {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (Date.now() < manualLockUntil) return;
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible.length > 0) {
-          const id = visible[0].target.dataset.step;
-          if (id && id !== state.activeStep) {
-            setActiveStep(id);
-          }
-        }
-      },
-      { rootMargin: '-20% 0px -35% 0px', threshold: [0.15, 0.5, 0.8] },
-    );
-    steps.forEach((s) => observer.observe(s));
+  if (chapterNavCtrl) {
+    chapterNavCtrl.sync({ act, subId: stepId });
   }
+  if (scroll && scrollyCtrl) {
+    scrollyCtrl.scrollToStep(stepId);
+  }
+  update();
 }
 
 function syncPartySelect() {
@@ -564,18 +473,29 @@ function populateUFSelect() {
   });
 }
 
-function syncFilterHeightVar() {
-  const fb = document.getElementById('filter-bar');
-  if (fb) {
-    document.documentElement.style.setProperty('--filter-h', `${Math.ceil(fb.getBoundingClientRect().height) + 12}px`);
-  }
-}
-
 async function init() {
   APP_DATA = await loadAppData();
   populateUFSelect();
   syncPartySelect();
-  setupScrollyObserver();
+  renderCoverageTable(APP_DATA.coverage);
+
+  chapterNavCtrl = createChapterNav({
+    onJumpStep: (stepId) => setActiveStep(stepId, { scroll: true }),
+    onLayoutChange: () => syncFilterHeightVar(),
+  });
+
+  scrollyCtrl = createScrollyContainer({
+    stepSelector: '.story-step',
+    onStepChange: (id) => setActiveStep(id),
+    onStepReenter: (id) => {
+      const stepEl = document.querySelector(`.story-step[data-step="${id}"]`);
+      if (stepEl && chapterNavCtrl) {
+        chapterNavCtrl.sync({ act: stepEl.dataset.act, subId: id });
+      }
+    },
+    getActiveStep: () => state.activeStep,
+  });
+
   syncFilterHeightVar();
   if (typeof ResizeObserver !== 'undefined') {
     const fb = document.getElementById('filter-bar');
@@ -628,6 +548,7 @@ async function init() {
   document.getElementById('reset-filters').addEventListener('click', () => {
     state.year = 2022;
     state.h2Year = 2022;
+    state.h2DivMode = 'priv';
     state.cargo = 'all';
     state.uf = '';
     state.party = '';
@@ -652,7 +573,7 @@ async function init() {
   });
 
   window.addEventListener('resize', () => update());
-  setActiveStep('h1');
+  setActiveStep('escala-macro');
 }
 
 init().catch((err) => {

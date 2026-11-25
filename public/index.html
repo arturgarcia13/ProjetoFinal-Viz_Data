@@ -5,8 +5,72 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>A Cota de Gênero Leva Mulheres ao Poder ou Apenas ao Papel? (2022–2026)</title>
   <meta name="description" content="Narrativa interativa em scrollytelling investigando onde a cota de gênero de 30% funciona ou vaza nas eleições proporcionais brasileiras (2022 vs. 2026).">
+  <meta property="og:title" content="A Cota de Gênero Leva Mulheres ao Poder ou Apenas ao Papel? (2022–2026)">
+  <meta property="og:description" content="Investigação interativa em cinco atos com microdados oficiais do TSE comparando registro de chapas, financiamento, urnas, sinais de integridade e geografia em 2022 e 2026.">
+  <meta property="og:type" content="article">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:image" content="assets/og-preview.svg">
+  <meta property="og:image:alt" content="Capa editorial da investigação sobre a cota de gênero nas eleições brasileiras de 2022 e 2026">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="assets/og-preview.svg">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2300805A'/%3E%3Cpath d='M12 50V18h11v32z' fill='%23FCE34D'/%3E%3Cpath d='M27 50V28h11v22z' fill='%23FF7AE5'/%3E%3Cpath d='M42 50V14h11v36z' fill='%23FF5E2B'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Por que a comparação principal usa 2022 e 2026 e deixa 2018 como referência auxiliar?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Em 2022 e 2026 vigorou o mesmo regime jurídico de federações partidárias, enquanto em 2018 ainda existiam coligações proporcionais. Comparar 2022 e 2026 mantém a unidade legal de chapa idêntica."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Por que microchapas com menos de 4 candidaturas saem dos gráficos por chapa?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Chapas de 1 a 3 pessoas geram percentuais discretos extremos como 0%, 33%, 50% ou 100%, distorcendo distribuições percentuais. Elas permanecem integralmente nos cálculos individuais de financiamento, votos e sinais."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Os sinais estatísticos da Súmula 73 provam fraude eleitoral individual?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Não. Os microdados numéricos do TSE não registram atos efetivos de campanha. Os indicadores apontam padrões agregados de atenção estatística, nunca acusação ou prova jurídica individual."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Por que a mediana feminina supera a masculina em alguns partidos no financiamento?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Para cumprir o piso de 30% do Fundo Público sem risco, muitos partidos distribuem verba pública a quase todas as candidatas, enquanto deixam parte da base masculina com R$ 0 e concentram valores maiores no topo."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Os dados de 2026 já são comparáveis aos de 2022?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sim. Ambos os pleitos superam 97% de prestações finais entregues entre candidaturas aptas, com ressalva explícita de que as contas de 2026 ainda aguardam julgamento judicial e 1,3% das aptas assumem zero votos pela extração de outubro."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "A aplicação expõe nomes, CPFs ou dados pessoais de candidaturas?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Não. Em conformidade com a LGPD e a Resolução TSE 23.729/2024, os cruzamentos usam identificadores anônimos e ocultam nomes civis, CPFs, emails e identificações de pessoas físicas ou MEIs."
+        }
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <!-- Acessibilidade Inicial: link de salto imediato antes da navegação -->
@@ -30,17 +94,16 @@
             <path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/>
           </svg>
         </span>
-        <p class="eyebrow">Pesquisa · UFC · Visualização de Dados · Microdados Oficiais do TSE (2022 vs. 2026)</p>
-        <h1>A Cota de Gênero Leva Mulheres ao Poder <em>ou Apenas ao Papel?</em></h1>
-        <p class="deck">Uma investigação em cinco atos — registro de chapas, financiamento, urnas, sinais de integridade e geografia — comparando o baseline consolidado de <strong>2022</strong> com o pleito de <strong>2026</strong> sob a mesma regra de federações partidárias.</p>
+        <p class="eyebrow">Pesquisa · UFC · Visualização de Dados · Microdados Oficiais do TSE</p>
+        <h1>A Cota de Gênero Leva Mulheres ao Poder<br><span class="hero-contrast">ou Apenas ao Papel?</span></h1>
+        <p class="deck">Uma investigação interativa em cinco atos comparando o registro de chapas, o financiamento, as urnas, os sinais de integridade e a geografia entre 2022 e 2026 sob a mesma regra de federações partidárias.</p>
         <div class="masthead-meta">
-          <span>Deputadas/os Federais e Estaduais (27 UFs)</span>
-          <span>Baseline 2022 · Comparativo direto 2026</span>
-          <span>Dados 100% anonimizados (LGPD)</span>
+          <span>46.465 candidaturas auditadas (2022 e 2026)</span>
+          <span>27 UFs · Federal e Estadual</span>
+          <span>100% dados oficiais do TSE · 0 PII (LGPD)</span>
         </div>
         <div class="hero-actions">
-          <a href="#escala" class="btn-primary">Leia a investigação</a>
-          <a href="#ato-5" class="btn-ghost">Explore o mapa por UF</a>
+          <a href="#escala" class="btn-primary">Explorar a investigação interativa</a>
         </div>
       </div>
     </div>
@@ -142,6 +205,8 @@
       <a href="#ato-4" data-jump-step="h8">H8 · Adaptação 2022→2026</a>
       <a href="#ato-5" data-jump-step="h9">H9 · Mapa UF &amp; Paralelas</a>
       <a href="#sintese">Síntese dos 5 Atos</a>
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#faq">Perguntas frequentes</a>
       <a href="#metodo-geral">Dados &amp; Métodos</a>
     </div>
   </nav>
@@ -167,7 +232,7 @@
         </div>
         <p>Antes dos gráficos agregados, observe uma amostra proporcional de <strong>48 chapas reais</strong> (<code>Federação/Partido × UF × Cargo</code>, com <code>n ≥ 4</code>). O amarelo domina o mosaico: são chapas comprimidas exatamente no piso legal de <strong>30% a 33,3%</strong>.</p>
         <p class="live-stat" id="stat-escala-macro">—</p>
-        <p class="step-note">Micro-chapas (<code>n &lt; 4</code>) ficam fora do cálculo percentual e estão documentadas na seção metodológica. <a class="method-escape" href="#metodo-h1">Ver nos métodos ↓</a></p>
+        <p class="step-note">Microchapas (<code>n &lt; 4</code>) ficam fora do cálculo percentual e estão documentadas na seção metodológica. <a class="method-escape" href="#metodo-h1">Ver nos métodos ↓</a></p>
       </article>
 
       <article class="story-step" data-step="escala-micro" data-act="0" tabindex="0">
@@ -207,7 +272,7 @@
         <p>A legislação eleitoral obriga cada partido ou federação a lançar ao menos <strong>30% de candidaturas de cada gênero</strong> por UF e cargo. Comparando 2022 e 2026 lado a lado, o piso vira teto operacional.</p>
         <p class="live-stat" id="stat-h1">—</p>
         <div id="ev-h1" class="inline-evidence-slot"></div>
-        <p class="step-note">Micro-chapas (<code>1–3</code> candidaturas) permanecem nos totais individuais e ficam fora da distribuição percentual por chapa (<code>n ≥ 4</code>). <a class="method-escape" href="#metodo-h1">Ver corte n≥4 nos métodos ↓</a></p>
+        <p class="step-note">Microchapas (<code>1–3</code> candidaturas) permanecem nos totais individuais e ficam fora da distribuição percentual por chapa (<code>n ≥ 4</code>). <a class="method-escape" href="#metodo-h1">Ver corte n≥4 nos métodos ↓</a></p>
       </article>
 
       <!-- ATO 2 -->
@@ -250,7 +315,7 @@
 
       <article class="story-step" data-step="h4" data-act="2" tabindex="0">
         <div class="step-head">
-          <span class="step-tag">H4 · Fluxo da Verba Pública e Fornecedores-Hub</span>
+          <span class="step-tag">H4 · Fluxo da Verba Pública e Fornecedores Hub</span>
           <div class="verdict-slot" id="verdict-h4"></div>
         </div>
         <p>Para além do quanto entra, para onde vai o recurso contratado? O Sankey compara o destino proporcional do Fundo Público (campanha direta, fornecedores compartilhados, partido e outras candidaturas) e a rede mapeia fornecedores ligados a campanhas de baixíssima votação.</p>
@@ -366,7 +431,15 @@
           <div id="stage-controls" class="stage-controls"></div>
         </div>
 
-        <div id="stage-canvas" class="stage-canvas"></div>
+        <div id="stage-canvas" class="stage-canvas">
+          <div class="stage-skeleton" aria-busy="true" aria-label="Carregando visualização">
+            <div class="skel-bar skel-lg"></div>
+            <div class="skel-grid">
+              <div class="skel-tile"></div><div class="skel-tile"></div><div class="skel-tile"></div><div class="skel-tile"></div>
+              <div class="skel-tile"></div><div class="skel-tile"></div><div class="skel-tile"></div><div class="skel-tile"></div>
+            </div>
+          </div>
+        </div>
         <p class="stage-secondary-kicker" id="stage-secondary-kicker" hidden></p>
         <div id="stage-secondary" class="stage-secondary"></div>
         <p id="stage-caption" class="stage-caption"></p>
@@ -374,12 +447,20 @@
     </aside>
   </main>
 
+  <!-- B11: TAGLINE REVEAL SECTION (OBRIGATÓRIA, PALAVRA POR PALAVRA NO SCROLL) -->
+  <section id="tagline-reveal" class="tagline-band" aria-label="Tese central da investigação">
+    <div class="container">
+      <p class="eyebrow">Tese da Investigação</p>
+      <p class="tagline-text" data-tagline-text>A cota de 30% abriu a porta do registro e do fundo público,<br>mas ainda precisa atravessar o abismo privado e a disputa nas urnas<br>para levar mulheres das chapas às cadeiras do parlamento.</p>
+    </div>
+  </section>
+
   <!-- ETAPA 4 DO FUNIL COGNITIVO: SÍNTESE & LEITURAS COMPLEMENTARES -->
   <section id="sintese" class="synthesis-band" aria-label="Síntese dos achados e leituras complementares">
     <div class="container">
       <div class="section-intro">
         <p class="eyebrow">Síntese da Investigação · Por que isso importa</p>
-        <h2>O que os dados confirmam — e onde a cota ainda precisa avançar</h2>
+        <h2>O que os dados confirmam e onde a cota ainda precisa avançar</h2>
         <p class="section-lead">Quando olhamos o sistema inteiro do registro à cadeira eleita, a lei de 30% alterou a entrada formal e a fatia pública agregada, mas ainda esbarra em tetos informais, concentração privada e disputa desigual nas urnas.</p>
       </div>
 
@@ -390,28 +471,50 @@
         <div class="scorecard-grid" id="synthesis-scorecard"></div>
       </div>
 
+      <!-- A2.8: Como funciona em 3 passos -->
+      <div id="como-funciona" class="how-wrap">
+        <h3 class="subsection-title">Como auditar esta investigação em 3 passos</h3>
+        <div class="how-grid">
+          <article class="how-step" data-reveal>
+            <span class="how-num">01</span>
+            <h4>Escolha o recorte no topo</h4>
+            <p>Combine ano eleitoral (2022 ou 2026), cargo, estado, partido e limiar de votos para recalcular toda a narrativa.</p>
+          </article>
+          <article class="how-step" data-reveal>
+            <span class="how-num">02</span>
+            <h4>Compare as 9 hipóteses ao vivo</h4>
+            <p>Acompanhe os selos automáticos de diagnóstico e observe no palco fixo quando a fonte muda de registro, conta ou urna.</p>
+          </article>
+          <article class="how-step" data-reveal>
+            <span class="how-num">03</span>
+            <h4>Audite cada número na origem</h4>
+            <p>Abra os cartões de evidência e consulte diretamente os portais oficiais do TSE e do STF sem barreiras ou cadastro.</p>
+          </article>
+        </div>
+      </div>
+
       <div id="leituras" class="readings-wrap">
         <h3 class="subsection-title">Para ir além · Fontes primárias e marcos legais</h3>
         <div class="reading-grid">
-          <article class="reading-card">
+          <article class="reading-card" data-reveal>
             <span class="reading-kicker">Base Oficial</span>
             <h4>Portal de Dados Abertos do TSE</h4>
             <p>Repositório público com os arquivos de candidaturas, votação por zona e prestações de contas usados neste ensaio.</p>
             <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener noreferrer">Acessar dados abertos ↗︎</a>
           </article>
-          <article class="reading-card">
+          <article class="reading-card" data-reveal>
             <span class="reading-kicker">Jurisprudência</span>
             <h4>STF · ADI 5617 (Piso de 30% no Fundo)</h4>
             <p>Decisão que vinculou o mínimo de 30% das candidaturas femininas à distribuição proporcional de FEFC e Fundo Partidário.</p>
             <a href="https://portal.stf.jus.br/processos/detalhe.asp?incidente=5090801" target="_blank" rel="noopener noreferrer">Consultar processo STF ↗︎</a>
           </article>
-          <article class="reading-card">
+          <article class="reading-card" data-reveal>
             <span class="reading-kicker">Integridade</span>
             <h4>TSE · Súmula 73 (Fraude à Cota)</h4>
             <p>Consolida os critérios objetivos e contextuais para apuração de candidaturas fictícias e nulidade do DRAP.</p>
             <a href="https://www.tse.jus.br/legislacao/compilada/sumula-tse" target="_blank" rel="noopener noreferrer">Ler súmulas do TSE ↗︎</a>
           </article>
-          <article class="reading-card">
+          <article class="reading-card" data-reveal>
             <span class="reading-kicker">Auditoria Pública</span>
             <h4>DivulgaCandContas (TSE)</h4>
             <p>Ferramenta oficial para conferência individual de receitas, fornecedores, despesas contratadas e situação eleitoral.</p>
@@ -441,18 +544,18 @@
         </details>
 
         <details class="method-item" id="metodo-h1">
-          <summary>2. Corte n ≥ 4 nas chapas, Registradas vs. APTO e micro-chapas</summary>
+          <summary>2. Corte n ≥ 4 nas chapas, Registradas vs. APTO e microchapas</summary>
           <div class="method-body">
-            <p>Chapas com menos de 4 candidaturas (<em>micro-chapas</em>) só podem assumir percentuais discretos extremos (0%, 33%, 50%, 67%, 100%). Para evitar ruído visual nos gráficos por chapa (Mosaico, H1 e H7), aplica-se o corte <code>n ≥ 4</code>; porém todas as candidaturas individuais seguem integralmente contabilizadas nos indicadores de financiamento, votação e sinais (H2–H6, H8 e Big Numbers).</p>
+            <p>Chapas com menos de 4 candidaturas (<strong>microchapas</strong>) só podem assumir percentuais discretos extremos (0%, 33%, 50%, 67%, 100%). Para evitar ruído visual nos gráficos por chapa (Mosaico, H1 e H7), aplica-se o corte <code>n ≥ 4</code>; porém todas as candidaturas individuais seguem integralmente contabilizadas nos indicadores de financiamento, votação e sinais (H2–H6, H8 e Big Numbers).</p>
             <p>Em H1, <strong>Registradas</strong> mede todas as candidaturas protocoladas, enquanto <strong>Aptas</strong> filtra apenas quem chegou com situação <code>APTO</code> à disputa, revelando quantas chapas caem abaixo de 30% após indeferimentos ou renúncias.</p>
           </div>
         </details>
 
         <details class="method-item" id="metodo-h4">
-          <summary>3. Alocação proporcional do Sankey e critério dos Fornecedores-Hub (H4)</summary>
+          <summary>3. Alocação proporcional do Sankey e critério dos Fornecedores Hub (H4)</summary>
           <div class="method-body">
             <p>Como a tabela <code>despesas_contratadas</code> do TSE não vincula diretamente cada nota fiscal à conta bancária de origem (pública ou privada), o Sankey multiplica o gasto de cada candidatura pela sua parcela pública na receita total (<code>(FEFC + FP) / receita_total</code>).</p>
-            <p>Um fornecedor é classificado como <strong>Fornecedor-Hub</strong> somente quando atende <code>≥ 2</code> candidaturas <code>APTO</code> do mesmo partido e UF e concentra <code>&gt; 15%</code> da despesa de pelo menos uma candidatura com menos de 20 votos.</p>
+            <p>Um fornecedor é classificado como <strong>Fornecedor Hub</strong> somente quando atende <code>≥ 2</code> candidaturas <code>APTO</code> do mesmo partido e UF e concentra <code>&gt; 15%</code> da despesa de pelo menos uma candidatura com menos de 20 votos.</p>
           </div>
         </details>
 
@@ -475,15 +578,88 @@
     </div>
   </section>
 
+  <!-- A2.10 & A7: FAQ PARA AEO -->
+  <section id="faq" class="faq-band" aria-label="Perguntas frequentes sobre a pesquisa">
+    <div class="container">
+      <div class="section-intro">
+        <p class="eyebrow">Perguntas Frequentes · Esclarecimentos Rápidos</p>
+        <h2>Dúvidas comuns sobre metodologia e leitura</h2>
+        <p class="section-lead">Respostas diretas sobre recortes, critérios legais, cobertura de 2026 e proteção de dados pessoais.</p>
+      </div>
+
+      <div class="faq-accordion">
+        <details class="faq-item" data-reveal>
+          <summary>Por que a comparação principal usa 2022 e 2026 e deixa 2018 como referência auxiliar?</summary>
+          <div class="faq-body">
+            <p>Em 2022 e 2026 vigorou o mesmo regime jurídico de federações partidárias, enquanto em 2018 ainda existiam coligações proporcionais. Comparar 2022 e 2026 mantém a unidade legal de chapa idêntica.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal>
+          <summary>Por que microchapas com menos de 4 candidaturas saem dos gráficos por chapa?</summary>
+          <div class="faq-body">
+            <p>Chapas de 1 a 3 pessoas geram percentuais discretos extremos como 0%, 33%, 50% ou 100%, distorcendo distribuições percentuais. Elas permanecem integralmente nos cálculos individuais de financiamento, votos e sinais.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal>
+          <summary>Os sinais estatísticos da Súmula 73 provam fraude eleitoral individual?</summary>
+          <div class="faq-body">
+            <p>Não. Os microdados numéricos do TSE não registram atos efetivos de campanha. Os indicadores apontam padrões agregados de atenção estatística, nunca acusação ou prova jurídica individual.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal>
+          <summary>Por que a mediana feminina supera a masculina em alguns partidos no financiamento?</summary>
+          <div class="faq-body">
+            <p>Para cumprir o piso de 30% do Fundo Público sem risco, muitos partidos distribuem verba pública a quase todas as candidatas, enquanto deixam parte da base masculina com R$ 0 e concentram valores maiores no topo.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal>
+          <summary>Os dados de 2026 já são comparáveis aos de 2022?</summary>
+          <div class="faq-body">
+            <p>Sim. Ambos os pleitos superam 97% de prestações finais entregues entre candidaturas aptas, com ressalva explícita de que as contas de 2026 ainda aguardam julgamento judicial e 1,3% das aptas assumem zero votos pela extração de outubro.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal>
+          <summary>A aplicação expõe nomes, CPFs ou dados pessoais de candidaturas?</summary>
+          <div class="faq-body">
+            <p>Não. Em conformidade com a LGPD e a Resolução TSE 23.729/2024, os cruzamentos usam identificadores anônimos e ocultam nomes civis, CPFs, emails e identificações de pessoas físicas ou MEIs.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- A2.11 & A2.12: GARANTIA DE TRANSPARÊNCIA E CTA FINAL IDÊNTICO AO TOPO -->
+  <section id="cta-final" class="final-cta-band" aria-label="Chamada final para explorar os dados">
+    <div class="container">
+      <div class="final-cta-card" data-reveal>
+        <p class="eyebrow">Acesso Livre · Auditoria Completa</p>
+        <h2>Teste cada hipótese no estado e partido do seu interesse</h2>
+        <p class="final-cta-guarantee">Dados abertos, pipeline reproduzível em Python e DuckDB com diferença zero contra os arquivos oficiais do TSE e navegação imediata sem cadastro.</p>
+        <a href="#escala" class="btn-primary">Explorar a investigação interativa</a>
+      </div>
+    </div>
+  </section>
+
   <footer class="site-footer">
     <div class="container footer-grid">
       <div>
         <h4>Fontes, Privacidade e Limitações</h4>
-        <p>Microdados abertos do Tribunal Superior Eleitoral (TSE): <code>consulta_cand</code>, <code>votacao_candidato_munzona</code>, <code>receitas_candidatos</code> e <code>despesas_contratadas_candidatos</code> (2022 e 2026). Cruzamentos feitos exclusivamente por <code>SQ_CANDIDATO</code>, sem exposição de nomes, CPFs ou e-mails (LGPD / Res. TSE 23.729/2024).</p>
+        <p>Microdados abertos do Tribunal Superior Eleitoral (TSE): <code>consulta_cand</code>, <code>votacao_candidato_munzona</code>, <code>receitas_candidatos</code> e <code>despesas_contratadas_candidatos</code> (2022 e 2026). Cruzamentos feitos exclusivamente por <code>SQ_CANDIDATO</code>, sem exposição de nomes, CPFs ou emails (LGPD e Res. TSE 23.729/2024).</p>
       </div>
       <div>
         <h4>Auditoria e Rastreabilidade</h4>
-        <p id="footer-coverage">Cobertura verificada automaticamente pelo pipeline Python/DuckDB.</p>
+        <p id="footer-coverage">Cobertura verificada automaticamente pelo pipeline Python e DuckDB.</p>
+        <nav class="footer-links" aria-label="Links institucionais e retorno">
+          <a href="#metodo-geral">Privacidade e LGPD</a>
+          <a href="#metodologia">Metodologia</a>
+          <a href="#faq">Perguntas frequentes</a>
+          <a href="#intro">Voltar ao topo ↑</a>
+        </nav>
       </div>
     </div>
   </footer>

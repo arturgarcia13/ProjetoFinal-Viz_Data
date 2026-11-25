@@ -79,7 +79,7 @@ if (
   throw new Error(`Brandbook/Big Numbers inválido: ${JSON.stringify(brandCheck)}`);
 }
 
-// 1. Layout split-screen em desktop + Acessibilidade (.skip-link) + ChapterNav 2 camadas
+// 1. Layout split-screen em desktop + Acessibilidade (.skip-link) + ChapterNav 2 camadas + Regras /landing-page-design
 const shellCheck = await page.evaluate(() => {
   const skip = document.querySelector('a.skip-link');
   const firstChild = document.body.firstElementChild;
@@ -88,6 +88,17 @@ const shellCheck = await page.evaluate(() => {
   const filterRect = document.getElementById('filter-bar').getBoundingClientRect();
   const subLinks = [...document.querySelectorAll('#chapter-subnav a')].map((a) => a.textContent.trim());
   const actLinks = [...document.querySelectorAll('.act-nav a')].map((a) => a.dataset.act);
+  const heroCtas = [...document.querySelectorAll('.hero-actions a')].map((a) => ({
+    text: a.textContent.trim(),
+    href: a.getAttribute('href'),
+  }));
+  const finalCta = document.querySelector('#cta-final a.btn-primary');
+  const emCount = document.querySelectorAll('em').length;
+  const stepBorder = getComputedStyle(document.querySelector('.story-step'));
+  const statBorder = getComputedStyle(document.querySelector('.live-stat'));
+  const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute('content') || '';
+  const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content') || '';
+  const faqSchema = document.querySelector('script[type="application/ld+json"]')?.textContent || '';
   return {
     skipHref: skip?.getAttribute('href'),
     skipIsFirst: firstChild === skip,
@@ -96,6 +107,15 @@ const shellCheck = await page.evaluate(() => {
     filterH: filterRect.height,
     subLinks,
     actLinks,
+    heroCtas,
+    finalCtaText: finalCta?.textContent.trim() || '',
+    finalCtaHref: finalCta?.getAttribute('href') || '',
+    emCount,
+    stepUniformBorder: stepBorder.borderLeftWidth === stepBorder.borderTopWidth,
+    statUniformBorder: statBorder.borderLeftWidth === statBorder.borderTopWidth,
+    hasOgTitle: ogTitle.length > 10,
+    hasOgImage: ogImage.length > 0,
+    hasFaqSchema: faqSchema.includes('FAQPage'),
     overflowX: document.documentElement.scrollWidth > window.innerWidth,
   };
 });
@@ -107,8 +127,17 @@ if (
   || shellCheck.subLinks.length < 2
   || !shellCheck.actLinks.includes('synthesis')
   || !shellCheck.actLinks.includes('methods')
+  || shellCheck.heroCtas.length !== 1
+  || shellCheck.heroCtas[0].text !== shellCheck.finalCtaText
+  || shellCheck.heroCtas[0].href !== shellCheck.finalCtaHref
+  || shellCheck.emCount !== 0
+  || !shellCheck.stepUniformBorder
+  || !shellCheck.statUniformBorder
+  || !shellCheck.hasOgTitle
+  || !shellCheck.hasOgImage
+  || !shellCheck.hasFaqSchema
 ) {
-  throw new Error(`Shell/Acessibilidade/Split-screen inválido: ${JSON.stringify(shellCheck)}`);
+  throw new Error(`Shell/Acessibilidade/LandingPage inválido: ${JSON.stringify(shellCheck)}`);
 }
 
 // Helper para validar hover padronizado (modelo H1) e ausência de <title> / Plot tip nativos
@@ -323,6 +352,10 @@ for (const s of steps) {
       if (!h3Check.subtitleVisible || !h3Check.hasLegend || !h3Check.hasQuads || !h3Check.hasRotatedDiag) {
         throw new Error(`Elementos visuais de H3 incompletos: ${JSON.stringify(h3Check)}`);
       }
+      const h3ItalicCount = await page.$$eval('#stage-canvas svg [font-style="italic"]', (els) => els.length);
+      if (h3ItalicCount !== 0) {
+        throw new Error(`H3 ainda possui elementos com font-style="italic": ${h3ItalicCount}`);
+      }
       if (!h3Check.radiiSortedDesc || h3Check.fillOp !== '0.75' || h3Check.strokeOp !== '1') {
         throw new Error(`Z-order ou opacidade de bolhas H3 inválidos: ${JSON.stringify(h3Check)}`);
       }
@@ -457,20 +490,38 @@ if (!popoverOpen) throw new Error('Popover de acesso direto aos gráficos não a
 await page.click('#chart-jump-popover a[data-jump-step="h3"]');
 await page.waitForFunction(() => document.getElementById('stage-kicker').textContent.includes('H3'));
 
-// Progressive disclosure: clique em .method-escape deve abrir o <details> alvo
+// Progressive disclosure: clique em .method-escape e no link do rodapé deve abrir o <details> alvo
 await page.click('a.method-escape[href="#metodo-h6"]');
 const methodOpen = await page.$eval('#metodo-h6', (el) => el.open);
 if (!methodOpen) throw new Error('Progressive disclosure não abriu #metodo-h6');
+await page.click('.footer-links a[href="#metodo-geral"]');
+const footerMethodOpen = await page.$eval('#metodo-geral', (el) => el.open);
+if (!footerMethodOpen) throw new Error('Link de privacidade no rodapé não abriu #metodo-geral');
 
 const tailCheck = await page.evaluate(() => ({
   synthesisCards: document.querySelectorAll('#synthesis-cards .synthesis-card').length,
   scorecardItems: document.querySelectorAll('#synthesis-scorecard .scorecard-item').length,
+  howSteps: document.querySelectorAll('#como-funciona .how-step').length,
   readingCards: document.querySelectorAll('#leituras .reading-card').length,
+  faqItems: document.querySelectorAll('#faq .faq-item').length,
   coverageRows: document.querySelectorAll('#methods-coverage-table tbody tr').length,
+  taglineWords: document.querySelectorAll('#tagline-reveal .reveal-word').length,
 }));
-if (tailCheck.synthesisCards !== 3 || tailCheck.scorecardItems !== 9 || tailCheck.readingCards !== 4 || tailCheck.coverageRows < 4) {
-  throw new Error(`Seções Síntese/Métodos incompletas: ${JSON.stringify(tailCheck)}`);
+if (
+  tailCheck.synthesisCards !== 3
+  || tailCheck.scorecardItems !== 9
+  || tailCheck.howSteps !== 3
+  || tailCheck.readingCards !== 4
+  || tailCheck.faqItems !== 6
+  || tailCheck.coverageRows < 4
+  || tailCheck.taglineWords < 15
+) {
+  throw new Error(`Seções Tagline/Síntese/FAQ/Métodos incompletas: ${JSON.stringify(tailCheck)}`);
 }
+
+// Verifica Tagline Reveal iluminando palavras ao rolar até #tagline-reveal
+await page.$eval('#tagline-reveal', (el) => el.scrollIntoView({ behavior: 'instant', block: 'center' }));
+await page.waitForFunction(() => document.querySelectorAll('#tagline-reveal .reveal-word.is-lit').length > 0);
 
 // 3. Testa troca de ano 2022 -> 2026 e presença de partidos de 2026 (PCDOB, PRD, MOBILIZA)
 await page.click('[data-year="2026"]');

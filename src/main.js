@@ -8,6 +8,7 @@ import { createScrollyContainer } from './components/scrollyContainer.js';
 import { createChapterNav } from './components/chapterNav.js';
 import { renderReactiveStage } from './components/reactiveStage.js';
 import { renderEvidenceSlot } from './components/evidenceCard.js';
+import { initScrollMotion } from './components/scrollReveal.js';
 
 const state = {
   year: 2022,
@@ -573,10 +574,19 @@ async function init() {
   });
 
   window.addEventListener('resize', () => update());
+  initScrollMotion();
   setActiveStep('escala-macro');
 }
 
 init().catch((err) => {
-  document.getElementById('scope-summary').textContent = `Erro ao carregar dados: ${err.message}`;
+  const scopeEl = document.getElementById('scope-summary');
+  if (scopeEl) {
+    scopeEl.classList.add('is-error');
+    scopeEl.textContent = 'Falha ao carregar os dados. Recarregue a página para tentar novamente.';
+  }
+  const canvasEl = document.getElementById('stage-canvas');
+  if (canvasEl) {
+    canvasEl.innerHTML = '<p class="chart-empty is-error" role="alert">Não foi possível carregar os dados da visualização. Recarregue a página para tentar novamente.</p>';
+  }
   console.error(err);
 });

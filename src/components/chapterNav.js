@@ -66,7 +66,9 @@ export const CHAPTER_TREE = [
     href: '#sintese',
     subs: [
       { id: 'sintese', label: 'Achados dos 5 Atos', type: 'anchor' },
-      { id: 'leituras', label: 'Fontes & Leituras', type: 'anchor' },
+      { id: 'como-funciona', label: 'Como funciona', type: 'anchor' },
+      { id: 'leituras', label: 'Fontes e Leituras', type: 'anchor' },
+      { id: 'faq', label: 'FAQ', type: 'anchor' },
     ],
   },
   {
@@ -176,9 +178,9 @@ export function createChapterNav({ onJumpStep, onLayoutChange } = {}) {
     });
   }
 
-  // Links de escape metodológico ("Ver nos métodos ↓")
+  // Links de escape metodológico e âncoras diretas para seções em #metodologia
   document.addEventListener('click', (e) => {
-    const link = e.target.closest('a.method-escape');
+    const link = e.target.closest('a.method-escape, a[href^="#metodo-"]');
     if (!link) return;
     const href = link.getAttribute('href') || '';
     if (href.startsWith('#')) {
@@ -186,6 +188,7 @@ export function createChapterNav({ onJumpStep, onLayoutChange } = {}) {
       openMethodDetails(href);
       const target = document.getElementById(href.slice(1));
       scrollToElement(target);
+      sync({ act: 'methods', subId: href.slice(1) });
     }
   });
 
@@ -258,6 +261,7 @@ export function createChapterNav({ onJumpStep, onLayoutChange } = {}) {
     const tailSections = [
       { el: document.getElementById('sintese'), act: 'synthesis', sub: 'sintese' },
       { el: document.getElementById('metodologia'), act: 'methods', sub: 'metodo-geral' },
+      { el: document.getElementById('faq'), act: 'synthesis', sub: 'faq' },
     ].filter((x) => x.el);
 
     if (tailSections.length > 0) {

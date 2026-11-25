@@ -425,7 +425,6 @@ export function renderH3Scatter(
       .attr('y', y)
       .attr('text-anchor', anchor)
       .attr('font-size', isCompact ? 9.5 : 10.5)
-      .attr('font-style', 'italic')
       .attr('font-weight', 600)
       .attr('fill', color)
       .attr('fill-opacity', 0.92)

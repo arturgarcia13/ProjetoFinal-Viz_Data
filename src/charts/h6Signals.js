@@ -82,7 +82,7 @@ export function renderH6Signals(container, h6Series, { width = 700 } = {}) {
     .attr('height', height)
     .attr('role', 'img')
     .attr('aria-label', 'Evolução de 2018 a 2026 da proporção de mulheres e homens com 2 ou mais sinais')
-    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
+    .style('font-family', 'Inter, system-ui, sans-serif');
 
   // Legenda no topo
   let lx = margin.left;
@@ -136,7 +136,7 @@ export function renderH6Signals(container, h6Series, { width = 700 } = {}) {
     svg.append('line')
       .attr('x1', mx).attr('x2', mx)
       .attr('y1', margin.top + 14).attr('y2', margin.top + plotH)
-      .attr('stroke', 'rgba(92, 225, 230, 0.4)')
+      .attr('stroke', 'rgba(14, 140, 147, 0.4)')
       .attr('stroke-dasharray', '4,4')
       .attr('stroke-width', 1.2);
     svg.append('text')
@@ -161,7 +161,7 @@ export function renderH6Signals(container, h6Series, { width = 700 } = {}) {
     svg.append('line')
       .attr('x1', tx).attr('x2', tx)
       .attr('y1', yf).attr('y2', ym)
-      .attr('stroke', 'rgba(255, 255, 255, 0.35)')
+      .attr('stroke', 'rgba(20, 38, 32, 0.35)')
       .attr('stroke-width', 1.4);
 
     const ratioTxt = y2.pct2PlusM > 0 ? `${y2.ratio2Plus.toFixed(1).replace('.', ',')}× F/M` : '—';
@@ -175,7 +175,7 @@ export function renderH6Signals(container, h6Series, { width = 700 } = {}) {
       svg.append('line')
         .attr('x1', tx).attr('x2', tx)
         .attr('y1', pillY + 17).attr('y2', Math.max(pillY + 17, topDotY - 23))
-        .attr('stroke', 'rgba(255, 255, 255, 0.35)')
+        .attr('stroke', 'rgba(20, 38, 32, 0.35)')
         .attr('stroke-width', 1);
     }
 
@@ -186,7 +186,7 @@ export function renderH6Signals(container, h6Series, { width = 700 } = {}) {
       .attr('height', 17)
       .attr('rx', 8.5)
       .attr('fill', y2.ratio2Plus >= 2 ? SEMANTIC_PALETTE.alert : SEMANTIC_PALETTE.surfaceAlt)
-      .attr('stroke', 'rgba(255, 255, 255, 0.35)')
+      .attr('stroke', 'rgba(20, 38, 32, 0.35)')
       .attr('stroke-width', 0.8);
     svg.append('text')
       .attr('x', tx)
@@ -194,7 +194,7 @@ export function renderH6Signals(container, h6Series, { width = 700 } = {}) {
       .attr('text-anchor', 'middle')
       .attr('font-size', 9.5)
       .attr('font-weight', 700)
-      .attr('fill', y2.ratio2Plus >= 2 ? '#001A12' : '#FFFFFF')
+      .attr('fill', y2.ratio2Plus >= 2 ? '#FFFFFF' : SEMANTIC_PALETTE.ink)
       .text(ratioTxt);
   }
 

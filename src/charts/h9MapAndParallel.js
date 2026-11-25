@@ -20,17 +20,17 @@ export const H9_METRICS = [
 
 function cellColors(val, kind) {
   if (val === null || !Number.isFinite(val)) {
-    return { bg: '#245B49', fg: 'rgba(255,255,255,0.75)', tone: 'neutral' };
+    return { bg: '#E6EEEA', fg: '#647A71', tone: 'neutral' };
   }
   if (kind === 'alert') {
-    if (val >= 5) return { bg: SEMANTIC_PALETTE.alert, fg: '#001A12', tone: 'below' };
+    if (val >= 5) return { bg: SEMANTIC_PALETTE.alert, fg: '#FFFFFF', tone: 'below' };
     if (val >= 2) return { bg: SEMANTIC_PALETTE.floor, fg: '#003D2B', tone: 'floor' };
-    return { bg: '#005C40', fg: '#FFFFFF', tone: 'above' };
+    return { bg: '#D2F1E5', fg: '#005C40', tone: 'above' };
   }
-  if (val >= 30) return { bg: SEMANTIC_PALETTE.ok, fg: '#003D2B', tone: 'above' };
-  if (val >= 20) return { bg: '#006E4D', fg: '#FFFFFF', tone: 'neutral' };
+  if (val >= 30) return { bg: SEMANTIC_PALETTE.ok, fg: '#FFFFFF', tone: 'above' };
+  if (val >= 20) return { bg: '#E6EEEA', fg: '#142620', tone: 'neutral' };
   if (val >= 12) return { bg: SEMANTIC_PALETTE.floor, fg: '#003D2B', tone: 'floor' };
-  return { bg: SEMANTIC_PALETTE.alert, fg: '#001A12', tone: 'below' };
+  return { bg: SEMANTIC_PALETTE.alert, fg: '#FFFFFF', tone: 'below' };
 }
 
 /**
@@ -53,7 +53,7 @@ export function renderUFMap(container, brUfGeo, h9MatrixData, {
     .attr('height', height)
     .attr('role', 'img')
     .attr('aria-label', 'Mapa coroplético quantitativo por Unidade da Federação')
-    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
+    .style('font-family', 'Inter, system-ui, sans-serif');
 
   if (onClearUF) {
     svg.on('click', (evt) => {
@@ -86,7 +86,7 @@ export function renderUFMap(container, brUfGeo, h9MatrixData, {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
       const row = byUf.get(uf);
       const val = row?.[metric];
-      if (!row || row.inconclusive || val === null || !Number.isFinite(val)) return '#245B49';
+      if (!row || row.inconclusive || val === null || !Number.isFinite(val)) return '#D9E2DD';
       return colorScale(val);
     })
     .attr('fill-opacity', (d) => {
@@ -95,7 +95,7 @@ export function renderUFMap(container, brUfGeo, h9MatrixData, {
     })
     .attr('stroke', (d) => {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
-      return selectedUF === uf ? '#FFFFFF' : SEMANTIC_PALETTE.surface;
+      return selectedUF === uf ? SEMANTIC_PALETTE.ink : SEMANTIC_PALETTE.surface;
     })
     .attr('stroke-width', (d) => {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
@@ -146,10 +146,10 @@ export function renderUFMap(container, brUfGeo, h9MatrixData, {
       },
       {
         onEnter: () => {
-          d3.select(this).attr('stroke', '#FFFFFF').attr('stroke-width', isSelected ? 2.5 : 1.9);
+          d3.select(this).attr('stroke', SEMANTIC_PALETTE.ink).attr('stroke-width', isSelected ? 2.5 : 1.9);
         },
         onLeave: () => {
-          d3.select(this).attr('stroke', isSelected ? '#FFFFFF' : SEMANTIC_PALETTE.surface).attr('stroke-width', isSelected ? 2.5 : 1);
+          d3.select(this).attr('stroke', isSelected ? SEMANTIC_PALETTE.ink : SEMANTIC_PALETTE.surface).attr('stroke-width', isSelected ? 2.5 : 1);
         },
       },
     );
@@ -172,7 +172,7 @@ export function renderUFMap(container, brUfGeo, h9MatrixData, {
     .attr('width', legW).attr('height', 10)
     .attr('rx', 3)
     .attr('fill', `url(#${gradId})`)
-    .attr('stroke', 'rgba(255,255,255,0.28)')
+    .attr('stroke', 'rgba(20, 38, 32, 0.28)')
     .attr('stroke-width', 0.6);
 
   const ticks = isAlert
@@ -184,12 +184,12 @@ export function renderUFMap(container, brUfGeo, h9MatrixData, {
       .attr('y', 23)
       .attr('text-anchor', i === 0 ? 'start' : (i === 2 ? 'end' : 'middle'))
       .attr('font-size', 9.5)
-      .attr('fill', '#FFFFFF')
+      .attr('fill', SEMANTIC_PALETTE.ink)
       .text(txt);
   });
 
   const incG = leg.append('g').attr('transform', `translate(${legW + 18}, 0)`);
-  incG.append('rect').attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', '#245B49').attr('stroke', 'rgba(255,255,255,0.28)').attr('stroke-width', 0.6);
+  incG.append('rect').attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', '#D9E2DD').attr('stroke', 'rgba(20, 38, 32, 0.28)').attr('stroke-width', 0.6);
   incG.append('text').attr('x', 14).attr('y', 9).attr('font-size', 9.5).attr('fill', SEMANTIC_PALETTE.muted).text('Inconclusivo');
 
   // Extremos clicáveis do mapa na métrica selecionada

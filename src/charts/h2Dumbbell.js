@@ -41,7 +41,7 @@ export function renderH2Dumbbell(
     top: 52,
     right: isCompact ? 76 : 106,
     bottom: 42,
-    left: isCompact ? 84 : 112,
+    left: isCompact ? 102 : 124,
   };
   const legItems = [
     { kind: 'ring', stroke: SEMANTIC_PALETTE.y2022, label: '2022' },
@@ -100,7 +100,7 @@ export function renderH2Dumbbell(
     .attr('height', height)
     .attr('role', 'img')
     .attr('aria-label', 'Diferença entre mediana de receitas de mulheres e homens por partido em 2022 e 2026')
-    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
+    .style('font-family', 'Inter, system-ui, sans-serif');
 
   svg.on('click', (evt) => {
     if (selectedParty && !evt.target.closest('.h2-row') && onClearParty) {
@@ -231,7 +231,7 @@ export function renderH2Dumbbell(
       .attr('width', width - 4)
       .attr('height', rowH - 2)
       .attr('rx', 4)
-      .attr('fill', isSel ? 'rgba(92, 225, 230, 0.14)' : 'transparent');
+      .attr('fill', isSel ? 'rgba(14, 140, 147, 0.14)' : 'transparent');
 
     // Nome do partido no eixo Y
     rowG.append('text')

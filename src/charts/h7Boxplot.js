@@ -56,7 +56,7 @@ export function renderH7Boxplot(
     .attr('height', height)
     .attr('role', 'img')
     .attr('aria-label', 'Taxa agregada de candidatas com 2 ou mais sinais por faixa de percentual feminino na chapa')
-    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
+    .style('font-family', 'Inter, system-ui, sans-serif');
 
   // Legenda de anos
   let lx = margin.left;
@@ -81,7 +81,7 @@ export function renderH7Boxplot(
         .attr('width', x.bandwidth())
         .attr('height', plotH)
         .attr('rx', 6)
-        .attr('fill', r.band === '< 30%' ? 'rgba(255, 94, 43, 0.12)' : 'rgba(255, 176, 32, 0.12)');
+        .attr('fill', r.band === '< 30%' ? 'rgba(226, 72, 31, 0.12)' : 'rgba(201, 138, 0, 0.12)');
       svg.append('text')
         .attr('x', x(r.band) + x.bandwidth() / 2)
         .attr('y', margin.top + 13)

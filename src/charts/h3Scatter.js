@@ -360,7 +360,7 @@ export function renderH3Scatter(
     .attr('height', height)
     .attr('role', 'img')
     .attr('aria-label', 'Dispersão entre percentual de candidatas mulheres e percentual do Fundo Público por partido em escala linear')
-    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
+    .style('font-family', 'Inter, system-ui, sans-serif');
 
   svg.on('click', (evt) => {
     if (selectedParty && !evt.target.closest('circle') && onClearParty) {
@@ -396,7 +396,7 @@ export function renderH3Scatter(
     .attr('width', plotRight - plotLeft)
     .attr('height', plotBottom - plotTop)
     .attr('fill', 'none')
-    .attr('stroke', 'rgba(255, 255, 255, 0.28)')
+    .attr('stroke', 'rgba(20, 38, 32, 0.28)')
     .attr('stroke-width', 1);
 
   const axisG = svg.append('g').attr('aria-label', 'axes').attr('font-size', 11).attr('fill', SEMANTIC_PALETTE.muted);
@@ -438,7 +438,7 @@ export function renderH3Scatter(
     rulesG.append('line')
       .attr('x1', x30).attr('x2', x30)
       .attr('y1', plotTop).attr('y2', plotBottom)
-      .attr('stroke', 'rgba(255, 255, 255, 0.45)')
+      .attr('stroke', 'rgba(20, 38, 32, 0.45)')
       .attr('stroke-dasharray', '3,3')
       .attr('stroke-width', 1.25);
   }
@@ -467,7 +467,7 @@ export function renderH3Scatter(
     rulesG.append('line')
       .attr('x1', px1).attr('y1', py1)
       .attr('x2', px2).attr('y2', py2)
-      .attr('stroke', 'rgba(255, 255, 255, 0.78)')
+      .attr('stroke', 'rgba(20, 38, 32, 0.78)')
       .attr('stroke-dasharray', '5,4')
       .attr('stroke-width', 1.6);
 
@@ -582,16 +582,16 @@ export function renderH3Scatter(
     .attr('height', legH)
     .attr('rx', 6)
     .attr('fill', SEMANTIC_PALETTE.surfaceAlt)
-    .attr('stroke', 'rgba(255, 255, 255, 0.25)')
+    .attr('stroke', 'rgba(20, 38, 32, 0.25)')
     .attr('stroke-width', 1);
 
   const row1Y = legY + (isCompact ? 14 : 14);
   legG.append('circle').attr('cx', legX + 12).attr('cy', row1Y - 3).attr('r', 4).attr('fill', SEMANTIC_PALETTE.ok).attr('stroke', '#FFFFFF').attr('stroke-width', 0.8);
-  legG.append('text').attr('x', legX + 20).attr('y', row1Y).attr('font-size', isCompact ? 9.5 : 10).attr('fill', '#FFFFFF').text('Cota respeitada');
+  legG.append('text').attr('x', legX + 20).attr('y', row1Y).attr('font-size', isCompact ? 9.5 : 10).attr('fill', SEMANTIC_PALETTE.ink).text('Cota respeitada');
 
   const col2X = legX + (isCompact ? 114 : 128);
   legG.append('circle').attr('cx', col2X).attr('cy', row1Y - 3).attr('r', 4).attr('fill', SEMANTIC_PALETTE.alert).attr('stroke', '#FFFFFF').attr('stroke-width', 0.8);
-  legG.append('text').attr('x', col2X + 8).attr('y', row1Y).attr('font-size', isCompact ? 9.5 : 10).attr('fill', '#FFFFFF').text('Subfinanciamento');
+  legG.append('text').attr('x', col2X + 8).attr('y', row1Y).attr('font-size', isCompact ? 9.5 : 10).attr('fill', SEMANTIC_PALETTE.ink).text('Subfinanciamento');
 
   const row2Y = legY + (isCompact ? 34 : 32);
   legG.append('text')
@@ -653,7 +653,7 @@ export function renderH3Scatter(
         .attr('y1', startY.toFixed(1))
         .attr('x2', anchorRectPt.x.toFixed(1))
         .attr('y2', anchorRectPt.y.toFixed(1))
-        .attr('stroke', n.isAlert ? 'rgba(255, 94, 43, 0.72)' : 'rgba(255, 255, 255, 0.58)')
+        .attr('stroke', n.isAlert ? 'rgba(226, 72, 31, 0.72)' : 'rgba(20, 38, 32, 0.58)')
         .attr('stroke-width', 0.9)
         .style('opacity', selectedParty && selectedParty !== n.party ? 0.2 : 0.82);
     }
@@ -665,7 +665,7 @@ export function renderH3Scatter(
       .attr('text-anchor', 'middle')
       .attr('font-size', isCompact ? 8.8 : 9.5)
       .attr('font-weight', n.isAlert ? 700 : 600)
-      .attr('fill', n.isAlert ? '#FFD1C2' : '#FFFFFF')
+      .attr('fill', n.isAlert ? SEMANTIC_PALETTE.alert : SEMANTIC_PALETTE.ink)
       .attr('stroke', SEMANTIC_PALETTE.surface)
       .attr('stroke-width', 3.2)
       .attr('stroke-linejoin', 'round')

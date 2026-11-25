@@ -100,7 +100,7 @@ export function renderH8Temporal(container, h8Data, { width = 700 } = {}) {
       .attr('height', panelH)
       .attr('role', 'img')
       .attr('aria-label', panel.title)
-      .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
+      .style('font-family', 'Inter, system-ui, sans-serif');
 
     svg.append('text')
       .attr('x', isNarrowPanel ? 10 : margin.left)

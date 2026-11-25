@@ -161,26 +161,10 @@
         <a href="#metodologia" data-act="methods">Métodos</a>
       </nav>
 
-      <div class="global-filters">
-        <div class="filter-group" role="group" aria-label="Cargo">
-          <button class="seg active" data-cargo="all" type="button" aria-pressed="true">Todos</button>
-          <button class="seg" data-cargo="6" type="button" aria-pressed="false">Federal</button>
-          <button class="seg" data-cargo="7" type="button" aria-pressed="false">Estadual</button>
-        </div>
-        <label class="select-wrap">
-          <span>UF</span>
-          <select id="filter-uf"><option value="">Brasil (27)</option></select>
-        </label>
-        <label class="select-wrap">
-          <span>Partido</span>
-          <select id="filter-party"><option value="">Todos</option></select>
-        </label>
-        <button id="reset-filters" class="btn-reset" type="button">Limpar</button>
-      </div>
+      <a href="#boca-da-taca" class="btn-jump-filters">Explorar filtros ↓</a>
     </div>
 
     <div class="container filter-meta-row">
-      <p id="scope-summary" class="scope-summary">Carregando base validada...</p>
       <div class="chips-row" id="active-chips"></div>
     </div>
   </div>
@@ -520,6 +504,34 @@
     </section>
 
   </main>
+
+  <!-- MOMENTO 3: BOCA DA TAÇA — filtros livres que recalculam todos os gráficos -->
+  <section class="boca-da-taca-section" id="boca-da-taca" aria-label="Exploração livre: filtros globais">
+    <div class="container boca-inner">
+      <span class="boca-badge">A Boca da Taça · Exploração Livre</span>
+      <h2 class="boca-title">Agora investigue seu Estado ou Partido</h2>
+      <p class="boca-subtitle">Você percorreu o diagnóstico nacional. Use os filtros para recalcular todos os gráficos por cargo, unidade da federação ou legenda.</p>
+      <div class="global-filters boca-filters">
+        <div class="filter-group" role="group" aria-label="Cargo">
+          <button class="seg active" data-cargo="all" type="button" aria-pressed="true">Todos</button>
+          <button class="seg" data-cargo="6" type="button" aria-pressed="false">Federal</button>
+          <button class="seg" data-cargo="7" type="button" aria-pressed="false">Estadual</button>
+        </div>
+        <label class="select-wrap">
+          <span>UF</span>
+          <select id="filter-uf"><option value="">Brasil (27)</option></select>
+        </label>
+        <label class="select-wrap">
+          <span>Partido</span>
+          <select id="filter-party"><option value="">Todos</option></select>
+        </label>
+        <button id="reset-filters" class="btn-reset" type="button">Limpar</button>
+      </div>
+      <p id="scope-summary" class="scope-summary">Carregando base validada...</p>
+      <div class="explorer-actions"><a href="#ato-1" class="btn-primary">↑ Reexaminar os gráficos com este filtro</a></div>
+    </div>
+  </section>
+
 
   <!-- TAGLINE REVEAL SECTION (B11) -->
   <section id="tagline-reveal" class="tagline-band" aria-label="Tese central da investigação">

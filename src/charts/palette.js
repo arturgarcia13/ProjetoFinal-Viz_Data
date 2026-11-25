@@ -1,38 +1,38 @@
 /**
- * Paleta Semântica Única do Projeto.
+ * Paleta Semântica Única do Projeto — versão editorial clara (papel creme).
  * Nenhuma cor se repete com significados conflitantes entre gráficos.
  */
 export const SEMANTIC_PALETTE = {
   // Gênero (exclusivo em todo o site)
-  women: '#FF7AE5', // Rosa Vibrante = Mulheres
-  men: '#FCE34D',   // Amarelo Solar = Homens
+  women: '#D63FB0', // Rosa profundo = Mulheres
+  men: '#4B636E',   // Ardósia petróleo = Homens (linha de base)
 
   // Conformidade / Alerta / Gap (exclusivo)
-  ok: '#00D09C',    // Verde-menta = Cota respeitada / Superávit / Sem vazamento
-  alert: '#FF5E2B', // Laranja-vermelho = Subfinanciamento / Déficit / Irregular (<30%) / Alerta crítico
-  floor: '#FFB020', // Âmbar = Limite operacional (30%–33,3%) / Atenção moderada
+  ok: '#007D5B',    // Esmeralda = Cota respeitada / Superávit
+  alert: '#E2481F', // Coral = Subfinanciamento / Déficit / Irregular (<30%)
+  floor: '#C98A00', // Âmbar dourado = Limite operacional (30%–33,3%)
 
-  // Anos / Série Temporal (nunca usa Rosa, Amarelo ou Laranja)
-  y2018: 'rgba(255, 255, 255, 0.62)', // Cinza-gelo translúcido
-  y2022: '#FFFFFF',                   // Branco puro (ou vazado com borda branca)
-  y2026: '#5CE1E6',                   // Ciano editorial sólido
+  // Anos / Série Temporal
+  y2018: '#A3B3AC', // Cinza-sálvia
+  y2022: '#142620', // Tinta escura (ou vazado)
+  y2026: '#0E8C93', // Petróleo-ciano
 
-  // Fontes de Receita (H2B barra 100% e H4 Sankey)
-  fefc: '#5CE1E6',  // Ciano
-  fp: '#00D09C',    // Verde-menta
-  prop: '#B8A9FF',  // Lavanda editorial
-  priv: '#FFFFFF',  // Branco
+  // Fontes de Receita (H2B e H4)
+  fefc: '#0E8C93',
+  fp: '#007D5B',
+  prop: '#7B6CD9',
+  priv: '#A3B3AC',
 
   // Etapas do Funil (H5)
-  cand: '#B8A9FF',    // 1. Candidatas
-  votes: '#5CE1E6',   // 2. Votos nominais
-  elected: '#FF7AE5', // 3. Eleitas (Rosa feminino)
+  cand: '#7B6CD9',
+  votes: '#0E8C93',
+  elected: '#D63FB0',
 
-  // Superfícies & Texto sobre verde escuro (#003D2B)
-  surface: '#003D2B',
-  surfaceAlt: '#005C40',
-  ink: '#FFFFFF',
-  muted: 'rgba(255, 255, 255, 0.84)',
-  subtle: 'rgba(255, 255, 255, 0.45)',
-  grid: 'rgba(255, 255, 255, 0.14)',
+  // Superfícies & Texto sobre papel claro
+  surface: '#FFFFFF',
+  surfaceAlt: '#F3EEE2',
+  ink: '#142620',
+  muted: '#3D524A',
+  subtle: '#647A71',
+  grid: 'rgba(20, 38, 32, 0.12)',
 };

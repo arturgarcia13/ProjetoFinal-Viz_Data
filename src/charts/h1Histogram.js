@@ -13,7 +13,7 @@ const PALETTE = {
   ok: SEMANTIC_PALETTE.ok,
   ink: SEMANTIC_PALETTE.ink,
   muted: SEMANTIC_PALETTE.muted,
-  zero: 'rgba(255, 255, 255, 0.72)',
+  zero: 'rgba(20, 38, 32, 0.72)',
   grid: SEMANTIC_PALETTE.grid,
   axis: SEMANTIC_PALETTE.subtle,
 };
@@ -152,7 +152,7 @@ export function renderH1Histogram(
     .attr('width', width)
     .attr('height', height)
     .attr('role', 'img')
-    .style('font-family', 'Barlow, Inter, system-ui, sans-serif')
+    .style('font-family', 'Inter, system-ui, sans-serif')
     .attr(
       'aria-label',
       `Histograma espelhado comparando % de mulheres por chapa em 2022 e 2026 (${isApto ? 'Aptas' : 'Registradas'})`,
@@ -304,7 +304,7 @@ export function renderH1Histogram(
       .attr('width', width - 8)
       .attr('height', barH + 10)
       .attr('rx', 6)
-      .attr('fill', isSelected ? 'rgba(92, 225, 230, 0.14)' : 'transparent')
+      .attr('fill', isSelected ? 'rgba(14, 140, 147, 0.14)' : 'transparent')
       .attr('stroke', isSelected ? PALETTE.y2026 : 'none')
       .attr('stroke-width', isSelected ? 1.5 : 0);
 

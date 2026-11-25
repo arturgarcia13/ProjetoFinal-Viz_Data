@@ -31,7 +31,7 @@ export function renderH4Sankey(container, h4Data, { width = 700 } = {}) {
     .attr('height', height)
     .attr('role', 'img')
     .attr('aria-label', 'Sankey proporcional da distribuição da receita entre candidatas competitivas e base até a eleição')
-    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
+    .style('font-family', 'Inter, system-ui, sans-serif');
 
   const layout = d3Sankey()
     .nodeWidth(16)
@@ -68,7 +68,7 @@ export function renderH4Sankey(container, h4Data, { width = 700 } = {}) {
     if (n.id === 'top10') return SEMANTIC_PALETTE.women;
     if (n.id === 'base90') return SEMANTIC_PALETTE.alert;
     if (n.id === 'el') return SEMANTIC_PALETTE.ok;
-    return 'rgba(255, 255, 255, 0.52)';
+    return 'rgba(20, 38, 32, 0.52)';
   };
 
   const linkColor = (l) => {
@@ -148,7 +148,7 @@ export function renderH4Sankey(container, h4Data, { width = 700 } = {}) {
     .attr('text-anchor', (d) => (d.x0 < width / 2 ? 'start' : 'end'))
     .attr('font-size', isCompact ? 9.5 : 11)
     .attr('font-weight', 700)
-    .attr('fill', '#FFFFFF')
+    .attr('fill', SEMANTIC_PALETTE.ink)
     .attr('stroke', SEMANTIC_PALETTE.surface)
     .attr('stroke-width', 3.5)
     .attr('stroke-linejoin', 'round')

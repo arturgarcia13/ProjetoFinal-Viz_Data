@@ -35,7 +35,7 @@ export function renderH5Conversion(
   ];
 
   const isCompact = width < 460;
-  const leftMargin = isCompact ? 86 : 116;
+  const leftMargin = isCompact ? 104 : 128;
   const rightMargin = isCompact ? 40 : 52;
   const legStartX = isCompact ? 8 : leftMargin;
   let lxCalc = legStartX;
@@ -80,7 +80,7 @@ export function renderH5Conversion(
     .attr('height', height)
     .attr('role', 'img')
     .attr('aria-label', 'Funil horizontal de conversão eleitoral por partido ordenado por taxa de eleitas')
-    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
+    .style('font-family', 'Inter, system-ui, sans-serif');
 
   svg.on('click', (evt) => {
     if (selectedParty && !evt.target.closest('.h5-party-row') && onClearParty) {
@@ -108,8 +108,8 @@ export function renderH5Conversion(
     .attr('width', boxW)
     .attr('height', 20)
     .attr('rx', 4)
-    .attr('fill', 'rgba(255, 94, 43, 0.14)')
-    .attr('stroke', 'rgba(255, 94, 43, 0.45)')
+    .attr('fill', 'rgba(226, 72, 31, 0.14)')
+    .attr('stroke', 'rgba(226, 72, 31, 0.45)')
     .attr('stroke-width', 0.8);
   svg.append('text')
     .attr('x', boxX + 8)
@@ -143,7 +143,7 @@ export function renderH5Conversion(
     gridG.append('line')
       .attr('x1', x30).attr('x2', x30)
       .attr('y1', margin.top - 4).attr('y2', margin.top + plotH)
-      .attr('stroke', '#FFFFFF')
+      .attr('stroke', SEMANTIC_PALETTE.ink)
       .attr('stroke-dasharray', '4,3')
       .attr('stroke-width', 1.4);
     gridG.append('text')
@@ -151,7 +151,7 @@ export function renderH5Conversion(
       .attr('y', margin.top - 7)
       .attr('font-size', 9.5)
       .attr('font-weight', 700)
-      .attr('fill', '#FFFFFF')
+      .attr('fill', SEMANTIC_PALETTE.ink)
       .text('Piso 30%');
   }
 
@@ -179,7 +179,7 @@ export function renderH5Conversion(
       .attr('width', width - 4)
       .attr('height', y.bandwidth() + 4)
       .attr('rx', 4)
-      .attr('fill', isSel ? 'rgba(255, 122, 229, 0.14)' : 'transparent');
+      .attr('fill', isSel ? 'rgba(214, 63, 176, 0.14)' : 'transparent');
 
     // Sigla à esquerda no eixo Y (sem sobreposição!)
     rowG.append('text')

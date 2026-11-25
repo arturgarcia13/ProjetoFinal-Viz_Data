@@ -4,10 +4,10 @@
   <path fill="#FF7AE5" d="M-20 630V310c24-26 52-44 92-54 14-56-16-94-4-146 12-46 54-78 106-82 62-4 108 34 122 86 12 46-10 86 22 116 10 8 18 20 14 32-6 14-24 14-26 24-4 10 14 18 12 32-2 14-20 16-20 30 0 18 16 32 14 56-4 26-24 44-44 60l78 144H-20Z"/>
   <path fill="#FF5E2B" d="M60 630c8-76 36-142 96-168 10-24 6-46-8-70-26-44-22-106 14-146 30-34 80-46 126-36 50 10 82 46 88 96 4 24-4 44 4 58 10 20 30 32 34 46 4 14-14 24-20 32-4 6 6 14 4 24-4 12-18 16-18 26 0 14 14 20 12 38-6 26-34 36-62 36-24 0-40-6-52-16-6 26 20 52 52 80H60Z"/>
   <path fill="#FCE34D" d="M210 630c10-62 36-112 92-138 16-8 26-24 24-42-40-20-62-62-60-112 4-56 40-100 96-110 16-30 52-40 82-26 30 14 46 44 40 74 24 20 36 50 36 82 0 24-6 40 6 54 12 14 34 28 36 42 2 12-14 20-22 28-4 6 6 14 4 24-6 10-18 14-18 24 0 14 12 22 6 38-6 22-36 30-66 26-20-2-36-8-50-16-4 20 16 36 40 52H210Z"/>
-  <text x="520" y="138" font-family="Barlow, sans-serif" font-size="24" font-weight="700" fill="#FFFFFF" letter-spacing="3">MICRODADOS OFICIAIS DO TSE · 2022 VS. 2026</text>
-  <text x="520" y="232" font-family="Anton, Impact, sans-serif" font-size="68" fill="#FCE34D">A COTA DE GÊNERO</text>
-  <text x="520" y="308" font-family="Anton, Impact, sans-serif" font-size="68" fill="#FCE34D">LEVA MULHERES AO PODER</text>
-  <text x="520" y="384" font-family="Anton, Impact, sans-serif" font-size="68" fill="#FFFFFF">OU APENAS AO PAPEL?</text>
-  <text x="520" y="454" font-family="Barlow, sans-serif" font-size="28" font-weight="500" fill="#FFFFFF">Registro, financiamento, urnas, integridade e geografia</text>
-  <text x="520" y="594" font-family="Barlow, sans-serif" font-size="24" font-weight="700" fill="#FCE34D">46.465 candidaturas auditadas · 27 UFs · Dados 100% anonimizados (LGPD)</text>
+  <text x="520" y="138" font-family="Inter, sans-serif" font-size="24" font-weight="700" fill="#FFFFFF" letter-spacing="3">MICRODADOS OFICIAIS DO TSE · 2022 VS. 2026</text>
+  <text x="520" y="232" font-family="Newsreader, Georgia, serif" font-size="68" fill="#FCE34D">A COTA DE GÊNERO</text>
+  <text x="520" y="308" font-family="Newsreader, Georgia, serif" font-size="68" fill="#FCE34D">LEVA MULHERES AO PODER</text>
+  <text x="520" y="384" font-family="Newsreader, Georgia, serif" font-size="68" fill="#FFFFFF">OU APENAS AO PAPEL?</text>
+  <text x="520" y="454" font-family="Inter, sans-serif" font-size="28" font-weight="500" fill="#FFFFFF">Registro, financiamento, urnas, integridade e geografia</text>
+  <text x="520" y="594" font-family="Inter, sans-serif" font-size="24" font-weight="700" fill="#FCE34D">46.465 candidaturas auditadas · 27 UFs · Dados 100% anonimizados (LGPD)</text>
 </svg>

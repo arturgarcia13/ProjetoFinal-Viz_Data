@@ -43,7 +43,7 @@ export function renderDivergentChart(
     top: 48,
     right: isCompact ? 12 : 24,
     bottom: 36,
-    left: isCompact ? 78 : 106,
+    left: isCompact ? 100 : 118,
   };
   const colGap = isCompact ? 26 : 46;
   const rowH = 26;
@@ -73,7 +73,7 @@ export function renderDivergentChart(
     .attr('height', height)
     .attr('role', 'img')
     .attr('aria-label', 'Comparativo entre Fundo Público e Recurso Privado na diferença de medianas entre mulheres e homens')
-    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
+    .style('font-family', 'Inter, system-ui, sans-serif');
 
   svg.on('click', (evt) => {
     if (selectedParty && !evt.target.closest('.div-row') && onClearParty) {
@@ -90,7 +90,7 @@ export function renderDivergentChart(
       left: margin.left,
     },
     {
-      title: isCompact ? '2. Privado / Próprio' : '2. Recurso Privado / Próprio',
+      title: isCompact ? '2. Privado' : '2. Recurso Privado / Próprio',
       sub: 'Sem cota legal',
       scale: xPriv,
       left: margin.left + colW + colGap,
@@ -114,7 +114,7 @@ export function renderDivergentChart(
       .attr('fill', SEMANTIC_PALETTE.muted)
       .text(col.sub);
 
-    const ticks = col.scale.ticks(3);
+    const ticks = col.scale.ticks(isCompact ? 2 : 3);
     if (!ticks.includes(0)) ticks.push(0);
     for (const t of ticks) {
       const tx = col.scale(t);
@@ -164,7 +164,7 @@ export function renderDivergentChart(
       .attr('width', width - 4)
       .attr('height', barH + 4)
       .attr('rx', 4)
-      .attr('fill', isSel ? 'rgba(92, 225, 230, 0.14)' : 'transparent');
+      .attr('fill', isSel ? 'rgba(14, 140, 147, 0.14)' : 'transparent');
 
     rowG.append('text')
       .attr('x', margin.left - 8)
@@ -324,7 +324,7 @@ function renderSourceCompositionBar(container, sources, { width = 700 } = {}) {
     .attr('height', height)
     .attr('role', 'img')
     .attr('aria-label', 'Composição percentual das fontes de receita por gênero')
-    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
+    .style('font-family', 'Inter, system-ui, sans-serif');
 
   svg.append('text')
     .attr('x', legStartX)

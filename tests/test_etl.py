@@ -22,7 +22,7 @@ def test_analytical_base_schema_and_no_pii():
     meta = base["meta"]
     assert meta["baselineYear"] == 2022
     assert meta["comparisonYear"] == 2026
-    assert meta["years"] == [2022, 2026]
+    assert meta["years"] == [2018, 2022, 2026]
     assert meta["cargos"] == ["6", "7"]
 
     schema = meta["schema"]
@@ -33,7 +33,7 @@ def test_analytical_base_schema_and_no_pii():
     assert cargos_dict == {"6", "7"}, f"Cargos inesperados: {cargos_dict}"
 
     rows = base["candidates"]
-    assert len(rows) == 27367 + 19098
+    assert len(rows) == 26580 + 27367 + 19098
     cids = [r[0] for r in rows]
     assert cids == list(range(1, len(rows) + 1))
 
@@ -46,7 +46,7 @@ def test_coverage_and_sanity_invariants():
     assert c22["population"]["inapto_cands"] == 2634
     assert c22["sources"]["consulta_cand"]["cargo_6_7_rows"] == c22["sources"]["consulta_cand"]["unique_sq"]
 
-    for yr in ("2022", "2026"):
+    for yr in ("2018", "2022", "2026"):
         c = cov[yr]
         assert c["dt_geracao"].get("doador_originario"), f"DT_GERACAO de doador_originario ausente em {yr}"
         inapto = c["population"]["inapto_impact"]
@@ -62,7 +62,7 @@ def test_network_hubs_integrity_and_lgpd():
     net = json.loads((DATA / "network_hubs.json").read_text(encoding="utf-8"))["years"]
     cpf_re = re.compile(r"\b\d{11}\b")
     mei_cnpj_re = re.compile(r"^\d{2}\.\d{3}\.\d{3}\s+")
-    for yr in ("2022", "2026"):
+    for yr in ("2018", "2022", "2026"):
         ydata = net[yr]
         cids = {c["cid"] for c in ydata["candidates"]}
         hids = {h["hid"] for h in ydata["hubs"]}
@@ -90,6 +90,7 @@ def test_network_hubs_integrity_and_lgpd():
 
 def test_coverage_markdown_sections():
     md = (ROOT / "docs" / "relatorio_cobertura_2022.md").read_text(encoding="utf-8")
+    assert "## Ano 2018 — Referência Auxiliar" in md
     assert "## Ano 2022 — Baseline Principal" in md
     assert "## Ano 2026 — Comparativo Direto" in md
     assert "Impacto das candidaturas `INAPTO`" in md

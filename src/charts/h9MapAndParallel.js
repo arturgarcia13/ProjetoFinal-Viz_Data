@@ -1,87 +1,109 @@
 import * as d3 from 'd3';
 import { IBGE_TO_UF, UF_NAMES } from '../data.js';
+import { SEMANTIC_PALETTE } from './palette.js';
 import {
   bindTooltipEvents,
   buildTooltipCard,
   createChartTooltip,
   fmtInt,
   fmtPct,
-  fmtRatio,
 } from './tooltip.js';
 
-const STAGE_COLOR = {
-  'Papel': '#FFFFFF',
-  'Dinheiro': '#FCE34D',
-  'Urna (Votos)': '#FF5E2B',
-  'Urna (Cadeiras)': '#FF7AE5',
-  'Integridade': '#FFB020',
-  'Sem Vazamento Crítico': '#00B884',
-  'Inconclusivo': '#245B49',
-};
+export const H9_METRICS = [
+  { key: 'pctEleitasF', label: '5. Eleitas (%)', short: 'Eleitas', kind: 'parity' },
+  { key: 'pctCandF', label: '1. Candidatas (%)', short: 'Papel', kind: 'parity' },
+  { key: 'pctPubF', label: '2. Fundo Público (%)', short: 'Fundo Púb.', kind: 'parity' },
+  { key: 'pctPrivF', label: '3. Privado/Próprio (%)', short: 'Privado', kind: 'parity' },
+  { key: 'pctVotosF', label: '4. Votos (%)', short: 'Votos', kind: 'parity' },
+  { key: 'pctAlertsF', label: '6. Alertas ≥2 (%)', short: 'Alertas', kind: 'alert' },
+];
 
-function bottleneckTone(bottleneck) {
-  if (!bottleneck || bottleneck === 'Inconclusivo') return 'neutral';
-  if (bottleneck === 'Sem Vazamento Crítico') return 'above';
-  if (bottleneck === 'Integridade' || bottleneck === 'Papel') return 'floor';
-  return 'below';
+function cellColors(val, kind) {
+  if (val === null || !Number.isFinite(val)) {
+    return { bg: '#245B49', fg: 'rgba(255,255,255,0.75)', tone: 'neutral' };
+  }
+  if (kind === 'alert') {
+    if (val >= 5) return { bg: SEMANTIC_PALETTE.alert, fg: '#001A12', tone: 'below' };
+    if (val >= 2) return { bg: SEMANTIC_PALETTE.floor, fg: '#003D2B', tone: 'floor' };
+    return { bg: '#005C40', fg: '#FFFFFF', tone: 'above' };
+  }
+  if (val >= 30) return { bg: SEMANTIC_PALETTE.ok, fg: '#003D2B', tone: 'above' };
+  if (val >= 20) return { bg: '#006E4D', fg: '#FFFFFF', tone: 'neutral' };
+  if (val >= 12) return { bg: SEMANTIC_PALETTE.floor, fg: '#003D2B', tone: 'floor' };
+  return { bg: SEMANTIC_PALETTE.alert, fg: '#001A12', tone: 'below' };
 }
 
 /**
- * H7 / H9 — Mapa Coroplético do Brasil por UF (etapa crítica ou taxa de sinais H7)
+ * H9 (Painel 1) — Mapa Coroplético Quantitativo das 27 UFs por métrica do funil.
  */
-export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
-  width = 520,
-  mode = 'h9',
+export function renderUFMap(container, brUfGeo, h9MatrixData, {
+  width = 480,
+  metric = 'pctEleitasF',
   selectedUF = '',
-  allowedUFs = null,
   onSelectUF = null,
+  onClearUF = null,
 } = {}) {
   container.innerHTML = '';
   const height = 340;
   const tipCtrl = createChartTooltip(container);
   const svg = d3.select(tipCtrl.wrap).append('svg')
+    .attr('class', 'h9-map-svg')
     .attr('viewBox', `0 0 ${width} ${height}`)
     .attr('width', width)
     .attr('height', height)
+    .attr('role', 'img')
+    .attr('aria-label', 'Mapa coroplético quantitativo por Unidade da Federação')
     .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
 
-  const projection = d3.geoMercator().fitExtent([[16, 10], [width - 16, height - 56]], brUfGeo);
-  const path = d3.geoPath(projection);
+  if (onClearUF) {
+    svg.on('click', (evt) => {
+      if (selectedUF && !evt.target.closest('path')) {
+        onClearUF();
+      }
+    });
+  }
 
-  const h9ByUf = new Map(h9Data.ufRows.map((u) => [u.key, u]));
-  const h7ByUf = new Map(h7Data.byUf.map((u) => [u.uf, u]));
-  const h7Scale = d3.scaleSequential(d3.interpolateRgbBasis(['#00805A', '#FCE34D', '#FF5E2B'])).domain([0, 0.12]);
+  const meta = H9_METRICS.find((m) => m.key === metric) || H9_METRICS[0];
+  const isAlert = meta.kind === 'alert';
+  const domain = isAlert ? [0, 6, 12] : [5, 22, 36];
+  const rangeColors = isAlert
+    ? [SEMANTIC_PALETTE.ok, SEMANTIC_PALETTE.floor, SEMANTIC_PALETTE.alert]
+    : [SEMANTIC_PALETTE.alert, SEMANTIC_PALETTE.floor, SEMANTIC_PALETTE.ok];
+
+  const colorScale = d3.scaleLinear().domain(domain).range(rangeColors).clamp(true);
+  const byUf = new Map((h9MatrixData?.ufRows || []).map((u) => [u.key, u]));
+
+  const projection = d3.geoMercator().fitExtent([[14, 10], [width - 14, height - 56]], brUfGeo);
+  const path = d3.geoPath(projection);
 
   const ufPaths = svg.append('g')
     .selectAll('path')
     .data(brUfGeo.features)
     .join('path')
     .attr('d', path)
+    .attr('data-uf', (d) => IBGE_TO_UF[String(d.properties.codarea)])
     .attr('fill', (d) => {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
-      if (mode === 'h7') {
-        const u = h7ByUf.get(uf);
-        if (!u || u.inconclusive) return STAGE_COLOR['Inconclusivo'];
-        return h7Scale(u.rate);
-      }
-      const u = h9ByUf.get(uf);
-      return STAGE_COLOR[u?.bottleneck || 'Inconclusivo'] || STAGE_COLOR['Inconclusivo'];
+      const row = byUf.get(uf);
+      const val = row?.[metric];
+      if (!row || row.inconclusive || val === null || !Number.isFinite(val)) return '#245B49';
+      return colorScale(val);
     })
     .attr('fill-opacity', (d) => {
-      if (!allowedUFs || allowedUFs.size === 0) return 1;
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
-      return allowedUFs.has(uf) ? 1 : 0.2;
+      return selectedUF && selectedUF !== uf ? 0.35 : 1;
     })
     .attr('stroke', (d) => {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
-      return selectedUF === uf ? '#FFFFFF' : '#003D2B';
+      return selectedUF === uf ? '#FFFFFF' : SEMANTIC_PALETTE.surface;
     })
     .attr('stroke-width', (d) => {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
       return selectedUF === uf ? 2.5 : 1;
     })
-    .style('cursor', 'pointer')
-    .on('click', (_, d) => {
+    .style('cursor', onSelectUF ? 'pointer' : 'default')
+    .on('click', (evt, d) => {
+      evt.stopPropagation();
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
       if (uf && onSelectUF) onSelectUF(uf);
     });
@@ -95,287 +117,269 @@ export function renderUFMap(container, brUfGeo, h9Data, h7Data, {
       this,
       tipCtrl,
       () => {
-        if (mode === 'h7') {
-          const u = h7ByUf.get(uf);
-          if (!u || u.inconclusive) {
-            return buildTooltipCard({
-              title: `${uf} — ${name}`,
-              badge: 'Inconclusivo',
-              badgeTone: 'neutral',
-              rows: [
-                { label: 'Critério mínimo', value: 'n < 10 ou FINAL < 70%' },
-              ],
-              hint: onSelectUF ? 'Clique na UF para filtrar o painel' : '',
-            });
-          }
-          return buildTooltipCard({
-            title: `${uf} — ${name}`,
-            badge: `${fmtPct(u.rate * 100)} ≥2 sinais`,
-            badgeTone: u.rate >= 0.06 ? 'below' : (u.rate >= 0.03 ? 'floor' : 'above'),
-            rows: [
-              {
-                label: 'Mulheres com ≥2 sinais',
-                value: fmtPct(u.rate * 100),
-                sub: `${fmtInt(u.twoPlusF)}/${fmtInt(u.nF)}`,
-                focus: true,
-              },
-              { label: 'Cobertura FINAL', value: fmtPct(u.finalRate * 100) },
-            ],
-            hint: onSelectUF ? 'Clique na UF para filtrar o painel' : '',
-          });
-        }
-
-        const u = h9ByUf.get(uf);
+        const u = byUf.get(uf);
         if (!u || u.inconclusive) {
           return buildTooltipCard({
             title: `${uf} — ${name}`,
             badge: 'Inconclusivo',
             badgeTone: 'neutral',
-            rows: [
-              { label: 'Critério mínimo', value: 'Amostra ou FINAL < 70%' },
-            ],
-            hint: onSelectUF ? 'Clique na UF para filtrar o painel' : '',
+            rows: [{ label: 'Critério mínimo', value: 'n < 10 ou FINAL < 70%' }],
+            hint: onSelectUF ? 'Clique na UF para filtrar/limpar' : '',
           });
         }
+        const curVal = u[metric];
+        const tone = cellColors(curVal, meta.kind).tone;
         return buildTooltipCard({
           title: `${uf} — ${name}`,
-          badge: u.bottleneck,
-          badgeTone: bottleneckTone(u.bottleneck),
+          badge: `${meta.short}: ${curVal !== null ? fmtPct(curVal) : '—'}`,
+          badgeTone: tone,
           rows: [
-            { label: 'Inclusão no papel', value: fmtPct(u.inclusaoPct), focus: u.bottleneck === 'Papel' },
-            { label: 'Equidade FEFC', value: fmtRatio(u.eqFefc), focus: u.bottleneck === 'Dinheiro' },
-            { label: 'Rendimento na urna', value: fmtRatio(u.rendUrna), focus: u.bottleneck === 'Urna (Votos)' },
-            { label: 'Sucesso em cadeiras', value: fmtRatio(u.sucParl), focus: u.bottleneck === 'Urna (Cadeiras)' },
-            { label: 'Integridade', value: fmtPct(u.integridadePct), focus: u.bottleneck === 'Integridade' },
+            { label: '1. Candidatas (APTO)', value: fmtPct(u.pctCandF), focus: metric === 'pctCandF' },
+            { label: '2. Fundo Público', value: u.pctPubF !== null ? fmtPct(u.pctPubF) : '—', focus: metric === 'pctPubF' },
+            { label: '3. Privado/Próprio', value: u.pctPrivF !== null ? fmtPct(u.pctPrivF) : '—', focus: metric === 'pctPrivF' },
+            { label: '4. Votos nominais', value: u.pctVotosF !== null ? fmtPct(u.pctVotosF) : '—', focus: metric === 'pctVotosF' },
+            { label: '5. Eleitas', value: u.pctEleitasF !== null ? fmtPct(u.pctEleitasF) : '—', sub: `${u.elF}/${u.elTot}`, focus: metric === 'pctEleitasF' },
+            { label: '6. Alertas ≥2 sinais', value: u.pctAlertsF !== null ? fmtPct(u.pctAlertsF) : '—', focus: metric === 'pctAlertsF' },
           ],
-          hint: onSelectUF ? 'Clique na UF para filtrar o painel' : '',
+          hint: onSelectUF ? 'Clique na UF para filtrar/limpar o painel' : '',
         });
       },
       {
         onEnter: () => {
-          d3.select(this)
-            .attr('stroke', '#FFFFFF')
-            .attr('stroke-width', isSelected ? 2.5 : 1.9);
+          d3.select(this).attr('stroke', '#FFFFFF').attr('stroke-width', isSelected ? 2.5 : 1.9);
         },
         onLeave: () => {
-          d3.select(this)
-            .attr('stroke', isSelected ? '#FFFFFF' : '#003D2B')
-            .attr('stroke-width', isSelected ? 2.5 : 1);
+          d3.select(this).attr('stroke', isSelected ? '#FFFFFF' : SEMANTIC_PALETTE.surface).attr('stroke-width', isSelected ? 2.5 : 1);
         },
       },
     );
   });
 
-  // Legenda com quebra automática de linha para evitar recorte lateral em telas estreitas
-  const legendItems = mode === 'h7'
-    ? [
-        ['0% sinais', h7Scale(0)],
-        ['6% sinais', h7Scale(0.06)],
-        ['≥12% sinais', h7Scale(0.12)],
-        ['Inconclusivo', STAGE_COLOR['Inconclusivo']],
-      ]
-    : Object.entries(STAGE_COLOR).filter(([k]) => h9Data.stageCounts[k] || k === 'Inconclusivo');
+  // Legenda com gradiente contínuo + Inconclusivo
+  const legW = Math.min(200, width - 120);
+  const gradId = `h9-map-grad-${isAlert ? 'alert' : 'parity'}`;
+  const defs = svg.append('defs');
+  const grad = defs.append('linearGradient')
+    .attr('id', gradId)
+    .attr('x1', '0%').attr('x2', '100%').attr('y1', '0%').attr('y2', '0%');
+  grad.append('stop').attr('offset', '0%').attr('stop-color', rangeColors[0]);
+  grad.append('stop').attr('offset', '50%').attr('stop-color', rangeColors[1]);
+  grad.append('stop').attr('offset', '100%').attr('stop-color', rangeColors[2]);
 
-  const leg = svg.append('g').attr('transform', `translate(12, ${height - 46})`);
-  let xOff = 0;
-  let yOff = 0;
-  legendItems.forEach(([label, color]) => {
-    const itemW = label.length * 6.5 + 24;
-    if (xOff > 0 && xOff + itemW > width - 20) {
-      xOff = 0;
-      yOff += 18;
-    }
-    const g = leg.append('g').attr('transform', `translate(${xOff}, ${yOff})`);
-    g.append('rect').attr('width', 11).attr('height', 11).attr('rx', 2).attr('fill', color).attr('stroke', 'rgba(255, 255, 255, 0.25)').attr('stroke-width', 0.6);
-    g.append('text').attr('x', 15).attr('y', 9.5).attr('font-size', 10.5).attr('fill', '#FFFFFF').text(label);
-    xOff += itemW + 8;
+  const leg = svg.append('g').attr('transform', `translate(10, ${height - 38})`);
+  leg.append('rect')
+    .attr('x', 0).attr('y', 0)
+    .attr('width', legW).attr('height', 10)
+    .attr('rx', 3)
+    .attr('fill', `url(#${gradId})`)
+    .attr('stroke', 'rgba(255,255,255,0.28)')
+    .attr('stroke-width', 0.6);
+
+  const ticks = isAlert
+    ? [[0, '0%'], [0.5, '6%'], [1, '≥12% alertas']]
+    : [[0, '≤5%'], [0.5, '22%'], [1, '≥36%']];
+  ticks.forEach(([t, txt], i) => {
+    leg.append('text')
+      .attr('x', legW * t)
+      .attr('y', 23)
+      .attr('text-anchor', i === 0 ? 'start' : (i === 2 ? 'end' : 'middle'))
+      .attr('font-size', 9.5)
+      .attr('fill', '#FFFFFF')
+      .text(txt);
   });
-}
 
-function axisDomain(rows, key, [baseLo, baseHi], pad) {
-  const vals = rows.map((r) => r[key]).filter(Number.isFinite);
-  if (vals.length === 0) return [baseLo, baseHi];
-  const lo = Math.min(baseLo, Math.floor((Math.min(...vals) - pad) * 10) / 10);
-  const hi = Math.max(baseHi, Math.ceil((Math.max(...vals) + pad) * 10) / 10);
-  return [lo, hi];
+  const incG = leg.append('g').attr('transform', `translate(${legW + 18}, 0)`);
+  incG.append('rect').attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', '#245B49').attr('stroke', 'rgba(255,255,255,0.28)').attr('stroke-width', 0.6);
+  incG.append('text').attr('x', 14).attr('y', 9).attr('font-size', 9.5).attr('fill', SEMANTIC_PALETTE.muted).text('Inconclusivo');
+
+  // Extremos clicáveis do mapa na métrica selecionada
+  const validUfs = (h9MatrixData?.ufRows || []).filter((u) => !u.inconclusive && u[metric] !== null);
+  if (validUfs.length >= 2) {
+    const sorted = [...validUfs].sort((a, b) => a[metric] - b[metric]);
+    const minUf = sorted[0];
+    const maxUf = sorted[sorted.length - 1];
+    const topItem = isAlert ? minUf : maxUf;
+    const botItem = isAlert ? maxUf : minUf;
+
+    const extBar = document.createElement('div');
+    extBar.className = 'h9-extremes-bar';
+    [
+      { item: topItem, cls: 'is-high', caption: isAlert ? 'Menor risco (UF)' : `Maior ${meta.short}` },
+      { item: botItem, cls: 'is-low', caption: isAlert ? 'Maior alerta (UF)' : `Menor ${meta.short}` },
+    ].forEach(({ item, cls, caption }) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `h9-extreme-btn ${cls}`;
+      btn.innerHTML = `<span>${caption}</span><strong>${item.key} · ${fmtPct(item[metric])}</strong>`;
+      if (onSelectUF) btn.addEventListener('click', () => onSelectUF(item.key));
+      extBar.appendChild(btn);
+    });
+    container.appendChild(extBar);
+  }
 }
 
 /**
- * Ato 5 — Coordenadas Paralelas Interativas (5 eixos sem clamping + restauração de brush)
+ * H9 (Painel 2) — Matriz Heatmap Ordenável (27 UFs ou Top 15 Partidos × 6 Métricas do Funil).
  */
-export function renderParallelCoordinates(container, h9Data, {
-  width = 700,
-  unit = 'party',
+export function renderH9HeatmapMatrix(container, h9MatrixData, {
+  unit = 'uf',
+  sortBy = 'pctEleitasF',
+  sortDir = 'desc',
   selectedEntity = '',
-  initialRanges = null,
+  onSort = null,
   onSelectEntity = null,
-  onBrushFilter = null,
+  onClearEntity = null,
 } = {}) {
   container.innerHTML = '';
-  const rows = (unit === 'uf' ? h9Data.ufRows : h9Data.partyRows).filter((r) => !r.inconclusive);
-
-  if (rows.length === 0) {
-    container.innerHTML = '<p class="chart-empty">Sem grupos suficientes para traçar coordenadas paralelas neste recorte.</p>';
+  const rawRows = unit === 'party' ? (h9MatrixData?.partyRows || []) : (h9MatrixData?.ufRows || []);
+  if (rawRows.length === 0) {
+    container.innerHTML = '<p class="chart-empty">Sem dados suficientes para exibir a matriz neste recorte.</p>';
     return;
   }
 
-  const axes = [
-    { key: 'inclusaoPct', label: 'Inclusão (%)', domain: axisDomain(rows, 'inclusaoPct', [20, 45], 2) },
-    { key: 'eqFefc', label: 'Eq. FEFC (×)', domain: axisDomain(rows, 'eqFefc', [0.4, 1.5], 0.05) },
-    { key: 'rendUrna', label: 'Rend. Urna (×)', domain: axisDomain(rows, 'rendUrna', [0.2, 1.4], 0.05) },
-    { key: 'sucParl', label: 'Suc. Cadeiras (×)', domain: axisDomain(rows, 'sucParl', [0, 1.6], 0.05) },
-    { key: 'integridadePct', label: 'Integridade (%)', domain: [Math.min(80, ...rows.map((r) => Math.floor(r.integridadePct))), 100] },
+  const rows = [...rawRows].sort((a, b) => {
+    if (sortBy === 'key') {
+      return sortDir === 'asc' ? a.key.localeCompare(b.key) : b.key.localeCompare(a.key);
+    }
+    const va = a[sortBy] ?? -999;
+    const vb = b[sortBy] ?? -999;
+    return sortDir === 'asc' ? va - vb : vb - va;
+  });
+
+  const tipCtrl = createChartTooltip(container, { wrapClass: 'h9-matrix-shell' });
+  const scrollHint = document.createElement('p');
+  scrollHint.className = 'h9-scroll-hint';
+  scrollHint.textContent = 'Deslize horizontalmente a tabela para ver Votos e Alertas →';
+  tipCtrl.wrap.appendChild(scrollHint);
+  const wrap = document.createElement('div');
+  wrap.className = 'h9-matrix-wrap';
+  tipCtrl.wrap.appendChild(wrap);
+
+  if (onClearEntity) {
+    const handleClearBg = (evt) => {
+      if (
+        selectedEntity
+        && !evt.target.closest('tr[data-entity]')
+        && !evt.target.closest('th')
+        && !evt.target.closest('.chart-tooltip')
+      ) {
+        onClearEntity();
+      }
+    };
+    tipCtrl.wrap.addEventListener('click', handleClearBg);
+    container.addEventListener('click', handleClearBg);
+  }
+
+  const table = document.createElement('table');
+  table.className = 'h9-matrix-table';
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  const cols = [
+    { key: 'key', label: unit === 'party' ? 'Partido' : 'UF', kind: 'entity' },
+    ...H9_METRICS.map((m) => ({ key: m.key, label: m.short, fullLabel: m.label, kind: m.kind })),
   ];
 
-  const height = 235;
-  const margin = { top: 30, right: 56, bottom: 22, left: 40 };
-  const tipCtrl = createChartTooltip(container);
-  const svg = d3.select(tipCtrl.wrap).append('svg')
-    .attr('viewBox', `0 0 ${width} ${height}`)
-    .attr('width', width)
-    .attr('height', height)
-    .style('font-family', 'Barlow, Inter, system-ui, sans-serif');
-
-  const x = d3.scalePoint()
-    .domain(axes.map((a) => a.key))
-    .range([margin.left, width - margin.right]);
-
-  const y = new Map(
-    axes.map((a) => [
-      a.key,
-      d3.scaleLinear().domain(a.domain).range([height - margin.bottom, margin.top]),
-    ]),
-  );
-
-  const line = d3.line()
-    .x((d) => x(d.key))
-    .y((d) => y.get(d.key)(d.val));
-
-  const activeRanges = initialRanges instanceof Map ? new Map(initialRanges) : new Map();
-
-  const paths = svg.append('g')
-    .attr('fill', 'none')
-    .selectAll('path')
-    .data(rows)
-    .join('path')
-    .attr('d', (d) => line(axes.map((a) => ({ key: a.key, val: d[a.key] }))))
-    .attr('stroke', (d) => STAGE_COLOR[d.bottleneck] || '#555')
-    .attr('stroke-width', (d) => (selectedEntity === d.key ? 3 : 1.6))
-    .attr('stroke-opacity', (d) => (selectedEntity && selectedEntity !== d.key ? 0.2 : 0.72))
-    .style('cursor', 'pointer')
-    .on('click', (_, d) => {
-      if (onSelectEntity) onSelectEntity(d.key, unit);
+  for (const c of cols) {
+    const th = document.createElement('th');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `h9-sort-btn${sortBy === c.key ? ' is-sorted' : ''}`;
+    btn.dataset.sortKey = c.key;
+    const arrow = sortBy === c.key ? (sortDir === 'asc' ? ' ▴' : ' ▾') : '';
+    btn.textContent = `${c.label}${arrow}`;
+    if (c.fullLabel) btn.title = `Ordenar por ${c.fullLabel}`;
+    btn.addEventListener('click', (evt) => {
+      evt.stopPropagation();
+      if (onSort) onSort(c.key);
     });
-
-  function isRowAllowed(d) {
-    for (const [k, [y0, y1]] of activeRanges.entries()) {
-      const v = d[k];
-      if (v < y0 || v > y1) return false;
-    }
-    return true;
+    th.appendChild(btn);
+    headRow.appendChild(th);
   }
+  thead.appendChild(headRow);
+  table.appendChild(thead);
 
-  function applyBrushStyles(notify = true) {
-    const allowed = new Set();
-    paths.each(function (d) {
-      const ok = activeRanges.size === 0 || isRowAllowed(d);
-      if (activeRanges.size > 0 && ok) allowed.add(d.key);
-      if (activeRanges.size > 0) {
-        d3.select(this)
-          .attr('stroke-opacity', ok ? (selectedEntity && selectedEntity !== d.key ? 0.3 : 0.85) : 0.08)
-          .attr('stroke-width', ok ? (selectedEntity === d.key ? 3 : 2.1) : 1);
-      } else {
-        d3.select(this)
-          .attr('stroke-opacity', selectedEntity && selectedEntity !== d.key ? 0.2 : 0.72)
-          .attr('stroke-width', selectedEntity === d.key ? 3 : 1.6);
-      }
-    });
-    if (notify && onBrushFilter) {
-      onBrushFilter(activeRanges.size > 0 ? allowed : null, new Map(activeRanges));
-    }
-  }
+  const tbody = document.createElement('tbody');
+  for (const r of rows) {
+    const tr = document.createElement('tr');
+    tr.dataset.entity = r.key;
+    const isSel = selectedEntity === r.key;
+    const isDimmed = Boolean(selectedEntity && !isSel);
+    if (isSel) tr.classList.add('is-selected');
+    if (isDimmed) tr.classList.add('is-dimmed');
 
-  paths.each(function (d) {
-    const entityLabel = unit === 'uf' ? `${d.key} — ${UF_NAMES[d.key] || d.key}` : d.key;
-    bindTooltipEvents(
-      this,
-      tipCtrl,
-      () => buildTooltipCard({
-        title: entityLabel,
-        badge: d.bottleneck,
-        badgeTone: bottleneckTone(d.bottleneck),
-        rows: [
-          { label: 'Inclusão (%)', value: fmtPct(d.inclusaoPct), focus: d.bottleneck === 'Papel' },
-          { label: 'Eq. FEFC', value: fmtRatio(d.eqFefc), focus: d.bottleneck === 'Dinheiro' },
-          { label: 'Rend. Urna', value: fmtRatio(d.rendUrna), focus: d.bottleneck === 'Urna (Votos)' },
-          { label: 'Suc. Cadeiras', value: fmtRatio(d.sucParl), focus: d.bottleneck === 'Urna (Cadeiras)' },
-          { label: 'Integridade (%)', value: fmtPct(d.integridadePct), focus: d.bottleneck === 'Integridade' },
-        ],
-        hint: onSelectEntity
-          ? `Clique na linha para filtrar ${unit === 'uf' ? 'a UF' : 'o partido'}`
-          : '',
-      }),
-      {
-        onEnter: () => {
-          d3.select(this).attr('stroke-width', 3).attr('stroke-opacity', 1);
-        },
-        onLeave: () => {
-          applyBrushStyles(false);
-        },
-      },
-    );
-  });
+    const nameTd = document.createElement('td');
+    nameTd.className = 'h9-entity-cell';
+    nameTd.textContent = r.key;
+    tr.appendChild(nameTd);
 
-  const axisG = svg.selectAll('.pc-axis')
-    .data(axes)
-    .join('g')
-    .attr('class', 'pc-axis')
-    .attr('transform', (d) => `translate(${x(d.key)},0)`);
+    for (const m of H9_METRICS) {
+      const td = document.createElement('td');
+      td.className = 'h9-heat-cell';
+      const val = r.inconclusive ? null : r[m.key];
+      const { bg, fg } = cellColors(val, m.kind);
+      td.style.backgroundColor = bg;
+      td.style.color = fg;
+      td.textContent = val !== null && Number.isFinite(val) ? fmtPct(val) : '—';
 
-  axisG.each(function (a) {
-    d3.select(this).call(d3.axisLeft(y.get(a.key)).ticks(5));
-  });
-
-  axisG.append('text')
-    .attr('y', margin.top - 12)
-    .attr('text-anchor', 'middle')
-    .attr('font-size', 10.5)
-    .attr('font-weight', '600')
-    .attr('fill', '#FFFFFF')
-    .text((d) => d.label);
-
-  let restoring = false;
-  axisG.each(function (a) {
-    const scale = y.get(a.key);
-    const brush = d3.brushY()
-      .extent([[-12, margin.top], [12, height - margin.bottom]])
-      .on('brush end', (ev) => {
-        if (restoring) return;
-        if (!ev.selection) {
-          activeRanges.delete(a.key);
-        } else {
-          const [py0, py1] = ev.selection;
-          const vHi = scale.invert(py0);
-          const vLo = scale.invert(py1);
-          activeRanges.set(a.key, [vLo, vHi]);
+      bindTooltipEvents(td, tipCtrl, () => {
+        const title = unit === 'uf' ? `${r.key} — ${UF_NAMES[r.key] || r.key}` : `Partido ${r.key}`;
+        if (r.inconclusive) {
+          return buildTooltipCard({
+            title,
+            badge: 'Inconclusivo',
+            badgeTone: 'neutral',
+            rows: [{ label: 'Critério mínimo', value: 'n < 10 ou FINAL < 70%' }],
+          });
         }
-        applyBrushStyles(true);
+        return buildTooltipCard({
+          title,
+          badge: `${m.short}: ${val !== null ? fmtPct(val) : '—'}`,
+          badgeTone: cellColors(val, m.kind).tone,
+          rows: [
+            { label: '1. Candidatas (APTO)', value: fmtPct(r.pctCandF), focus: m.key === 'pctCandF' },
+            { label: '2. Fundo Público', value: r.pctPubF !== null ? fmtPct(r.pctPubF) : '—', focus: m.key === 'pctPubF' },
+            { label: '3. Privado/Próprio', value: r.pctPrivF !== null ? fmtPct(r.pctPrivF) : '—', focus: m.key === 'pctPrivF' },
+            { label: '4. Votos nominais', value: r.pctVotosF !== null ? fmtPct(r.pctVotosF) : '—', focus: m.key === 'pctVotosF' },
+            { label: '5. Eleitas', value: r.pctEleitasF !== null ? fmtPct(r.pctEleitasF) : '—', sub: `${r.elF}/${r.elTot}`, focus: m.key === 'pctEleitasF' },
+            { label: '6. Alertas ≥2 sinais', value: r.pctAlertsF !== null ? fmtPct(r.pctAlertsF) : '—', focus: m.key === 'pctAlertsF' },
+          ],
+          hint: onSelectEntity ? `Clique na linha para destacar/limpar ${unit === 'uf' ? 'a UF' : 'o partido'}` : '',
+        });
       });
-    const bg = d3.select(this).append('g').attr('class', 'pc-brush').call(brush);
-    const saved = activeRanges.get(a.key);
-    if (saved) {
-      const [vLo, vHi] = saved;
-      const py0 = Math.max(margin.top, Math.min(height - margin.bottom, scale(vHi)));
-      const py1 = Math.max(margin.top, Math.min(height - margin.bottom, scale(vLo)));
-      if (py1 > py0) {
-        restoring = true;
-        bg.call(brush.move, [py0, py1]);
-        restoring = false;
-      }
-    }
-  });
 
-  if (activeRanges.size > 0) {
-    applyBrushStyles(false);
+      tr.appendChild(td);
+    }
+
+    if (onSelectEntity) {
+      tr.style.cursor = 'pointer';
+      tr.addEventListener('click', (evt) => {
+        evt.stopPropagation();
+        onSelectEntity(r.key, unit);
+      });
+    }
+    tbody.appendChild(tr);
   }
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+
+  const clearBar = document.createElement('div');
+  clearBar.className = 'h9-clear-bar';
+  const hintSpan = document.createElement('span');
+  hintSpan.textContent = selectedEntity
+    ? `Destaque ativo: ${selectedEntity} · clique nesta faixa ou na linha para limpar`
+    : 'Clique em uma linha para destacar · clique nos títulos para ordenar';
+  clearBar.appendChild(hintSpan);
+  if (selectedEntity && onClearEntity) {
+    const clrBtn = document.createElement('button');
+    clrBtn.type = 'button';
+    clrBtn.className = 'h9-clear-btn';
+    clrBtn.textContent = 'Limpar seleção ×';
+    clrBtn.addEventListener('click', (evt) => {
+      evt.stopPropagation();
+      onClearEntity();
+    });
+    clearBar.appendChild(clrBtn);
+  }
+  tipCtrl.wrap.appendChild(clearBar);
 }

@@ -109,7 +109,7 @@ def write_coverage_artifacts(coverage_by_year: dict[str, Any]) -> None:
     )
 
     md_lines = [
-        "# Relatório de Cobertura por Fonte — Baseline 2022 e Comparativo 2026",
+        "# Relatório de Cobertura por Fonte — 2018 (Auxiliar), 2022 (Baseline) e 2026 (Comparativo)",
         "",
         "> Gerado automaticamente por `etl/build_dataset.py` (`etl/report_coverage.py`). Todos os números refletem os CSVs oficiais `*_BRASIL.csv` do TSE filtrados para `CD_CARGO IN ('6', '7')` e `CD_TIPO_ELEICAO = '2'`.",
         "",

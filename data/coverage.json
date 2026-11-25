@@ -1,5 +1,124 @@
 {
   "years": {
+    "2018": {
+      "year": 2018,
+      "role": "auxiliary",
+      "dt_geracao": {
+        "consulta_cand": "13/11/2024",
+        "votacao": "13/11/2024",
+        "receitas": "18/10/2026",
+        "despesas_contratadas": "18/10/2026",
+        "doador_originario": "18/10/2026"
+      },
+      "sources": {
+        "consulta_cand": {
+          "raw_rows": 29287,
+          "cargo_6_7_rows": 26580,
+          "unique_sq": 26580
+        },
+        "votacao": {
+          "raw_rows": 8680108,
+          "cargo_6_7_rows": 8438852,
+          "unique_sq": 23666,
+          "sum_v_nom": 179664953,
+          "sum_v_val": 179658687
+        },
+        "receitas": {
+          "raw_rows": 329683,
+          "cargo_6_7_rows": 289110,
+          "unique_sq": 25484,
+          "sum_r": 2368188376.79,
+          "sum_fefc": 1251192072.59
+        },
+        "doador_originario": {
+          "raw_rows": 151448,
+          "unique_sq_receita": 8421,
+          "matched_cargo_6_7_sq_receita": 7036,
+          "rec_transfer_sq": 110810,
+          "rec_transfer_matched_orig": 7036
+        },
+        "despesas_contratadas": {
+          "raw_rows": 1724053,
+          "cargo_6_7_rows": 1493387,
+          "unique_sq": 25484,
+          "sum_e_efetivo": 2161770122.1,
+          "sum_e_interno_excl": 0.0
+        }
+      },
+      "population": {
+        "total_cands": 26580,
+        "apto_cands": 23697,
+        "inapto_cands": 2883,
+        "inapto_impact": {
+          "v_val": 184049,
+          "v_nom": 184049,
+          "r": 44605693.82,
+          "fefc": 18931769.13,
+          "e": 38546131.1,
+          "elected": 2
+        },
+        "gender_all": {
+          "F": 8511,
+          "M": 18018,
+          "ND": 51
+        },
+        "gender_apto": {
+          "F": 7422,
+          "M": 16275,
+          "ND": 0
+        },
+        "chapas_reg": {
+          "total": 716,
+          "micro_lt4": 76,
+          "micro_cands": 131
+        },
+        "chapas_apto": {
+          "total": 682,
+          "micro_lt4": 58,
+          "micro_cands": 95
+        }
+      },
+      "matching": {
+        "all": {
+          "votacao": 23666,
+          "receitas": 25484,
+          "despesas_contratadas": 25484,
+          "zero_fin": 2221,
+          "missing_rec": 1096
+        },
+        "apto": {
+          "votacao": 23649,
+          "receitas": 23059,
+          "despesas_contratadas": 23059,
+          "zero_fin": 1480,
+          "missing_rec": 638
+        }
+      },
+      "tp_prestacao_all": {
+        "FINAL": 24394,
+        "AUSENTE": 1096,
+        "PARCIAL": 773,
+        "RELATÓRIO FINANCEIRO": 317
+      },
+      "tp_prestacao_apto": {
+        "FINAL": 22127,
+        "PARCIAL": 645,
+        "AUSENTE": 638,
+        "RELATÓRIO FINANCEIRO": 287
+      },
+      "sanity": {
+        "exported_v_val": 179658687,
+        "exported_v_nom": 179664953,
+        "exported_r": 2368188376.79,
+        "exported_fefc": 1251192072.59,
+        "exported_e": 2161770122.1
+      },
+      "hubs_summary": {
+        "hubs_count": 94,
+        "cand_nodes_count": 369,
+        "links_count": 559
+      }
+    },
     "2022": {
       "year": 2022,
       "role": "baseline",

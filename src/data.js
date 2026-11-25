@@ -92,12 +92,11 @@ export function filterCandidates(candidates, filters = {}) {
 }
 
 export async function loadAppData() {
-  const [rawBase, networkHubs, coverage, brUf] = await Promise.all([
+  const [rawBase, coverage, brUf] = await Promise.all([
     fetch('data/analytical_base.json').then((r) => {
       if (!r.ok) throw new Error(`HTTP ${r.status} em data/analytical_base.json`);
       return r.json();
     }),
-    fetch('data/network_hubs.json').then((r) => (r.ok ? r.json() : { years: {} })),
     fetch('data/coverage.json').then((r) => (r.ok ? r.json() : { years: {} })),
     fetch('data/br_uf.json').then((r) => {
       if (!r.ok) throw new Error(`HTTP ${r.status} em data/br_uf.json`);
@@ -106,5 +105,5 @@ export async function loadAppData() {
   ]);
 
   const { meta, candidates } = decodeAnalyticalBase(rawBase);
-  return { meta, candidates, networkHubs, coverage, brUf };
+  return { meta, candidates, coverage, brUf };
 }

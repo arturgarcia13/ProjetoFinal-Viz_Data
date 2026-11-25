@@ -107,7 +107,7 @@ export function computeH1(candidates) {
   const totalSlates = slates.length;
   const compliant = slates.filter((s) => s.pctReg >= 0.3).length;
   const floorBand = slates.filter((s) => s.pctReg >= 0.3 && s.pctReg <= 0.3334).length;
-  const above40 = slates.filter((s) => s.pctReg > 0.4).length;
+  const ge40 = slates.filter((s) => s.pctReg >= 0.4).length;
   const below30 = slates.filter((s) => s.pctReg < 0.3).length;
 
   const aptoSlates = slates.filter((s) => s.nApto >= 4);
@@ -116,8 +116,10 @@ export function computeH1(candidates) {
 
   const pctCompliant = safeDiv(compliant, totalSlates);
   const pctFloorBand = safeDiv(floorBand, totalSlates);
-  const pctAbove40 = safeDiv(above40, totalSlates);
+  const pctGe40 = safeDiv(ge40, totalSlates);
   const pctAptoCompliant = safeDiv(aptoCompliant, aptoSlates.length);
+  const pctDroppedByInapto = safeDiv(droppedByInapto, totalSlates);
+  const pctDroppedAmongCompliant = safeDiv(droppedByInapto, compliant);
 
   let verdict;
   if (totalSlates < 10) {
@@ -145,16 +147,20 @@ export function computeH1(candidates) {
     totalSlates,
     compliant,
     floorBand,
-    above40,
+    above40: ge40,
+    ge40,
     below30,
     pctCompliant,
     pctFloorBand,
-    pctAbove40,
+    pctAbove40: pctGe40,
+    pctGe40,
     aptoSlatesCount: aptoSlates.length,
     pctAptoCompliant,
     pctAptoFloorBand: safeDiv(aptoFloorBand, aptoSlates.length),
     regCompliantTotal,
     droppedByInapto,
+    pctDroppedByInapto,
+    pctDroppedAmongCompliant,
     microSlatesReg,
     microCandsReg,
     microSlatesApto,
@@ -173,13 +179,15 @@ export const H1_MIRROR_BINS = [
 
 /**
  * H1 (Comparativo Espelhado 2022 vs. 2026) — 5 faixas estratégicas sobre chapas (n >= 4),
- * calculando distribuição percentual e absoluta em dois universos limpos: Registradas e Aptas.
+ * calculando distribuição percentual e absoluta em dois universos limpos: Registradas e Aptas,
+ * além de partidos por faixa (para visões coordenadas) e análise das chapas < 30%.
  */
 export function computeH1Comparison(
   allCandidates,
   { cargo = 'all', uf = null, party = null, parties = null, ufs = null } = {},
 ) {
   const byYear = {};
+  const slatePartiesByYear = { 2022: new Map(), 2026: new Map() };
 
   for (const yr of [2022, 2026]) {
     const subset = allCandidates.filter((c) => {
@@ -191,19 +199,47 @@ export function computeH1Comparison(
       if (ufs && ufs.size > 0 && !ufs.has(c.uf)) return false;
       return true;
     });
+    for (const c of subset) {
+      if (c.g !== 'F' && c.g !== 'M') continue;
+      const sk = c.slateKey || `${c.y}|${c.uf}|${c.cargo}|${c.chapa}`;
+      let set = slatePartiesByYear[yr].get(sk);
+      if (!set) {
+        set = new Set();
+        slatePartiesByYear[yr].set(sk, set);
+      }
+      set.add(c.p);
+    }
     byYear[yr] = computeH1(subset);
   }
 
+  const collectParties = (yr, slates) => {
+    const out = new Set();
+    const map = slatePartiesByYear[yr];
+    for (const s of slates) {
+      const pSet = map.get(s.key);
+      if (pSet) pSet.forEach((p) => out.add(p));
+    }
+    return [...out].sort();
+  };
+
   const bins = H1_MIRROR_BINS.map((def) => {
     const entry = { id: def.id, label: def.label, zone: def.zone, status: def.status };
+    const regPartiesUnion = new Set();
+    const aptoPartiesUnion = new Set();
     for (const yr of [2022, 2026]) {
       const h1y = byYear[yr];
       const totalReg = h1y.totalSlates;
       const totalApto = h1y.aptoSlatesCount;
-      const regN = h1y.slates.filter((s) => def.test(s.pctReg * 100)).length;
-      const aptoN = h1y.slates.filter((s) => s.nApto >= 4 && def.test(s.pctApto * 100)).length;
+      const regSlates = h1y.slates.filter((s) => def.test(s.pctReg * 100));
+      const aptoSlates = h1y.slates.filter((s) => s.nApto >= 4 && def.test(s.pctApto * 100));
+      const regN = regSlates.length;
+      const aptoN = aptoSlates.length;
       const regPct = safeDiv(regN, totalReg) * 100;
       const aptoPct = safeDiv(aptoN, totalApto) * 100;
+      const pReg = collectParties(yr, regSlates);
+      const pApto = collectParties(yr, aptoSlates);
+      pReg.forEach((p) => regPartiesUnion.add(p));
+      pApto.forEach((p) => aptoPartiesUnion.add(p));
       entry[`y${yr}`] = {
         regN,
         aptoN,
@@ -211,35 +247,117 @@ export function computeH1Comparison(
         aptoPct,
         totalReg,
         totalApto,
+        partiesReg: pReg,
+        partiesApto: pApto,
       };
     }
     entry.deltaRegPP = entry.y2026.regPct - entry.y2022.regPct;
     entry.deltaAptoPP = entry.y2026.aptoPct - entry.y2022.aptoPct;
     entry.deltaRegN = entry.y2026.regN - entry.y2022.regN;
     entry.deltaAptoN = entry.y2026.aptoN - entry.y2022.aptoN;
+    entry.partiesUnion = {
+      reg: [...regPartiesUnion].sort(),
+      apto: [...aptoPartiesUnion].sort(),
+    };
     return entry;
   });
 
+  // Análise detalhada das chapas abaixo de 30% (2022 vs. 2026)
+  const lt30ByYear = {};
+  const lt30RegSets = {};
+  const lt30AptoSets = {};
+  const lt30PartyCounts = { 2022: new Map(), 2026: new Map() };
+
+  for (const yr of [2022, 2026]) {
+    const h1y = byYear[yr];
+    const regLt30 = h1y.slates.filter((s) => s.pctReg < 0.3);
+    const aptoLt30 = h1y.slates.filter((s) => s.nApto >= 4 && s.pctApto < 0.3);
+    const nearFloorRegCount = regLt30.filter((s) => s.pctReg >= 0.25).length;
+
+    const countByParty = (slates) => {
+      const m = new Map();
+      for (const s of slates) {
+        const pSet = slatePartiesByYear[yr].get(s.key);
+        if (!pSet) continue;
+        for (const p of pSet) {
+          m.set(p, (m.get(p) || 0) + 1);
+        }
+      }
+      return [...m.entries()]
+        .map(([partyCode, count]) => ({ party: partyCode, count }))
+        .sort((a, b) => b.count - a.count || a.party.localeCompare(b.party));
+    };
+
+    const topReg = countByParty(regLt30);
+    for (const item of topReg) lt30PartyCounts[yr].set(item.party, item.count);
+
+    lt30RegSets[yr] = new Set(regLt30.map((s) => `${s.uf}|${s.cargo}|${s.chapa}`));
+    lt30AptoSets[yr] = new Set(aptoLt30.map((s) => `${s.uf}|${s.cargo}|${s.chapa}`));
+
+    const regPct = safeDiv(regLt30.length, h1y.totalSlates) * 100;
+    const aptoPct = safeDiv(aptoLt30.length, h1y.aptoSlatesCount) * 100;
+    lt30ByYear[yr] = {
+      regCount: regLt30.length,
+      regPct,
+      aptoCount: aptoLt30.length,
+      aptoPct,
+      deltaRegToAptoPP: aptoPct - regPct,
+      droppedByInapto: h1y.droppedByInapto,
+      pctDroppedOfReg: h1y.pctDroppedByInapto * 100,
+      nearFloorRegCount,
+      topPartiesReg: topReg.slice(0, 6),
+      topPartiesApto: countByParty(aptoLt30).slice(0, 6),
+    };
+  }
+
+  let sameSlateRepeats = 0;
+  for (const k of lt30RegSets[2022]) {
+    if (lt30RegSets[2026].has(k)) sameSlateRepeats += 1;
+  }
+  let sameSlateAptoRepeats = 0;
+  for (const k of lt30AptoSets[2022]) {
+    if (lt30AptoSets[2026].has(k)) sameSlateAptoRepeats += 1;
+  }
+
+  const repeatPartiesReg = [];
+  for (const [p, c22] of lt30PartyCounts[2022].entries()) {
+    const c26 = lt30PartyCounts[2026].get(p);
+    if (c26) repeatPartiesReg.push({ party: p, count2022: c22, count2026: c26 });
+  }
+  repeatPartiesReg.sort((a, b) => (b.count2022 + b.count2026) - (a.count2022 + a.count2026));
+
   return {
     bins,
+    lt30Details: {
+      byYear: lt30ByYear,
+      sameSlateRepeats,
+      sameSlateAptoRepeats,
+      repeatPartiesReg,
+    },
     byYear: {
       2022: {
         totalSlates: byYear[2022].totalSlates,
         aptoSlatesCount: byYear[2022].aptoSlatesCount,
+        pctGe40: byYear[2022].pctGe40,
+        pctAptoCompliant: byYear[2022].pctAptoCompliant,
         microSlatesReg: byYear[2022].microSlatesReg,
         microCandsReg: byYear[2022].microCandsReg,
         microSlatesApto: byYear[2022].microSlatesApto,
         microCandsApto: byYear[2022].microCandsApto,
         droppedByInapto: byYear[2022].droppedByInapto,
+        pctDroppedByInapto: byYear[2022].pctDroppedByInapto,
       },
       2026: {
         totalSlates: byYear[2026].totalSlates,
         aptoSlatesCount: byYear[2026].aptoSlatesCount,
+        pctGe40: byYear[2026].pctGe40,
+        pctAptoCompliant: byYear[2026].pctAptoCompliant,
         microSlatesReg: byYear[2026].microSlatesReg,
         microCandsReg: byYear[2026].microCandsReg,
         microSlatesApto: byYear[2026].microSlatesApto,
         microCandsApto: byYear[2026].microCandsApto,
         droppedByInapto: byYear[2026].droppedByInapto,
+        pctDroppedByInapto: byYear[2026].pctDroppedByInapto,
       },
     },
   };
@@ -392,10 +510,15 @@ export function computeH3(candidates, coverageYear = null) {
       pubTotal: pPubTotal,
       pubF: pPubF,
       gap: y - x,
+      deficitBrl: (y - x) * pPubTotal,
       ratio: safeDiv(y, x),
     });
   }
   parties.sort((a, b) => b.pubTotal - a.pubTotal);
+  const totalDeficitBrl = parties
+    .filter((p) => p.deficitBrl < 0)
+    .reduce((s, p) => s + p.deficitBrl, 0);
+  const subfinancedCount = parties.filter((p) => p.deficitBrl < 0).length;
 
   const above30Cand = parties.filter((p) => p.pctCandF >= 0.33);
   const lockedBelow33 = above30Cand.filter((p) => p.pctPubF < p.pctCandF).length;
@@ -432,6 +555,8 @@ export function computeH3(candidates, coverageYear = null) {
     pubTotal,
     pctPubF,
     equityRatio,
+    totalDeficitBrl,
+    subfinancedCount,
     parties,
     verdict,
   };
@@ -499,7 +624,7 @@ export function computeH4(candidates) {
 /**
  * H5 — Conversão em 3 etapas (% Candidatas → % Votos Nominais → % Eleitas)
  */
-export function computeH5(candidates) {
+export function computeH5(candidates, { selectedParty = '' } = {}) {
   const apto = candidates.filter((c) => c.apto && (c.g === 'F' || c.g === 'M'));
   const nF = apto.filter((c) => c.g === 'F').length;
   const nM = apto.filter((c) => c.g === 'M').length;
@@ -516,7 +641,7 @@ export function computeH5(candidates) {
   const dropCadeira = pctEleitasF - pctVotosF;
 
   const byPartyMap = groupBy(apto, (c) => c.p);
-  const byParty = [];
+  const allEligible = [];
   for (const [party, rows] of byPartyMap.entries()) {
     const pElF = rows.filter((c) => c.g === 'F' && c.el).length;
     const pElM = rows.filter((c) => c.g === 'M' && c.el).length;
@@ -528,7 +653,7 @@ export function computeH5(candidates) {
     const pCandF = pF / rows.length;
     const pVotosF = safeDiv(pVF, pVTot);
     const pEleitasF = pElF / pElTotal;
-    byParty.push({
+    allEligible.push({
       party,
       nTotal: rows.length,
       nF: pF,
@@ -541,7 +666,13 @@ export function computeH5(candidates) {
       dropCadeira: pEleitasF - pVotosF,
     });
   }
-  byParty.sort((a, b) => b.elTotal - a.elTotal || b.nTotal - a.nTotal);
+  allEligible.sort((a, b) => b.elTotal - a.elTotal || b.nTotal - a.nTotal);
+  const byParty = allEligible.slice(0, 10);
+  if (selectedParty && !byParty.some((p) => p.party === selectedParty)) {
+    const extra = allEligible.find((p) => p.party === selectedParty);
+    if (extra) byParty.push(extra);
+  }
+  byParty.sort((a, b) => b.pctEleitasF - a.pctEleitasF || b.pctVotosF - a.pctVotosF || b.elTotal - a.elTotal);
 
   let verdict;
   if (elF + elM < 5) {
@@ -771,13 +902,13 @@ export function computeH7(candidates, { voteThreshold = 10, coverageYear = null 
 }
 
 /**
- * H8 — Comparativo Temporal 2022 vs. 2026 (Contas zeradas brutas vs. Movimentações padronizadas em lote)
+ * H8 — Comparativo Temporal 2018 → 2022 → 2026 (Contas zeradas brutas vs. Movimentações padronizadas em lote)
  */
 export function computeH8(allCandidates, { cargo = 'all', uf = null, party = null, parties = null, ufs = null, voteThreshold = 10 } = {}) {
   const rows = [];
   const byYear = {};
 
-  for (const yr of [2022, 2026]) {
+  for (const yr of [2018, 2022, 2026]) {
     const subset = allCandidates.filter((c) => {
       if (c.y !== yr) return false;
       if (cargo && cargo !== 'all' && c.cargo !== cargo) return false;
@@ -803,6 +934,10 @@ export function computeH8(allCandidates, { cargo = 'all', uf = null, party = nul
       pctStd: safeDiv(stdCount, n),
       pctClassic: safeDiv(classicCount, n),
       pctAdapted: safeDiv(adaptedCount, n),
+      zeroCount,
+      stdCount,
+      classicCount,
+      adaptedCount,
     };
 
     rows.push(
@@ -813,6 +948,7 @@ export function computeH8(allCandidates, { cargo = 'all', uf = null, party = nul
     );
   }
 
+  const y18 = byYear[2018];
   const y22 = byYear[2022];
   const y26 = byYear[2026];
   let verdict;
@@ -826,19 +962,19 @@ export function computeH8(allCandidates, { cargo = 'all', uf = null, party = nul
     verdict = {
       status: 'vaza',
       label: 'Vaza nesta Etapa',
-      reason: `Contas zeradas caíram (${(y22.pctZero * 100).toFixed(1)}% → ${(y26.pctZero * 100).toFixed(1)}%), mas movimentações padronizadas em lote subiram (${(y22.pctStd * 100).toFixed(1)}% → ${(y26.pctStd * 100).toFixed(1)}%).`,
+      reason: `De 2018 a 2026, contas zeradas caíram (${(y18.pctZero * 100).toFixed(1)}% → ${(y22.pctZero * 100).toFixed(1)}% → ${(y26.pctZero * 100).toFixed(1)}%), mas lotes padronizados subiram (${(y18.pctStd * 100).toFixed(1)}% → ${(y22.pctStd * 100).toFixed(1)}% → ${(y26.pctStd * 100).toFixed(1)}%).`,
     };
   } else if (y26.pctStd > 0.05 || y26.pctZero > 0.05) {
     verdict = {
       status: 'vaza',
       label: 'Vaza nesta Etapa',
-      reason: `Em 2026 permanecem ${(y26.pctZero * 100).toFixed(1)}% zeradas e ${(y26.pctStd * 100).toFixed(1)}% com pacote padronizado (2022: ${(y22.pctZero * 100).toFixed(1)}% e ${(y22.pctStd * 100).toFixed(1)}%).`,
+      reason: `Em 2026 permanecem ${(y26.pctZero * 100).toFixed(1)}% zeradas e ${(y26.pctStd * 100).toFixed(1)}% com pacote padronizado (2018: ${(y18.pctZero * 100).toFixed(1)}% e ${(y18.pctStd * 100).toFixed(1)}%).`,
     };
   } else {
     verdict = {
       status: 'funcionou',
       label: 'A Cota Funciona',
-      reason: `Redução simultânea de contas zeradas e padronizadas entre 2022 e 2026.`,
+      reason: `Redução simultânea de contas zeradas e padronizadas entre 2018 e 2026.`,
     };
   }
 
@@ -948,255 +1084,531 @@ export function computeH9AndParallel(candidates, { voteThreshold = 10 } = {}) {
   };
 }
 
-function classifyMosaicBand(pctReg) {
-  if (pctReg < 0.3) return 'below';
-  if (pctReg <= 0.3334) return 'floor';
-  if (pctReg <= 0.4) return 'mid';
-  return 'high';
-}
-
 /**
- * Mosaico em Escala (Macro → Micro / Grid to Pull-Out) sobre chapas reais (n >= 4).
- * Seleciona até maxTiles chapas proporcionalmente às faixas de cota e extrai 4 casos emblemáticos.
+ * H2 (Evolução 2022 → 2026) — Diferença sinalizada em Reais entre a mediana feminina e masculina (Δ = Mediana F − Mediana M)
+ * Ordenada do maior déficit feminino em 2026 no topo para o maior superávit feminino na base.
  */
-export function computeScaleMosaic(candidates, h1Data, { voteThreshold = 10, maxTiles = 48 } = {}) {
-  const slates = h1Data?.slates || [];
-  if (slates.length === 0) {
-    return {
-      totalSlates: 0,
-      bandCounts: { below: 0, floor: 0, mid: 0, high: 0 },
-      tiles: [],
-      pullOuts: [],
-      voteThreshold,
-    };
+export function computeH2GapEvolution(
+  allCandidates,
+  { cargo = 'all', uf = null, parties = null, selectedParty = '', limit = 12 } = {},
+) {
+  const filterYear = (yr) => allCandidates.filter((c) => {
+    if (c.y !== yr) return false;
+    if (cargo && cargo !== 'all' && c.cargo !== cargo) return false;
+    if (uf && c.uf !== uf) return false;
+    if (parties && parties.size > 0 && !parties.has(c.p)) return false;
+    return true;
+  });
+
+  const h2_22 = computeH2(filterYear(2022));
+  const h2_26 = computeH2(filterYear(2026));
+  const map22 = new Map(h2_22.byParty.map((p) => [p.party, p]));
+
+  const top26 = h2_26.byParty.slice(0, limit);
+  if (selectedParty && !top26.some((p) => p.party === selectedParty)) {
+    const extra = h2_26.byParty.find((p) => p.party === selectedParty);
+    if (extra) top26.push(extra);
   }
 
-  const bySlate = groupBy(
-    candidates.filter((c) => c.apto && c.g === 'F'),
-    (c) => c.slateKey || `${c.y}|${c.uf}|${c.cargo}|${c.chapa}`,
-  );
-
-  const enriched = slates.map((s) => {
-    const aptoF = bySlate.get(s.key) || [];
-    const twoPlusF = aptoF.filter((c) => countSignals(c, voteThreshold).total >= 2).length;
-    const band = classifyMosaicBand(s.pctReg);
-    const droppedByInapto = s.pctReg >= 0.3 && s.nApto >= 4 && s.pctApto < 0.3;
+  const rows = top26.map((p26) => {
+    const p22 = map22.get(p26.party) || null;
+    const gap2022 = p22 ? p22.medF - p22.medM : null;
+    const gap2026 = p26.medF - p26.medM;
+    const deltaGap = gap2022 !== null ? gap2026 - gap2022 : null;
     return {
-      ...s,
-      band,
-      twoPlusF,
-      twoPlusRate: safeDiv(twoPlusF, s.fApto || aptoF.length),
-      droppedByInapto,
-      pullOutRole: null,
-      pullOutIndex: null,
+      party: p26.party,
+      total2026: p26.total,
+      nF2026: p26.nF,
+      nM2026: p26.nM,
+      nF2022: p22?.nF ?? 0,
+      nM2022: p22?.nM ?? 0,
+      medF2022: p22?.medF ?? null,
+      medM2022: p22?.medM ?? null,
+      medF2026: p26.medF,
+      medM2026: p26.medM,
+      gap2022,
+      gap2026,
+      deltaGap,
+      womenAhead2026: gap2026 > 0,
     };
   });
 
-  const bandCounts = { below: 0, floor: 0, mid: 0, high: 0 };
-  for (const s of enriched) bandCounts[s.band] += 1;
+  rows.sort((a, b) => a.gap2026 - b.gap2026 || b.total2026 - a.total2026);
 
-  // Seleciona 4 casos emblemáticos (deduplicados por chave de chapa)
-  const pickedKeys = new Set();
-  const pickBest = (list, cmpFn) => {
-    const avail = list.filter((s) => !pickedKeys.has(s.key)).sort(cmpFn);
-    if (avail.length === 0) return null;
-    pickedKeys.add(avail[0].key);
-    return avail[0];
-  };
+  const globalGap2022 = h2_22.medF - h2_22.medM;
+  const globalGap2026 = h2_26.medF - h2_26.medM;
+  const deficitParties2026 = rows.filter((r) => r.gap2026 < 0).length;
 
-  const roleDefs = [
-    {
-      role: 'dropped',
-      label: 'Queda por inaptidão',
-      pick: () =>
-        pickBest(
-          enriched.filter((s) => s.droppedByInapto),
-          (a, b) => (b.fReg - b.fApto) - (a.fReg - a.fApto) || b.nReg - a.nReg,
-        ) || pickBest(enriched.filter((s) => s.band === 'floor'), (a, b) => a.pctApto - b.pctApto || b.nReg - a.nReg),
-    },
-    {
-      role: 'signals',
-      label: 'Piso 30%–33,3% com sinais',
-      pick: () =>
-        pickBest(
-          enriched.filter((s) => s.band === 'floor' && s.twoPlusF > 0),
-          (a, b) => b.twoPlusF - a.twoPlusF || b.twoPlusRate - a.twoPlusRate || b.nReg - a.nReg,
-        ) || pickBest(enriched.filter((s) => s.band === 'floor'), (a, b) => b.nReg - a.nReg),
-    },
-    {
-      role: 'below',
-      label: 'Abaixo do piso (< 30%)',
-      pick: () =>
-        pickBest(
-          enriched.filter((s) => s.band === 'below'),
-          (a, b) => b.nReg - a.nReg || a.pctReg - b.pctReg,
-        ) || pickBest(enriched.filter((s) => s.band === 'floor'), (a, b) => b.nReg - a.nReg),
-    },
-    {
-      role: 'contrast',
-      label: 'Acima de 40% (contraste)',
-      pick: () =>
-        pickBest(
-          enriched.filter((s) => s.band === 'high'),
-          (a, b) => b.nReg - a.nReg || b.pctReg - a.pctReg,
-        ) || pickBest(enriched, (a, b) => b.pctReg - a.pctReg || b.nReg - a.nReg),
-    },
-  ];
-
-  const pullOuts = [];
-  for (const def of roleDefs) {
-    const chosen = def.pick() || pickBest(enriched, (a, b) => b.nReg - a.nReg);
-    if (!chosen) continue;
-    chosen.pullOutRole = def.role;
-    chosen.pullOutLabel = def.label;
-    chosen.pullOutIndex = pullOuts.length + 1;
-    pullOuts.push(chosen);
-  }
-
-  let tiles;
-  if (enriched.length <= maxTiles) {
-    tiles = [...enriched];
+  let verdict;
+  if (rows.length < 3) {
+    verdict = {
+      status: 'inconclusivo',
+      label: 'Inconclusivo',
+      reason: `Amostra insuficiente para comparar evolução por partido (${rows.length} partidos).`,
+    };
+  } else if (deficitParties2026 >= Math.ceil(rows.length * 0.5)) {
+    verdict = {
+      status: 'vaza',
+      label: 'Vaza nesta Etapa',
+      reason: `Em 2026, ${deficitParties2026} de ${rows.length} maiores partidos têm mediana feminina menor que a masculina (ex.: PL ${((rows[0]?.gap2026 || 0) / 1000).toFixed(0)} mil).`,
+    };
   } else {
-    const selected = new Map(pullOuts.map((s) => [s.key, s]));
-    const bands = ['below', 'floor', 'mid', 'high'];
-    const targets = {};
-    let allocated = 0;
-    for (const b of bands) {
-      const share = Math.round((bandCounts[b] / enriched.length) * maxTiles);
-      targets[b] = Math.min(bandCounts[b], Math.max(bandCounts[b] > 0 ? 1 : 0, share));
-      allocated += targets[b];
-    }
-    while (allocated > maxTiles) {
-      const largest = bands.slice().sort((a, b) => targets[b] - targets[a])[0];
-      if (targets[largest] <= 1) break;
-      targets[largest] -= 1;
-      allocated -= 1;
-    }
-    while (allocated < maxTiles) {
-      const candidateBand = bands.find((b) => targets[b] < bandCounts[b]);
-      if (!candidateBand) break;
-      targets[candidateBand] += 1;
-      allocated += 1;
-    }
-
-    for (const b of bands) {
-      const pool = enriched
-        .filter((s) => s.band === b)
-        .sort((a, bItem) => bItem.nReg - a.nReg || a.key.localeCompare(bItem.key));
-      const existingInBand = [...selected.values()].filter((s) => s.band === b).length;
-      let needed = Math.max(0, targets[b] - existingInBand);
-      if (pool.length <= needed) {
-        for (const item of pool) selected.set(item.key, item);
-      } else {
-        const avail = pool.filter((s) => !selected.has(s.key));
-        const step = Math.max(1, avail.length / Math.max(1, needed));
-        for (let i = 0; i < needed && i < avail.length; i += 1) {
-          const idx = Math.min(avail.length - 1, Math.floor(i * step));
-          const item = avail[idx];
-          if (item) selected.set(item.key, item);
-        }
-      }
-    }
-
-    // Completa se deduplicação deixou abaixo de maxTiles
-    if (selected.size < maxTiles) {
-      for (const item of enriched) {
-        if (selected.size >= maxTiles) break;
-        if (!selected.has(item.key)) selected.set(item.key, item);
-      }
-    }
-    tiles = [...selected.values()].slice(0, maxTiles);
+    verdict = {
+      status: 'funcionou',
+      label: 'A Cota Funciona',
+      reason: `Maioria dos partidos exibe mediana feminina igual ou superior à masculina em 2026.`,
+    };
   }
 
-  const bandOrder = { below: 0, floor: 1, mid: 2, high: 3 };
-  tiles.sort((a, b) => bandOrder[a.band] - bandOrder[b.band] || a.pctReg - b.pctReg || b.nReg - a.nReg);
-
   return {
-    totalSlates: enriched.length,
-    bandCounts,
-    tiles,
-    pullOuts,
-    voteThreshold,
+    rows,
+    globalGap2022,
+    globalGap2026,
+    h2_22,
+    h2_26,
+    deficitParties2026,
+    verdict,
   };
 }
 
 /**
- * H2 Divergente — Disparidade relativa entre Mulheres e Homens ancorada na paridade (1× = 0).
- * Escala log2 simétrica com teto padrão de 15× (← Mais para Homens | Igual | Mais para Mulheres →).
+ * H2B — Comparativo direto Fundo Público vs. Recurso Privado/Próprio em Reais (Δ = Mediana F − Mediana M) + fontes 100%.
  */
-export function computeDivergentDisparity(h2Data, { mode = 'priv', limit = 12, cap = 15 } = {}) {
-  const parties = (h2Data?.byParty || []).slice(0, limit);
-  const maxLog = Math.log2(cap);
+export function computeH2PublicVsPrivate(h2Data, { selectedParty = '', limit = 12 } = {}) {
+  const byParty = h2Data?.byParty || [];
+  const selectedList = byParty.slice(0, limit);
+  if (selectedParty && !selectedList.some((p) => p.party === selectedParty)) {
+    const extra = byParty.find((p) => p.party === selectedParty);
+    if (extra) selectedList.push(extra);
+  }
 
-  const pickVals = (p) => {
-    if (mode === 'pub') return { valF: p.medPubF, valM: p.medPubM };
-    if (mode === 'total') return { valF: p.medF, valM: p.medM };
-    return { valF: p.medPrivF, valM: p.medPrivM };
-  };
+  const rows = selectedList.map((p) => ({
+    party: p.party,
+    total: p.total,
+    nF: p.nF,
+    nM: p.nM,
+    medPubF: p.medPubF,
+    medPubM: p.medPubM,
+    pubGap: p.medPubF - p.medPubM,
+    medPrivF: p.medPrivF,
+    medPrivM: p.medPrivM,
+    privGap: p.medPrivF - p.medPrivM,
+  }));
 
-  const rows = parties.map((p) => {
-    const { valF, valM } = pickVals(p);
-    let factor = 1;
-    let signedLog = 0;
-    let direction = 'equal';
-    let capped = false;
-    let zeroSide = null;
+  rows.sort((a, b) => a.privGap - b.privGap || b.total - a.total);
 
-    if (valF === 0 && valM === 0) {
-      direction = 'equal';
-    } else if (valM > 0 && valF === 0) {
-      factor = cap;
-      signedLog = -maxLog;
-      direction = 'M';
-      capped = true;
-      zeroSide = 'F';
-    } else if (valF > 0 && valM === 0) {
-      factor = cap;
-      signedLog = maxLog;
-      direction = 'F';
-      capped = true;
-      zeroSide = 'M';
-    } else {
-      const ratioFM = valF / valM;
-      const clamped = Math.max(1 / cap, Math.min(cap, ratioFM));
-      signedLog = Math.log2(clamped);
-      factor = ratioFM >= 1 ? ratioFM : 1 / ratioFM;
-      capped = ratioFM > cap || ratioFM < 1 / cap;
-      if (Math.abs(ratioFM - 1) < 0.05) direction = 'equal';
-      else direction = ratioFM > 1 ? 'F' : 'M';
-    }
+  const privDeficitCount = rows.filter((r) => r.privGap < 0).length;
+  const pubSurplusCount = rows.filter((r) => r.pubGap > 0).length;
+  const srcF = (h2Data?.sources || []).find((s) => s.g === 'F');
+  const srcM = (h2Data?.sources || []).find((s) => s.g === 'M');
+  const pubShareF = srcF ? srcF.pctFefc + srcF.pctFp : 0;
+  const pubShareM = srcM ? srcM.pctFefc + srcM.pctFp : 0;
 
-    return {
-      party: p.party,
-      total: p.total,
-      nF: p.nF,
-      nM: p.nM,
-      valF,
-      valM,
-      factor,
-      signedLog,
-      direction,
-      capped,
-      zeroSide,
-    };
-  });
-
-  rows.sort((a, b) => a.signedLog - b.signedLog || b.total - a.total);
-
-  const globalMedF = mode === 'pub' ? (h2Data?.medPubF || 0) : (mode === 'total' ? (h2Data?.medF || 0) : (h2Data?.medPrivF || 0));
-  const globalMedM = mode === 'pub' ? (h2Data?.medPubM || 0) : (mode === 'total' ? (h2Data?.medM || 0) : (h2Data?.medPrivM || 0));
+  const verdict = rows.length < 3
+    ? { status: 'inconclusivo', label: 'Inconclusivo', reason: `Amostra insuficiente (${rows.length} partidos).` }
+    : (privDeficitCount >= Math.ceil(rows.length * 0.6)
+        ? {
+            status: 'vaza',
+            label: 'Vaza no Privado',
+            reason: `Mulheres dependem ${(pubShareF * 100).toFixed(1)}% do Fundo Público (vs. ${(pubShareM * 100).toFixed(1)}% dos homens) e ficam atrás no recurso privado em ${privDeficitCount} de ${rows.length} partidos.`,
+          }
+        : {
+            status: 'funcionou',
+            label: 'Próximo à Paridade',
+            reason: `Equilíbrio entre recursos públicos e privados no recorte.`,
+          });
 
   return {
-    mode,
-    cap,
     rows,
-    summary: {
-      favoringM: rows.filter((r) => r.direction === 'M').length,
-      favoringF: rows.filter((r) => r.direction === 'F').length,
-      nearEqual: rows.filter((r) => r.direction === 'equal').length,
-      globalMedF,
-      globalMedM,
-      globalRatio: safeDiv(globalMedF, globalMedM),
-    },
+    sources: h2Data?.sources || [],
+    medPubF: h2Data?.medPubF || 0,
+    medPubM: h2Data?.medPubM || 0,
+    medPrivF: h2Data?.medPrivF || 0,
+    medPrivM: h2Data?.medPrivM || 0,
+    pubShareF,
+    pubShareM,
+    privDeficitCount,
+    pubSurplusCount,
+    verdict,
+  };
+}
+
+/**
+ * H4 — Sankey 100% proporcional entre mulheres APTO:
+ * Fonte da Receita (FEFC, FP, Próprios, Privadas) → Perfil (Competitivas Top 10% vs. Base 90%) → Resultado (Eleitas vs. Não eleitas).
+ */
+export function computeH4WomenSankey(candidates, { profile = 'all', coverageYear = null } = {}) {
+  const aptoF = candidates.filter((c) => c.apto && c.g === 'F');
+  const nF = aptoF.length;
+  const finalRate = nF > 0
+    ? safeDiv(aptoF.filter((c) => c.tpConta === 'FINAL').length, nF)
+    : (coverageYear ? safeDiv(coverageYear.tp_prestacao_apto?.FINAL || 0, coverageYear.population?.apto_cands || 1) : 0);
+
+  const sorted = [...aptoF].sort((a, b) => b.r - a.r || b.v - a.v || a.cid - b.cid);
+  const topCount = nF > 0 ? Math.max(1, Math.round(nF * 0.1)) : 0;
+  const top10 = sorted.slice(0, topCount);
+  const base90 = sorted.slice(topCount);
+
+  const sumBucket = (rows) => {
+    let fefc = 0;
+    let fp = 0;
+    let prop = 0;
+    let priv = 0;
+    let elRev = 0;
+    let nonElRev = 0;
+    let elCount = 0;
+    for (const c of rows) {
+      const totC = c.fefc + c.fp + c.prop + c.priv;
+      fefc += c.fefc;
+      fp += c.fp;
+      prop += c.prop;
+      priv += c.priv;
+      if (c.el) {
+        elRev += totC;
+        elCount += 1;
+      } else {
+        nonElRev += totC;
+      }
+    }
+    const totalRev = fefc + fp + prop + priv;
+    return {
+      n: rows.length,
+      elCount,
+      nonElCount: rows.length - elCount,
+      fefc,
+      fp,
+      prop,
+      priv,
+      elRev,
+      nonElRev,
+      totalRev,
+    };
+  };
+
+  const allStats = sumBucket(sorted);
+  const topStats = sumBucket(top10);
+  const baseStats = sumBucket(base90);
+
+  const groups = profile === 'top10'
+    ? [{ id: 'top10', name: 'Competitivas (Top 10%)', stats: topStats }]
+    : (profile === 'base90'
+        ? [{ id: 'base90', name: 'Base (90%)', stats: baseStats }]
+        : [
+            { id: 'top10', name: 'Competitivas (Top 10%)', stats: topStats },
+            { id: 'base90', name: 'Base (90%)', stats: baseStats },
+          ]);
+
+  const activeTotalRev = groups.reduce((s, g) => s + g.stats.totalRev, 0);
+  const activeTotalCands = groups.reduce((s, g) => s + g.stats.n, 0);
+
+  const nodes = [
+    { id: 'fefc', name: 'FEFC', col: 0 },
+    { id: 'fp', name: 'Fundo Partidário', col: 0 },
+    { id: 'prop', name: 'Recursos Próprios', col: 0 },
+    { id: 'priv', name: 'Doações Privadas', col: 0 },
+    ...groups.map((g) => ({ id: g.id, name: g.name, col: 1, candsCount: g.stats.n })),
+    { id: 'el', name: 'Eleitas', col: 2 },
+    { id: 'non_el', name: 'Não eleitas', col: 2 },
+  ];
+  const nodeIndex = new Map(nodes.map((n, idx) => [n.id, idx]));
+
+  const links = [];
+  if (activeTotalRev > 0) {
+    const srcDefs = [
+      ['fefc', 'FEFC'],
+      ['fp', 'Fundo Partidário'],
+      ['prop', 'Recursos Próprios'],
+      ['priv', 'Doações Privadas'],
+    ];
+    for (const g of groups) {
+      for (const [sKey] of srcDefs) {
+        const brl = g.stats[sKey];
+        if (brl <= 0) continue;
+        links.push({
+          source: nodeIndex.get(sKey),
+          target: nodeIndex.get(g.id),
+          value: (brl / activeTotalRev) * 100,
+          brl,
+          candsCount: g.stats.n,
+        });
+      }
+      if (g.stats.elRev > 0) {
+        links.push({
+          source: nodeIndex.get(g.id),
+          target: nodeIndex.get('el'),
+          value: (g.stats.elRev / activeTotalRev) * 100,
+          brl: g.stats.elRev,
+          candsCount: g.stats.elCount,
+        });
+      }
+      if (g.stats.nonElRev > 0) {
+        links.push({
+          source: nodeIndex.get(g.id),
+          target: nodeIndex.get('non_el'),
+          value: (g.stats.nonElRev / activeTotalRev) * 100,
+          brl: g.stats.nonElRev,
+          candsCount: g.stats.nonElCount,
+        });
+      }
+    }
+  }
+
+  const top10ShareRev = safeDiv(topStats.totalRev, allStats.totalRev);
+  const base90ShareRev = safeDiv(baseStats.totalRev, allStats.totalRev);
+  const top10ShareElected = safeDiv(topStats.elCount, allStats.elCount);
+
+  let verdict;
+  if (nF < 20 || allStats.totalRev <= 0 || finalRate < 0.7) {
+    verdict = {
+      status: 'inconclusivo',
+      label: 'Inconclusivo',
+      reason: `Amostra ou entrega FINAL insuficiente entre candidatas (F=${nF}, FINAL=${(finalRate * 100).toFixed(1)}%).`,
+    };
+  } else if (top10ShareRev >= 0.5) {
+    verdict = {
+      status: 'vaza',
+      label: 'Concentração Extrema',
+      reason: `As 10% mais financiadas (${topStats.n} candidatas) concentram ${(top10ShareRev * 100).toFixed(1)}% de toda a receita feminina e ${(top10ShareElected * 100).toFixed(1)}% das eleitas, enquanto 90% da base divide ${(base90ShareRev * 100).toFixed(1)}%.`,
+    };
+  } else {
+    verdict = {
+      status: 'funcionou',
+      label: 'Distribuição Mais Equilibrada',
+      reason: `As 10% mais financiadas concentram ${(top10ShareRev * 100).toFixed(1)}% da receita feminina.`,
+    };
+  }
+
+  return {
+    profile,
+    nF,
+    activeTotalCands,
+    activeTotalRev,
+    allStats,
+    topStats,
+    baseStats,
+    top10ShareRev,
+    base90ShareRev,
+    top10ShareElected,
+    nodes,
+    links,
+    verdict,
+  };
+}
+
+/**
+ * H6 (Série 2018 → 2022 → 2026) — Evolução da proporção de ≥2 sinais por gênero.
+ */
+export function computeH6Series(
+  allCandidates,
+  { cargo = 'all', uf = null, party = null, parties = null, voteThreshold = 10 } = {},
+) {
+  const years = [2018, 2022, 2026];
+  const byYear = {};
+  const points = [];
+
+  for (const yr of years) {
+    const subset = allCandidates.filter((c) => {
+      if (c.y !== yr) return false;
+      if (cargo && cargo !== 'all' && c.cargo !== cargo) return false;
+      if (uf && c.uf !== uf) return false;
+      if (party && c.p !== party) return false;
+      if (parties && parties.size > 0 && !parties.has(c.p)) return false;
+      return true;
+    });
+    const h6y = computeH6(subset, { voteThreshold });
+    byYear[yr] = h6y;
+    points.push(
+      {
+        year: yr,
+        gender: 'Mulheres',
+        g: 'F',
+        pct2Plus: h6y.pct2PlusF * 100,
+        count2Plus: h6y.summary.F.twoPlus,
+        n: h6y.summary.F.n,
+        ratio2Plus: h6y.ratio2Plus,
+        sigA: h6y.summary.F.sigA,
+        sigB: h6y.summary.F.sigB,
+        sigC: h6y.summary.F.sigC,
+      },
+      {
+        year: yr,
+        gender: 'Homens',
+        g: 'M',
+        pct2Plus: h6y.pct2PlusM * 100,
+        count2Plus: h6y.summary.M.twoPlus,
+        n: h6y.summary.M.n,
+        ratio2Plus: h6y.ratio2Plus,
+        sigA: h6y.summary.M.sigA,
+        sigB: h6y.summary.M.sigB,
+        sigC: h6y.summary.M.sigC,
+      },
+    );
+  }
+
+  const y18 = byYear[2018];
+  const y22 = byYear[2022];
+  const y26 = byYear[2026];
+  let verdict;
+  if (y26.summary.F.n < 20 || y26.summary.M.n < 20 || y26.finalRate < 0.7) {
+    verdict = {
+      status: 'inconclusivo',
+      label: 'Inconclusivo',
+      reason: `Amostra ou cobertura FINAL insuficiente para série 2018–2026 (FINAL 2026: ${(y26.finalRate * 100).toFixed(1)}%).`,
+    };
+  } else if (y26.pct2PlusF > y26.pct2PlusM * 1.25 && y26.pct2PlusF - y26.pct2PlusM > 0.01) {
+    verdict = {
+      status: 'vaza',
+      label: 'Vaza nesta Etapa',
+      reason: `Mesmo em 2026, mulheres acumulam ${(y26.pct2PlusF * 100).toFixed(1)}% de ≥2 sinais vs. ${(y26.pct2PlusM * 100).toFixed(1)}% dos homens (${y26.ratio2Plus.toFixed(2)}×; em 2018 era ${y18.ratio2Plus.toFixed(1)}×).`,
+    };
+  } else {
+    verdict = {
+      status: 'funcionou',
+      label: 'Disparidade Reduzida',
+      reason: `A razão F/M em ≥2 sinais caiu de ${y18.ratio2Plus.toFixed(1)}× em 2018 para ${y22.ratio2Plus.toFixed(2)}× em 2022 e ${y26.ratio2Plus.toFixed(2)}× em 2026 (limiar ≤ ${voteThreshold} votos).`,
+    };
+  }
+
+  return { voteThreshold, years, byYear, points, verdict };
+}
+
+/**
+ * H7 (Comparativo Lollipop 2022 vs. 2026, com opção 2018) — Taxa agregada de ≥2 sinais por faixa da chapa.
+ */
+export function computeH7Comparison(
+  allCandidates,
+  { cargo = 'all', uf = null, party = null, parties = null, voteThreshold = 10 } = {},
+) {
+  const byYear = {};
+  for (const yr of [2018, 2022, 2026]) {
+    const subset = allCandidates.filter((c) => {
+      if (c.y !== yr) return false;
+      if (cargo && cargo !== 'all' && c.cargo !== cargo) return false;
+      if (uf && c.uf !== uf) return false;
+      if (party && c.p !== party) return false;
+      if (parties && parties.size > 0 && !parties.has(c.p)) return false;
+      return true;
+    });
+    byYear[yr] = computeH7(subset, { voteThreshold });
+  }
+
+  const bandOrder = byYear[2022].bandOrder;
+  const rows = bandOrder.map((band) => {
+    const out = { band };
+    for (const yr of [2018, 2022, 2026]) {
+      const st = byYear[yr].bandStats.find((b) => b.band === band) || { slatesCount: 0, nF: 0, twoPlusCount: 0, aggRate: 0 };
+      out[`y${yr}`] = {
+        ...st,
+        aggRatePct: st.aggRate * 100,
+      };
+    }
+    return out;
+  });
+
+  return {
+    voteThreshold,
+    bandOrder,
+    byYear,
+    rows,
+    verdict2022: byYear[2022].verdict,
+    verdict2026: byYear[2026].verdict,
+  };
+}
+
+/**
+ * H9 (Mapa Quantitativo + Matriz Heatmap Ordenável) — 27 UFs e Top 15 Partidos nas 5 etapas.
+ */
+export function computeH9MatrixAndMap(
+  candidates,
+  { voteThreshold = 10, selectedParty = '', limitParties = 15 } = {},
+) {
+  function calcRow(key, rows) {
+    const validG = rows.filter((c) => c.g === 'F' || c.g === 'M');
+    const regF = validG.filter((c) => c.g === 'F').length;
+    const pctCandRegF = safeDiv(regF, validG.length);
+
+    const apto = validG.filter((c) => c.apto);
+    const aptoF = apto.filter((c) => c.g === 'F');
+    const nF = aptoF.length;
+    const nM = apto.length - nF;
+    const pctCandF = safeDiv(nF, apto.length);
+    const finalRate = safeDiv(apto.filter((c) => c.tpConta === 'FINAL').length, apto.length);
+
+    const pubF = aptoF.reduce((s, c) => s + c.fefc + c.fp, 0);
+    const pubTot = apto.reduce((s, c) => s + c.fefc + c.fp, 0);
+    const pctPubF = safeDiv(pubF, pubTot);
+
+    const privF = aptoF.reduce((s, c) => s + c.prop + c.priv, 0);
+    const privTot = apto.reduce((s, c) => s + c.prop + c.priv, 0);
+    const pctPrivF = safeDiv(privF, privTot);
+
+    const vF = aptoF.reduce((s, c) => s + c.v, 0);
+    const vTot = apto.reduce((s, c) => s + c.v, 0);
+    const pctVotosF = safeDiv(vF, vTot);
+
+    const elF = aptoF.filter((c) => c.el).length;
+    const elTot = apto.filter((c) => c.el).length;
+    const pctEleitasF = safeDiv(elF, elTot);
+
+    const alertsF = aptoF.filter((c) => countSignals(c, voteThreshold).total >= 2).length;
+    const pctAlertsF = safeDiv(alertsF, nF);
+
+    const inconclusive = apto.length < 10 || finalRate < 0.7;
+
+    return {
+      key,
+      nTotal: validG.length,
+      nApto: apto.length,
+      nF,
+      nM,
+      elF,
+      elTot,
+      alertsF,
+      finalRate,
+      inconclusive,
+      pctCandRegF: pctCandRegF * 100,
+      pctCandF: pctCandF * 100,
+      pctPubF: pubTot > 0 ? pctPubF * 100 : null,
+      pctPrivF: privTot > 0 ? pctPrivF * 100 : null,
+      pctVotosF: vTot > 0 ? pctVotosF * 100 : null,
+      pctEleitasF: elTot > 0 ? pctEleitasF * 100 : null,
+      pctAlertsF: nF > 0 ? pctAlertsF * 100 : null,
+    };
+  }
+
+  const byUfMap = groupBy(candidates, (c) => c.uf);
+  const ufRows = [...byUfMap.entries()]
+    .map(([uf, rows]) => calcRow(uf, rows))
+    .sort((a, b) => (b.pctEleitasF ?? -1) - (a.pctEleitasF ?? -1));
+
+  const byPartyMap = groupBy(candidates, (c) => c.p);
+  const eligibleParties = [...byPartyMap.entries()]
+    .filter(([, rows]) => rows.filter((c) => c.apto).length >= 20)
+    .map(([p, rows]) => calcRow(p, rows))
+    .sort((a, b) => b.nApto - a.nApto);
+
+  const partyRows = eligibleParties.slice(0, limitParties);
+  if (selectedParty && !partyRows.some((p) => p.key === selectedParty)) {
+    const extra = eligibleParties.find((p) => p.key === selectedParty);
+    if (extra) partyRows.push(extra);
+  }
+
+  const validUfs = ufRows.filter((u) => !u.inconclusive && u.pctEleitasF !== null);
+  const sortedEl = [...validUfs].sort((a, b) => a.pctEleitasF - b.pctEleitasF);
+  const lowUf = sortedEl[0];
+  const highUf = sortedEl[sortedEl.length - 1];
+
+  const verdict = validUfs.length < 5
+    ? { status: 'inconclusivo', label: 'Inconclusivo', reason: `Poucas UFs com amostra suficiente (${validUfs.length}).` }
+    : {
+        status: 'vaza',
+        label: 'Desigualdade Regional',
+        reason: `A eleição feminina varia de ${lowUf.pctEleitasF.toFixed(1)}% (${lowUf.key}) a ${highUf.pctEleitasF.toFixed(1)}% (${highUf.key}) entre UFs analisadas.`,
+      };
+
+  return {
+    ufRows,
+    partyRows,
+    verdict,
   };
 }

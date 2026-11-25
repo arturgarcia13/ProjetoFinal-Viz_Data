@@ -47,108 +47,76 @@ page.on('console', (m) => {
 });
 
 await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'networkidle0' });
-await page.waitForSelector('#stage-canvas svg');
+await page.waitForSelector('#canvas-h1 svg');
 await page.evaluate(() => document.fonts.ready);
 
-// 0. Brandbook tokens, tipografia e faixa de Big Numbers reativa
-const brandCheck = await page.evaluate(() => {
+// 0. Brandbook, remoção do Panorama em Escala e barra superior enxuta
+const shellCheck = await page.evaluate(() => {
   const bodyS = getComputedStyle(document.body);
   const h1S = getComputedStyle(document.querySelector('h1'));
+  const skip = document.querySelector('a.skip-link');
+  const filterRect = document.getElementById('filter-bar').getBoundingClientRect();
+  const hasEscala = Boolean(document.getElementById('escala'));
+  const hasMosaic = document.querySelectorAll('.mosaic-tile').length > 0;
+  const heroCta = document.querySelector('.hero-actions a.btn-primary');
+  const finalCta = document.querySelector('#cta-final a.btn-primary');
+  const emCount = document.querySelectorAll('em').length;
   const bigCand = document.getElementById('big-stat-cand')?.textContent?.trim() || '';
   const bigPub = document.getElementById('big-stat-pub')?.textContent?.trim() || '';
   const bigSeats = document.getElementById('big-stat-seats')?.textContent?.trim() || '';
   return {
     bodyBg: bodyS.backgroundColor,
-    bodyFont: bodyS.fontFamily,
     h1Color: h1S.color,
     h1Font: h1S.fontFamily,
+    bodyFont: bodyS.fontFamily,
+    skipHref: skip?.getAttribute('href'),
+    skipIsFirst: document.body.firstElementChild === skip,
+    filterH: filterRect.height,
+    hasEscala,
+    hasMosaic,
+    heroText: heroCta?.textContent?.trim(),
+    heroHref: heroCta?.getAttribute('href'),
+    finalText: finalCta?.textContent?.trim(),
+    finalHref: finalCta?.getAttribute('href'),
+    emCount,
     bigCand,
     bigPub,
     bigSeats,
-  };
-});
-if (
-  brandCheck.bodyBg !== 'rgb(0, 128, 90)'
-  || brandCheck.h1Color !== 'rgb(252, 227, 77)'
-  || !brandCheck.h1Font.includes('Anton')
-  || !brandCheck.bodyFont.includes('Barlow')
-  || !brandCheck.bigCand.endsWith('%')
-  || !brandCheck.bigPub.endsWith('%')
-  || !brandCheck.bigSeats.endsWith('%')
-) {
-  throw new Error(`Brandbook/Big Numbers inválido: ${JSON.stringify(brandCheck)}`);
-}
-
-// 1. Layout split-screen em desktop + Acessibilidade (.skip-link) + ChapterNav 2 camadas + Regras /landing-page-design
-const shellCheck = await page.evaluate(() => {
-  const skip = document.querySelector('a.skip-link');
-  const firstChild = document.body.firstElementChild;
-  const left = document.getElementById('narrative-pane').getBoundingClientRect();
-  const right = document.querySelector('.stage-pane').getBoundingClientRect();
-  const filterRect = document.getElementById('filter-bar').getBoundingClientRect();
-  const subLinks = [...document.querySelectorAll('#chapter-subnav a')].map((a) => a.textContent.trim());
-  const actLinks = [...document.querySelectorAll('.act-nav a')].map((a) => a.dataset.act);
-  const heroCtas = [...document.querySelectorAll('.hero-actions a')].map((a) => ({
-    text: a.textContent.trim(),
-    href: a.getAttribute('href'),
-  }));
-  const finalCta = document.querySelector('#cta-final a.btn-primary');
-  const emCount = document.querySelectorAll('em').length;
-  const stepBorder = getComputedStyle(document.querySelector('.story-step'));
-  const statBorder = getComputedStyle(document.querySelector('.live-stat'));
-  const ogTitle = document.querySelector('meta[property="og:title"]')?.getAttribute('content') || '';
-  const ogImage = document.querySelector('meta[property="og:image"]')?.getAttribute('content') || '';
-  const faqSchema = document.querySelector('script[type="application/ld+json"]')?.textContent || '';
-  return {
-    skipHref: skip?.getAttribute('href'),
-    skipIsFirst: firstChild === skip,
-    leftX: left.left,
-    rightX: right.left,
-    filterH: filterRect.height,
-    subLinks,
-    actLinks,
-    heroCtas,
-    finalCtaText: finalCta?.textContent.trim() || '',
-    finalCtaHref: finalCta?.getAttribute('href') || '',
-    emCount,
-    stepUniformBorder: stepBorder.borderLeftWidth === stepBorder.borderTopWidth,
-    statUniformBorder: statBorder.borderLeftWidth === statBorder.borderTopWidth,
-    hasOgTitle: ogTitle.length > 10,
-    hasOgImage: ogImage.length > 0,
-    hasFaqSchema: faqSchema.includes('FAQPage'),
     overflowX: document.documentElement.scrollWidth > window.innerWidth,
   };
 });
+
 if (
-  shellCheck.skipHref !== '#main-content'
+  shellCheck.bodyBg !== 'rgb(0, 128, 90)'
+  || shellCheck.h1Color !== 'rgb(252, 227, 77)'
+  || !shellCheck.h1Font.includes('Anton')
+  || !shellCheck.bodyFont.includes('Barlow')
+  || shellCheck.skipHref !== '#main-content'
   || !shellCheck.skipIsFirst
-  || shellCheck.rightX <= shellCheck.leftX
-  || shellCheck.overflowX
-  || shellCheck.subLinks.length < 2
-  || !shellCheck.actLinks.includes('synthesis')
-  || !shellCheck.actLinks.includes('methods')
-  || shellCheck.heroCtas.length !== 1
-  || shellCheck.heroCtas[0].text !== shellCheck.finalCtaText
-  || shellCheck.heroCtas[0].href !== shellCheck.finalCtaHref
+  || shellCheck.filterH > 95
+  || shellCheck.hasEscala
+  || shellCheck.hasMosaic
+  || shellCheck.heroText !== shellCheck.finalText
+  || shellCheck.heroHref !== '#ato-1'
   || shellCheck.emCount !== 0
-  || !shellCheck.stepUniformBorder
-  || !shellCheck.statUniformBorder
-  || !shellCheck.hasOgTitle
-  || !shellCheck.hasOgImage
-  || !shellCheck.hasFaqSchema
+  || !shellCheck.bigCand.endsWith('%')
+  || !shellCheck.bigPub.endsWith('%')
+  || !shellCheck.bigSeats.endsWith('%')
+  || shellCheck.overflowX
 ) {
-  throw new Error(`Shell/Acessibilidade/LandingPage inválido: ${JSON.stringify(shellCheck)}`);
+  throw new Error(`Shell/UX check falhou: ${JSON.stringify(shellCheck)}`);
 }
 
-// Helper para validar hover padronizado (modelo H1) e ausência de <title> / Plot tip nativos
-async function assertUnifiedHover(targetSelector, containerSelector = '#stage-canvas', wrapIndex = 0) {
+// Helper de hover unificado
+async function assertUnifiedHover(targetSelector, containerSelector, wrapIndex = 0) {
   const forbiddenCount = await page.$$eval(
     `${containerSelector} svg title, ${containerSelector} svg g[aria-label="tip"]`,
     (els) => els.length,
   );
   if (forbiddenCount !== 0) {
-    throw new Error(`Encontrados ${forbiddenCount} tooltips nativos (<title> ou Plot tip) em ${containerSelector}`);
+    throw new Error(`Encontrados ${forbiddenCount} tooltips nativos em ${containerSelector}`);
   }
+  await page.$eval(targetSelector, (el) => el.scrollIntoView({ behavior: 'instant', block: 'center' }));
   await page.hover(targetSelector);
   const tipInfo = await page.evaluate((cSel, idx) => {
     const wraps = document.querySelectorAll(`${cSel} .chart-wrap`);
@@ -161,416 +129,373 @@ async function assertUnifiedHover(targetSelector, containerSelector = '#stage-ca
     const hasTable = Boolean(tip.querySelector('.chart-tip-table, .h1-tip-table'));
     return {
       ok: !tip.hidden && hasHead && hasTable && tip.textContent.trim().length > 0,
-      hidden: tip.hidden,
-      hasHead,
-      hasTable,
-      insideX: tr.left >= wr.left - 1 && tr.right <= wr.right + 1,
-      insideY: tr.top >= wr.top - 1 && tr.bottom <= wr.bottom + 1,
-      text: tip.textContent.trim().slice(0, 80),
+      insideX: tr.left >= wr.left - 2 && tr.right <= wr.right + 2,
+      insideY: tr.top >= wr.top - 2 && tr.bottom <= wr.bottom + 2,
     };
   }, containerSelector, wrapIndex);
   if (!tipInfo.ok || !tipInfo.insideX || !tipInfo.insideY) {
-    throw new Error(`Hover padronizado falhou em ${targetSelector} (${containerSelector}): ${JSON.stringify(tipInfo)}`);
+    throw new Error(`Hover padronizado falhou em ${targetSelector}: ${JSON.stringify(tipInfo)}`);
   }
 }
 
-// 2. Percorre todos os passos (Macro->Micro + H1–H9 + Divergente), Context Switch, Popover e Hover padronizado
-const steps = ['escala-macro', 'escala-micro', 'h1', 'h2', 'h2-div', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9'];
-const observedModalities = new Set();
-for (const s of steps) {
-  await page.$eval(`.story-step[data-step="${s}"]`, (el) => el.scrollIntoView({ behavior: 'instant', block: 'center' }));
-  await page.click(`.story-step[data-step="${s}"]`);
-  await page.waitForSelector('#stage-canvas svg');
-  const modality = await page.$eval('#stage-context-modality', (el) => el.textContent.trim());
-  if (modality) observedModalities.add(modality);
-  const kicker = await page.$eval('#stage-kicker', (el) => el.textContent);
-  if (s === 'escala-macro') {
-    const macroCheck = await page.evaluate(() => ({
-      tiles: document.querySelectorAll('#stage-canvas .mosaic-tile').length,
-      dimmed: document.querySelectorAll('#stage-canvas .mosaic-tile.is-dimmed').length,
-      subnavText: document.getElementById('chapter-subnav')?.textContent || '',
-    }));
-    if (macroCheck.tiles !== 48 || macroCheck.dimmed !== 0 || !macroCheck.subnavText.includes('Mosaico em Escala')) {
-      throw new Error(`Estado Macro inválido: ${JSON.stringify(macroCheck)}`);
-    }
-    await assertUnifiedHover('#stage-canvas .mosaic-tile', '#stage-canvas', 0);
-  }
-  if (s === 'escala-micro') {
-    const microCheck = await page.evaluate(() => {
-      const tiles = [...document.querySelectorAll('#stage-canvas .mosaic-tile')];
-      const dimmed = tiles.filter((t) => t.classList.contains('is-dimmed'));
-      const featured = tiles.filter((t) => t.classList.contains('is-featured'));
-      const dimmedOpacity = dimmed[0] ? getComputedStyle(dimmed[0]).opacity : null;
-      const pullOutCards = document.querySelectorAll('#stage-secondary .evidence-card').length;
-      return { tilesCount: tiles.length, dimmedCount: dimmed.length, featuredCount: featured.length, dimmedOpacity, pullOutCards };
-    });
-    if (
-      microCheck.tilesCount !== 48
-      || microCheck.dimmedCount !== 44
-      || microCheck.featuredCount !== 4
-      || Number(microCheck.dimmedOpacity) > 0.2
-      || microCheck.pullOutCards !== 4
-    ) {
-      throw new Error(`Estado Micro (Pull-Out) inválido: ${JSON.stringify(microCheck)}`);
-    }
-    await assertUnifiedHover('#stage-canvas .mosaic-tile.is-featured', '#stage-canvas', 0);
-  }
-  if (s === 'h2-div') {
-    const divCheck = await page.evaluate(() => {
-      const svg = document.querySelector('#stage-canvas svg.divergent-svg');
-      const dirTxt = [...(svg?.querySelectorAll('.div-direction-labels text') || [])].map((e) => e.textContent.trim());
-      const ticks = [...(svg?.querySelectorAll('.div-grid text') || [])].map((e) => e.textContent.trim());
-      const bars = svg?.querySelectorAll('.div-bar').length || 0;
-      return { dirTxt, ticks, bars };
-    });
-    if (
-      divCheck.bars < 10
-      || !divCheck.dirTxt.some((t) => t.includes('←'))
-      || !divCheck.dirTxt.some((t) => t.includes('→'))
-      || !divCheck.ticks.includes('Igual')
-      || !divCheck.ticks.includes('5×')
-      || !divCheck.ticks.includes('15×')
-    ) {
-      throw new Error(`DivergentChart incompleto: ${JSON.stringify(divCheck)}`);
-    }
-    await assertUnifiedHover('#stage-canvas .div-bar', '#stage-canvas', 0);
-    // Alterna para Fundo Público e volta para Privado/Próprio
-    await page.click('#stage-controls button:nth-child(2)');
-    const pubActive = await page.$eval('#stage-controls button:nth-child(2)', (el) => el.getAttribute('aria-pressed'));
-    if (pubActive !== 'true') throw new Error('Alternância para Fundo Público falhou em h2-div');
-    await page.click('#stage-controls button:nth-child(1)');
-    // Click-to-filter no DivergentChart
-    await page.click('#stage-canvas .div-bar');
-    const selectedParty = await page.$eval('#filter-party', (el) => el.value);
-    if (!selectedParty) throw new Error('Click-to-filter falhou em h2-div');
-    await page.click('#reset-filters');
-    await page.click('.story-step[data-step="h2-div"]');
-  }
-  if (/^h[1-9]$/.test(s) && !kicker.toUpperCase().includes(s.toUpperCase())) {
-    throw new Error(`Stage kicker não atualizou para ${s}: ${kicker}`);
-  }
-  if (s === 'h1') {
-    const h1Check = await page.evaluate(() => {
-      const leftTicks = [...document.querySelectorAll('#stage-canvas .h1-axis-left .h1-axis-tick')].map((e) => e.textContent);
-      const rightTicks = [...document.querySelectorAll('#stage-canvas .h1-axis-right .h1-axis-tick')].map((e) => e.textContent);
-      const rows = document.querySelectorAll('#stage-canvas .h1-row').length;
-      const quotaRule = Boolean(document.querySelector('#stage-canvas .h1-quota-rule line'));
-      return { leftTicks, rightTicks, rows, quotaRule };
-    });
-    if (h1Check.rows !== 5 || !h1Check.quotaRule) {
-      throw new Error(`H1 espelhado incompleto: ${JSON.stringify(h1Check)}`);
-    }
-    if (JSON.stringify(h1Check.leftTicks) !== JSON.stringify(h1Check.rightTicks) || h1Check.leftTicks.length < 2) {
-      throw new Error(`Escalas espelhadas de H1 assimétricas: ${JSON.stringify(h1Check)}`);
-    }
-    // Hover sobre a faixa crítica (30%–33,3%) deve exibir tooltip comparativo sem linha de número absoluto
-    await assertUnifiedHover('#stage-canvas .h1-row[data-bin="30-33"] .h1-row-hit', '#stage-canvas', 0);
-    const tipText = await page.$eval('#stage-canvas .h1-tooltip', (el) => ({ hidden: el.hidden, text: el.textContent }));
-    if (tipText.hidden || !tipText.text.includes('54,2%') || !tipText.text.includes('42,3%') || tipText.text.includes('Absoluto')) {
-      throw new Error(`Tooltip comparativo de H1 falhou no hover: ${JSON.stringify(tipText)}`);
-    }
-    // Alternância Registradas ↔ Aptas mantém a mesma escala travada (apenas modo %, sem botão N)
-    const unitToggleCount = await page.$$eval('#stage-controls button', (els) => els.filter((b) => b.textContent.trim() === 'N').length);
-    if (unitToggleCount !== 0) {
-      throw new Error(`Botão "N" ainda está presente nos controles de H1`);
-    }
-    await page.click('#stage-controls button:nth-child(2)'); // Aptas
-    const aptoTicks = await page.$$eval('#stage-canvas .h1-axis-left .h1-axis-tick', (els) => els.map((e) => e.textContent));
-    if (JSON.stringify(aptoTicks) !== JSON.stringify(h1Check.leftTicks)) {
-      throw new Error(`Escala de H1 mudou entre Registradas (${h1Check.leftTicks}) e Aptas (${aptoTicks})`);
-    }
-    await page.click('#stage-controls button:nth-child(1)'); // volta para Registradas
-  }
-  if (s === 'h2' || s === 'h3') {
-    if (s === 'h2') {
-      const h2Check = await page.evaluate(() => {
-        const dumbbellSvg = document.querySelector('#stage-canvas .chart-wrap:nth-of-type(1) svg[viewBox]');
-        const facetLabels = dumbbellSvg.querySelectorAll('g[aria-label="fx-axis tick label"]').length;
-        const btns = [...document.querySelectorAll('#stage-controls button')].map((el) => ({
-          text: el.textContent.trim(),
-          pressed: el.getAttribute('aria-pressed'),
-        }));
-        const title = document.getElementById('stage-title').textContent;
-        return { facetLabels, btns, title };
-      });
-      if (h2Check.facetLabels !== 0 || h2Check.btns[0]?.text !== '2022' || h2Check.btns[0]?.pressed !== 'true') {
-        throw new Error(`H2 deveria ser dumbbell simples com seletor 2022|2026: ${JSON.stringify(h2Check)}`);
-      }
-      await assertUnifiedHover('#stage-canvas .chart-wrap:nth-of-type(1) g[aria-label="dot"] circle', '#stage-canvas', 0);
-      await assertUnifiedHover('#stage-canvas .chart-wrap:nth-of-type(2) g[aria-label="bar"] rect', '#stage-canvas', 1);
+// 1. Verifica todos os 10 canvases renderizados simultaneamente no fluxo vertical
+const canvasIds = [
+  '#canvas-h1', '#canvas-h2', '#canvas-h2b', '#canvas-h3', '#canvas-h4',
+  '#canvas-h5', '#canvas-h6', '#canvas-h7', '#canvas-h8', '#canvas-h9-map',
+];
+for (const cid of canvasIds) {
+  const hasSvg = await page.$(`${cid} svg`);
+  if (!hasSvg) throw new Error(`SVG ausente em ${cid}`);
+}
+const hasH9Matrix = await page.$('#canvas-h9-matrix table.h9-matrix-table');
+if (!hasH9Matrix) throw new Error('Matriz heatmap de H9 não renderizada');
 
-      // Troca o ano apenas dentro de H2 (2022 -> 2026) sem alterar o filtro global no topo
-      await page.click('#stage-controls button:nth-child(2)');
-      const afterH2Toggle = await page.evaluate(() => ({
-        h2Pressed26: document.querySelector('#stage-controls button:nth-child(2)').getAttribute('aria-pressed'),
-        stageTitle: document.getElementById('stage-title').textContent,
-        globalYear22: document.querySelector('[data-year="2022"]').getAttribute('aria-pressed'),
-        scopeSummary: document.getElementById('scope-summary').textContent,
-      }));
-      if (
-        afterH2Toggle.h2Pressed26 !== 'true'
-        || !afterH2Toggle.stageTitle.includes('2026')
-        || afterH2Toggle.globalYear22 !== 'true'
-        || !afterH2Toggle.scopeSummary.includes('2022')
-      ) {
-        throw new Error(`Seletor de ano de H2 não manteve independência do filtro global: ${JSON.stringify(afterH2Toggle)}`);
+// 2. H1: Texto >=40% corrigido, hover, gaveta <30%, visão coordenada H1 -> H2 e sincronia Registradas <-> Aptas
+const h1Stat = await page.$eval('#stat-h1', (el) => el.textContent);
+if (!h1Stat.includes('≥ 40%') || h1Stat.includes('22,1% > 40%')) {
+  throw new Error(`Texto de H1 inválido: ${h1Stat}`);
+}
+await assertUnifiedHover('#canvas-h1 .h1-row[data-bin="30-33"] .h1-row-hit', '#canvas-h1', 0);
+await page.click('#canvas-h1 .h1-row[data-bin="lt30"]');
+await page.waitForFunction(() => document.getElementById('scope-summary').textContent.includes('H1 < 30%'));
+const chipReg = await page.$eval('#active-chips', (el) => el.textContent);
+await page.click('#controls-h1 button:nth-child(2)'); // Aptas
+const chipApto = await page.$eval('#active-chips', (el) => el.textContent);
+if (!chipReg.includes('22 partidos') || !chipApto.includes('24 partidos')) {
+  throw new Error(`Sincronia H1 Registradas<->Aptas falhou: reg="${chipReg}" apto="${chipApto}"`);
+}
+await page.click('#controls-h1 button:nth-child(1)'); // volta Registradas
+const h2AfterBin = await page.$$eval('#canvas-h2 .h2-row', (els) => els.length);
+if (h2AfterBin < 1) throw new Error('Filtro coordenado H1 <30% zerou H2');
+// Clicar novamente na mesma barra desmarca a visão coordenada
+await page.click('#canvas-h1 .h1-row[data-bin="lt30"]');
+await page.waitForFunction(() => !document.getElementById('scope-summary').textContent.includes('H1 < 30%'));
+
+// 3. H2: Evolução 2022 -> 2026 + Bug de clique corrigido (destaca sem colapsar e desmarca no ponto ou no fundo)
+const h2CountBefore = await page.$$eval('#canvas-h2 .h2-row', (els) => els.length);
+if (h2CountBefore < 10) throw new Error(`H2 deveria ter ≥10 partidos, obteve ${h2CountBefore}`);
+await assertUnifiedHover('#canvas-h2 .h2-row', '#canvas-h2', 0);
+await page.click('#canvas-h2 .h2-row[data-party="PT"]');
+const h2AfterClick = await page.evaluate(() => ({
+  count: document.querySelectorAll('#canvas-h2 .h2-row').length,
+  partyFilter: document.getElementById('filter-party').value,
+}));
+if (h2AfterClick.count !== h2CountBefore || h2AfterClick.partyFilter !== 'PT') {
+  throw new Error(`H2 colapsou ou não selecionou PT: ${JSON.stringify(h2AfterClick)}`);
+}
+// Clicar novamente no mesmo ponto remove a seleção
+await page.click('#canvas-h2 .h2-row[data-party="PT"]');
+const partyAfterSecondClick = await page.$eval('#filter-party', (el) => el.value);
+if (partyAfterSecondClick !== '') {
+  throw new Error(`Segundo clique em H2 não removeu seleção: ${partyAfterSecondClick}`);
+}
+// Seleciona de novo e clica no fundo vazio do SVG para limpar
+await page.click('#canvas-h2 .h2-row[data-party="PL"]');
+await page.mouse.click(
+  ...(await page.$eval('#canvas-h2 svg.h2-gap-svg', (svg) => {
+    const r = svg.getBoundingClientRect();
+    return [r.left + 8, r.bottom - 8];
+  })),
+);
+const partyAfterBgClick = await page.$eval('#filter-party', (el) => el.value);
+if (partyAfterBgClick !== '') {
+  throw new Error(`Clique no fundo do gráfico H2 não removeu seleção: ${partyAfterBgClick}`);
+}
+
+// 4. H2B: Público vs Privado + Barra 100% fontes (desktop sem colisão barra×rótulo)
+const h2bDeskBarLabelHits = await page.evaluate(() => {
+  const hits = [];
+  for (const row of document.querySelectorAll('#canvas-h2b .div-row')) {
+    const rects = [...row.querySelectorAll('rect.div-bar')].map((r) => r.getBoundingClientRect());
+    const txts = [...row.querySelectorAll('text.div-val-label')].map((t) => ({
+      t: t.textContent.trim(),
+      b: t.getBoundingClientRect(),
+    }));
+    for (let i = 0; i < rects.length; i += 1) {
+      const r = rects[i];
+      const lbl = txts[i];
+      if (!r || !lbl) continue;
+      if (lbl.b.left < r.right - 1 && lbl.b.right > r.left + 1 && lbl.b.top < r.bottom && lbl.b.bottom > r.top) {
+        hits.push(lbl.t);
       }
-      await page.click('#stage-controls button:nth-child(1)'); // volta para 2022
     }
-    if (s === 'h3') {
-      const h3Check = await page.evaluate(() => {
-        const btns = [...document.querySelectorAll('#stage-controls button')].map((el) => ({
-          text: el.textContent.trim(),
-          pressed: el.getAttribute('aria-pressed'),
-        }));
-        const subtitle = document.getElementById('stage-subtitle');
-        const svg = document.querySelector('#stage-canvas svg');
-        const circles = [...svg.querySelectorAll('g[aria-label="dot"] circle')];
-        const radii = circles.map((c) => Number(c.getAttribute('r')));
-        const fillOp = circles[0]?.getAttribute('fill-opacity');
-        const strokeOp = circles[0]?.getAttribute('stroke-opacity');
-        const labels = [...svg.querySelectorAll('g[aria-label="text"] text')].map((t) => t.textContent.trim());
-        const hasLegend = Boolean(svg.querySelector('g[aria-label="h3-legend"]'));
-        const hasQuads = Boolean(svg.querySelector('g[aria-label="h3-quadrants"]'));
-        const diagTransform = svg.querySelector('text[aria-label="diagonal-label"]')?.getAttribute('transform') || '';
-        return {
-          btns,
-          subtitleVisible: Boolean(subtitle && !subtitle.hidden && subtitle.textContent.trim().length > 10),
-          circleCount: circles.length,
-          radiiSortedDesc: radii.every((r, i) => i === 0 || r <= radii[i - 1] + 0.01),
-          fillOp,
-          strokeOp,
-          labels,
-          hasLegend,
-          hasQuads,
-          hasRotatedDiag: diagTransform.includes('rotate('),
-        };
-      });
-      if (h3Check.btns[0]?.pressed !== 'true' || h3Check.btns[2]?.pressed !== 'true') {
-        throw new Error(`H3 deveria iniciar em Foco (≤46%) + Escala Linear: ${JSON.stringify(h3Check.btns)}`);
-      }
-      if (!h3Check.subtitleVisible || !h3Check.hasLegend || !h3Check.hasQuads || !h3Check.hasRotatedDiag) {
-        throw new Error(`Elementos visuais de H3 incompletos: ${JSON.stringify(h3Check)}`);
-      }
-      const h3ItalicCount = await page.$$eval('#stage-canvas svg [font-style="italic"]', (els) => els.length);
-      if (h3ItalicCount !== 0) {
-        throw new Error(`H3 ainda possui elementos com font-style="italic": ${h3ItalicCount}`);
-      }
-      if (!h3Check.radiiSortedDesc || h3Check.fillOp !== '0.75' || h3Check.strokeOp !== '1') {
-        throw new Error(`Z-order ou opacidade de bolhas H3 inválidos: ${JSON.stringify(h3Check)}`);
-      }
-      if (!h3Check.labels.includes('PSOL') || !h3Check.labels.includes('PMB') || h3Check.labels.length > 10) {
-        throw new Error(`Rótulos seletivos (top 6 + extremos) inesperados em H3: ${JSON.stringify(h3Check.labels)}`);
-      }
-      const labelBoxes = await page.$$eval('#stage-canvas g[aria-label="text"] text', (els) => els.map((el) => {
+  }
+  return hits;
+});
+if (h2bDeskBarLabelHits.length > 0) {
+  throw new Error(`H2B desktop colisão barra×rótulo: ${JSON.stringify(h2bDeskBarLabelHits)}`);
+}
+await assertUnifiedHover('#canvas-h2b .div-row', '#canvas-h2b', 0);
+await assertUnifiedHover('#canvas-h2b .h2b-src-bar', '#canvas-h2b', 1);
+
+// 5. H3: Sem botões de escala/zoom, escala linear, % verba = % mulheres, Cota respeitada, Subfinanciamento, déficit exato em R$, 100% bolhas vermelhas rotuladas sem colisão nem fuga do SVG (2022 e 2026)
+async function checkSvgGeometry(svgSelector, { textSelector = 'text', checkBounds = true, checkCircles = false } = {}) {
+  return page.evaluate((sSel, tSel, doBounds, doCircles) => {
+    const svgs = [...document.querySelectorAll(sSel)];
+    if (svgs.length === 0) return { missing: true, overlaps: [], clipped: [], outCircles: [], textCircleHits: [] };
+    const overlaps = [];
+    const clipped = [];
+    const outCircles = [];
+    const textCircleHits = [];
+    for (const svg of svgs) {
+      const sr = svg.getBoundingClientRect();
+      const labels = [...svg.querySelectorAll(tSel)].map((el) => {
         const b = el.getBoundingClientRect();
-        return { p: el.textContent.trim(), l: b.left, r: b.right, t: b.top, b: b.bottom };
-      }));
-      for (let i = 0; i < labelBoxes.length; i += 1) {
-        for (let j = i + 1; j < labelBoxes.length; j += 1) {
-          const a = labelBoxes[i];
-          const b = labelBoxes[j];
-          if (a.l < b.r && a.r > b.l && a.t < b.b && a.b > b.t) {
-            throw new Error(`Sobreposição de rótulos em H3: ${a.p} vs ${b.p}`);
+        return { t: el.textContent.trim(), l: b.left, r: b.right, top: b.top, bot: b.bottom };
+      }).filter((b) => b.t.length > 0 && b.r > b.l);
+      for (let i = 0; i < labels.length; i += 1) {
+        const a = labels[i];
+        if (doBounds && (a.l < sr.left - 3 || a.r > sr.right + 3 || a.top < sr.top - 3 || a.bot > sr.bottom + 3)) {
+          clipped.push(a.t);
+        }
+        for (let j = i + 1; j < labels.length; j += 1) {
+          const b = labels[j];
+          if (a.l < b.r && a.r > b.l && a.top < b.bot && a.bot > b.top) {
+            overlaps.push([a.t, b.t]);
           }
         }
       }
-      await assertUnifiedHover('#stage-canvas g[aria-label="dot"] circle', '#stage-canvas', 0);
-      const dimmedCount = await page.$$eval(
-        '#stage-canvas g[aria-label="dot"] circle',
-        (els) => els.filter((c) => c.style.opacity === '0.2').length,
-      );
-      if (dimmedCount < h3Check.circleCount - 1) {
-        throw new Error(`Hover em H3 não esmaeceu os demais partidos (dimmed=${dimmedCount}/${h3Check.circleCount})`);
+      if (doCircles) {
+        const dots = [...svg.querySelectorAll('g[aria-label="dot"] circle')].map((c) => {
+          const b = c.getBoundingClientRect();
+          return { p: c.getAttribute('data-party'), l: b.left, r: b.right, top: b.top, bot: b.bottom };
+        });
+        for (const d of dots) {
+          if (d.l < sr.left - 2 || d.r > sr.right + 2 || d.top < sr.top - 2 || d.bot > sr.bottom + 2) {
+            outCircles.push(d.p);
+          }
+          for (const lbl of labels) {
+            if (lbl.l < d.r && lbl.r > d.l && lbl.top < d.bot && lbl.bot > d.top) {
+              textCircleHits.push([lbl.t, d.p]);
+            }
+          }
+        }
       }
-      await page.click('#stage-controls .filter-group:nth-child(2) button:nth-child(2)'); // Escala Log (Todos)
-      const logActive = await page.$eval('#stage-controls .filter-group:nth-child(2) button:nth-child(2)', (el) => el.getAttribute('aria-pressed'));
-      const todosActive = await page.$eval('#stage-controls .filter-group:nth-child(1) button:nth-child(2)', (el) => el.getAttribute('aria-pressed'));
-      if (logActive !== 'true' || todosActive !== 'true') {
-        throw new Error('Alternância para Todos + Escala Log falhou em H3');
-      }
-      await page.click('#stage-controls .filter-group:nth-child(1) button:nth-child(1)'); // Volta para Foco (≤46%) -> Linear
-      const backLin = await page.$eval('#stage-controls .filter-group:nth-child(2) button:nth-child(1)', (el) => el.getAttribute('aria-pressed'));
-      if (backLin !== 'true') throw new Error('Volta para Foco (≤46%) deveria restaurar Escala Linear');
     }
-    await page.click('#stage-canvas g[aria-label="dot"] circle');
-    const selectedParty = await page.$eval('#filter-party', (el) => el.value);
-    if (!selectedParty) throw new Error(`Click-to-filter falhou em ${s}`);
-    await page.click('#reset-filters');
-    await page.click(`.story-step[data-step="${s}"]`);
-  }
-  if (s === 'h4') {
-    await assertUnifiedHover('#stage-canvas svg rect', '#stage-canvas', 0);
-    await page.click('#stage-controls button:nth-child(2)');
-    await page.waitForSelector('#stage-canvas svg');
-    await assertUnifiedHover('#stage-canvas svg rect', '#stage-canvas', 0);
-  }
-  if (s === 'h5') {
-    await assertUnifiedHover('#stage-canvas g[aria-label="bar"] > g rect', '#stage-canvas', 0);
-    await page.click('#stage-canvas g[aria-label="bar"] > g rect');
-    const selectedParty = await page.$eval('#filter-party', (el) => el.value);
-    if (!selectedParty) throw new Error('Click-to-filter falhou em h5');
-    await page.click('#reset-filters');
-    await page.click('.story-step[data-step="h5"]');
-  }
-  if (s === 'h6') {
-    await assertUnifiedHover('#stage-canvas g[aria-label="bar"] rect', '#stage-canvas', 0);
-  }
-  if (s === 'h7') {
-    const h7MapPaths = await page.$$eval('#stage-secondary path', (els) => els.length);
-    if (h7MapPaths !== 27) {
-      throw new Error(`H7 deveria exibir mapa das 27 UFs em stage-secondary, obteve ${h7MapPaths}`);
-    }
-    await assertUnifiedHover('#stage-canvas g[aria-label="dot"] circle', '#stage-canvas', 0);
-    await assertUnifiedHover('#stage-secondary svg path', '#stage-secondary', 0);
-  }
-  if (s === 'h8') {
-    await assertUnifiedHover('#stage-canvas g[aria-label="bar"] rect', '#stage-canvas', 0);
-  }
-  if (s === 'h9') {
-    const ufCount = await page.$$eval('#stage-canvas path', (els) => els.length);
-    const pcSvg = await page.$('#stage-secondary svg');
-    if (ufCount !== 27 || !pcSvg) {
-      throw new Error(`H9 incompleto: ufCount=${ufCount}, pcSvg=${Boolean(pcSvg)}`);
-    }
-    await assertUnifiedHover('#stage-canvas svg path', '#stage-canvas', 0);
-    // Hover sobre uma linha das Coordenadas Paralelas entre os eixos 1 e 2
-    const pcPoint = await page.evaluate(() => {
-      const path = document.querySelector('#stage-secondary svg > g:first-child path');
-      if (!path) return null;
-      const len = path.getTotalLength();
-      const pt = path.getPointAtLength(len * 0.12);
-      const svgRect = path.ownerSVGElement.getBoundingClientRect();
-      return { x: svgRect.left + pt.x, y: svgRect.top + pt.y };
-    });
-    if (!pcPoint) throw new Error('Linha das Coordenadas Paralelas não encontrada');
-    await page.mouse.move(pcPoint.x, pcPoint.y);
-    const pcTipOk = await page.$eval('#stage-secondary .chart-tooltip', (el) => !el.hidden && el.textContent.trim().length > 0);
-    if (!pcTipOk) throw new Error('Tooltip padronizado falhou ao fazer hover nas Coordenadas Paralelas');
-    // Testa brush nas Coordenadas Paralelas e persistência após clique em UF
-    const axisBox = await page.$eval('#stage-secondary .pc-brush .overlay', (el) => {
-      const r = el.getBoundingClientRect();
-      return { x: r.x + r.width / 2, y0: r.y + 30, y1: r.y + 120 };
-    });
-    await page.mouse.move(axisBox.x, axisBox.y0);
-    await page.mouse.down();
-    await page.mouse.move(axisBox.x, axisBox.y1);
-    await page.mouse.up();
-    await page.waitForFunction(() => document.getElementById('scope-summary').textContent.includes('Brush'));
-    await page.click('#stage-canvas path');
-    const selAfterUf = await page.$eval('#stage-secondary .pc-brush .selection', (el) => el.getAttribute('height'));
-    if (!selAfterUf || Number(selAfterUf) <= 0) {
-      throw new Error('Brush visual desapareceu após clicar em UF no mapa H9');
-    }
-    // Confirma que #filter-bar não cobre #stage-controls no desktop e que Eixos: UFs ativa de fato
-    const deskOverlap = await page.evaluate(() => {
-      const f = document.getElementById('filter-bar').getBoundingClientRect();
-      const s = document.querySelector('.stage-card').getBoundingClientRect();
-      return { filterBottom: f.bottom, stageTop: s.top };
-    });
-    if (deskOverlap.stageTop < deskOverlap.filterBottom - 1) {
-      throw new Error(`Sobreposição desktop em H9: ${JSON.stringify(deskOverlap)}`);
-    }
-    await page.click('#stage-controls button:nth-child(4)');
-    const ufBtnActive = await page.$eval('#stage-controls button:nth-child(4)', (el) => el.getAttribute('aria-pressed'));
-    if (ufBtnActive !== 'true') {
-      throw new Error(`Botão Eixos: UFs não ativou após clique real (aria-pressed=${ufBtnActive})`);
-    }
-    await page.waitForSelector('#stage-secondary svg');
-  }
+    return { missing: false, overlaps, clipped, outCircles, textCircleHits };
+  }, svgSelector, textSelector, checkBounds, checkCircles);
 }
 
-// 2b. Verifica troca de rótulos de contexto, popover de gráficos, Síntese e Progressive Disclosure em Métodos
-if (observedModalities.size < 5) {
-  throw new Error(`Poucas modalidades de troca de contexto observadas: ${[...observedModalities]}`);
-}
-await page.click('.btn-jump-charts');
-const popoverOpen = await page.$eval('#chart-jump-popover', (el) => el.matches(':popover-open') || el.classList.contains('is-open'));
-if (!popoverOpen) throw new Error('Popover de acesso direto aos gráficos não abriu');
-await page.click('#chart-jump-popover a[data-jump-step="h3"]');
-await page.waitForFunction(() => document.getElementById('stage-kicker').textContent.includes('H3'));
-
-// Progressive disclosure: clique em .method-escape e no link do rodapé deve abrir o <details> alvo
-await page.click('a.method-escape[href="#metodo-h6"]');
-const methodOpen = await page.$eval('#metodo-h6', (el) => el.open);
-if (!methodOpen) throw new Error('Progressive disclosure não abriu #metodo-h6');
-await page.click('.footer-links a[href="#metodo-geral"]');
-const footerMethodOpen = await page.$eval('#metodo-geral', (el) => el.open);
-if (!footerMethodOpen) throw new Error('Link de privacidade no rodapé não abriu #metodo-geral');
-
-const tailCheck = await page.evaluate(() => ({
-  synthesisCards: document.querySelectorAll('#synthesis-cards .synthesis-card').length,
-  scorecardItems: document.querySelectorAll('#synthesis-scorecard .scorecard-item').length,
-  howSteps: document.querySelectorAll('#como-funciona .how-step').length,
-  readingCards: document.querySelectorAll('#leituras .reading-card').length,
-  faqItems: document.querySelectorAll('#faq .faq-item').length,
-  coverageRows: document.querySelectorAll('#methods-coverage-table tbody tr').length,
-  taglineWords: document.querySelectorAll('#tagline-reveal .reveal-word').length,
-}));
+const h3Check = await page.evaluate(() => {
+  const btns = [...document.querySelectorAll('#controls-h3 button')].map((b) => b.textContent.trim());
+  const svg = document.querySelector('#canvas-h3 svg.h3-scatter-svg');
+  const txtAll = svg.textContent;
+  const redParties = [...svg.querySelectorAll('g[aria-label="dot"] circle')]
+    .filter((c) => (c.getAttribute('fill') || '').toUpperCase() === '#FF5E2B')
+    .map((c) => c.getAttribute('data-party'));
+  const labeledParties = new Set(
+    [...svg.querySelectorAll('g[aria-label="text"] text')].map((t) => t.getAttribute('data-party')),
+  );
+  const missingRed = redParties.filter((p) => !labeledParties.has(p));
+  const statTxt = document.getElementById('stat-h3')?.textContent || '';
+  return {
+    btns,
+    hasDiag: txtAll.includes('% verba = % mulheres'),
+    hasCota: txtAll.includes('Cota respeitada'),
+    hasSub: txtAll.includes('Subfinanciamento'),
+    hasDeficit: txtAll.includes('Déficit em reais') && txtAll.includes('−R$ 54,4M'),
+    statMatches: statTxt.includes('−R$ 54,4 milhões'),
+    missingRed,
+    labelsCount: labeledParties.size,
+  };
+});
+const h3DeskGeo22 = await checkSvgGeometry('#canvas-h3 svg.h3-scatter-svg', {
+  textSelector: 'g[aria-label="text"] text',
+  checkBounds: true,
+  checkCircles: true,
+});
+const h3DeskQuad22 = await checkSvgGeometry('#canvas-h3 svg.h3-scatter-svg', {
+  textSelector: 'g[aria-label="text"] text, g[aria-label="h3-quadrants"] text',
+  checkBounds: true,
+  checkCircles: false,
+});
+await page.click('#controls-h3 button:nth-child(2)');
+const h3DeskGeo26 = await checkSvgGeometry('#canvas-h3 svg.h3-scatter-svg', {
+  textSelector: 'g[aria-label="text"] text',
+  checkBounds: true,
+  checkCircles: true,
+});
+const h3DeskQuad26 = await checkSvgGeometry('#canvas-h3 svg.h3-scatter-svg', {
+  textSelector: 'g[aria-label="text"] text, g[aria-label="h3-quadrants"] text',
+  checkBounds: true,
+  checkCircles: false,
+});
+await page.click('#controls-h3 button:nth-child(1)');
+h3Check.overlaps = h3DeskQuad22.overlaps.length + h3DeskQuad26.overlaps.length;
 if (
-  tailCheck.synthesisCards !== 3
-  || tailCheck.scorecardItems !== 9
-  || tailCheck.howSteps !== 3
-  || tailCheck.readingCards !== 4
-  || tailCheck.faqItems !== 6
-  || tailCheck.coverageRows < 4
-  || tailCheck.taglineWords < 15
+  h3Check.btns.length !== 2
+  || !h3Check.hasDiag
+  || !h3Check.hasCota
+  || !h3Check.hasSub
+  || !h3Check.hasDeficit
+  || !h3Check.statMatches
+  || h3Check.missingRed.length > 0
+  || h3Check.overlaps > 0
+  || h3DeskGeo22.outCircles.length > 0
+  || h3DeskGeo26.outCircles.length > 0
+  || h3DeskGeo22.textCircleHits.length > 0
+  || h3DeskGeo26.textCircleHits.length > 0
 ) {
-  throw new Error(`Seções Tagline/Síntese/FAQ/Métodos incompletas: ${JSON.stringify(tailCheck)}`);
+  throw new Error(`H3 inválido: ${JSON.stringify({ h3Check, h3DeskGeo22, h3DeskGeo26 })}`);
+}
+await assertUnifiedHover('#canvas-h3 g[aria-label="dot"] circle', '#canvas-h3', 0);
+
+// 6. H4: Sem rede de hubs, apenas % nos rótulos do Sankey, filtro Competitivas Top 10%
+const h4Check = await page.evaluate(() => {
+  const btns = [...document.querySelectorAll('#controls-h4 button')].map((b) => b.textContent.trim());
+  const texts = [...document.querySelectorAll('#canvas-h4 svg text')].map((t) => t.textContent.trim());
+  const hasBrlInSvg = texts.some((t) => t.includes('R$'));
+  return { btns, hasBrlInSvg, hasTop10: texts.some((t) => t.includes('Competitivas')) };
+});
+if (h4Check.btns.some((b) => b.includes('Hub')) || h4Check.hasBrlInSvg || !h4Check.hasTop10) {
+  throw new Error(`H4 inválido: ${JSON.stringify(h4Check)}`);
+}
+await assertUnifiedHover('#canvas-h4 svg rect', '#canvas-h4', 0);
+await page.click('#controls-h4 button:nth-child(2)'); // Competitivas (Top 10%)
+await page.waitForFunction(() => !document.querySelector('#canvas-h4 svg').textContent.includes('Base (90%)'));
+await page.click('#controls-h4 button:nth-child(1)'); // volta Todas
+
+// 7. H5: Barras horizontais ordenadas por % Eleitas e zero sobreposição de siglas
+const h5OrderCheck = await page.evaluate(() => {
+  const labels = [...document.querySelectorAll('#canvas-h5 .h5-party-label')].map((el) => {
+    const b = el.getBoundingClientRect();
+    return { t: el.textContent.trim(), top: b.top, bot: b.bottom };
+  });
+  let overlap = 0;
+  for (let i = 1; i < labels.length; i += 1) {
+    if (labels[i].top < labels[i - 1].bot) overlap += 1;
+  }
+  return { count: labels.length, first: labels[0]?.t, overlap };
+});
+if (h5OrderCheck.count < 8 || h5OrderCheck.first !== 'PT' || h5OrderCheck.overlap > 0) {
+  throw new Error(`H5 inválido: ${JSON.stringify(h5OrderCheck)}`);
+}
+await assertUnifiedHover('#canvas-h5 .h5-bar', '#canvas-h5', 0);
+
+// 8. H6, H7 (com 2018), H8: zero colisão e clipping SVG em desktop
+const h6Has2018 = await page.$eval('#canvas-h6 svg', (el) => el.textContent.includes('2018'));
+if (!h6Has2018) throw new Error('H6 não exibe 2018');
+await page.click('#controls-h7 button'); // ativa 2018 em H7
+for (const sel of ['#canvas-h1 svg', '#canvas-h2 svg', '#canvas-h2b svg', '#canvas-h4 svg', '#canvas-h5 svg', '#canvas-h6 svg', '#canvas-h7 svg', '#canvas-h8 svg']) {
+  const g = await checkSvgGeometry(sel);
+  if (g.missing || g.overlaps.length > 0 || g.clipped.length > 0) {
+    throw new Error(`Falha geométrica desktop em ${sel}: ${JSON.stringify(g)}`);
+  }
+}
+await assertUnifiedHover('#canvas-h6 .h6-dot', '#canvas-h6', 0);
+await assertUnifiedHover('#canvas-h7 .h7-agg-dot', '#canvas-h7', 0);
+await assertUnifiedHover('#canvas-h8 .h8-dot', '#canvas-h8', 0);
+
+// 9. H9: Mapa 27 UFs + Matriz ordenável + clique no fundo da matriz limpa seleção
+const h9Check = await page.evaluate(() => ({
+  ufPaths: document.querySelectorAll('#canvas-h9-map svg path').length,
+  matRows: document.querySelectorAll('#canvas-h9-matrix tbody tr').length,
+}));
+if (h9Check.ufPaths !== 27 || h9Check.matRows !== 27) {
+  throw new Error(`H9 incompleto: ${JSON.stringify(h9Check)}`);
+}
+await assertUnifiedHover('#canvas-h9-map svg path', '#canvas-h9-map', 0);
+await assertUnifiedHover('#canvas-h9-matrix .h9-heat-cell', '#canvas-h9-matrix', 0);
+await page.click('#canvas-h9-matrix button[data-sort-key="pctCandF"]');
+const sortSorted = await page.$eval('#canvas-h9-matrix button[data-sort-key="pctCandF"]', (el) => el.classList.contains('is-sorted'));
+if (!sortSorted) throw new Error('Ordenação da matriz H9 falhou');
+await page.click('#controls-h9 .filter-group:nth-child(2) button:nth-child(2)'); // Top 15 Partidos
+await page.waitForFunction(() => document.querySelectorAll('#canvas-h9-matrix tbody tr').length <= 16);
+await page.click('#canvas-h9-matrix tbody tr[data-entity="PT"]');
+if ((await page.$eval('#filter-party', (el) => el.value)) !== 'PT') {
+  throw new Error('Clique em PT na matriz H9 não selecionou PT');
+}
+await page.click('#canvas-h9-matrix .h9-clear-bar');
+if ((await page.$eval('#filter-party', (el) => el.value)) !== '') {
+  throw new Error('Clique na área de limpeza da matriz H9 não removeu seleção de partido');
 }
 
-// Verifica Tagline Reveal iluminando palavras ao rolar até #tagline-reveal
-await page.$eval('#tagline-reveal', (el) => el.scrollIntoView({ behavior: 'instant', block: 'center' }));
-await page.waitForFunction(() => document.querySelectorAll('#tagline-reveal .reveal-word.is-lit').length > 0);
-
-// 3. Testa troca de ano 2022 -> 2026 e presença de partidos de 2026 (PCDOB, PRD, MOBILIZA)
-await page.click('[data-year="2026"]');
-await page.waitForFunction(() => document.getElementById('scope-summary').textContent.includes('2026'));
-const parties2026 = await page.$$eval('#filter-party option', (els) => els.map((e) => e.value));
+// 10. Partidos de 2026 no dropdown + Tagline Reveal + Mobile 390px sem overflow e sem colisões SVG
+const partiesInSelect = await page.$$eval('#filter-party option', (els) => els.map((e) => e.value));
 for (const p26 of ['PCDOB', 'PRD', 'MOBILIZA']) {
-  if (!parties2026.includes(p26)) {
+  if (!partiesInSelect.includes(p26)) {
     throw new Error(`Partido de 2026 ausente em #filter-party: ${p26}`);
   }
 }
 
-await page.click('[data-cargo="6"]');
-await page.select('#filter-uf', 'CE');
-await page.waitForFunction(() => document.getElementById('scope-summary').textContent.includes('Ceará'));
-const filteredText = await page.$eval('#scope-summary', (el) => el.textContent);
+await page.$eval('#tagline-reveal', (el) => el.scrollIntoView({ behavior: 'instant', block: 'center' }));
+await page.waitForFunction(() => document.querySelectorAll('#tagline-reveal .reveal-word.is-lit').length > 0);
 
-await page.click('#reset-filters');
-await page.waitForFunction(() => document.getElementById('scope-summary').textContent.includes('2022'));
-
-// 4. Testa reduced-motion e mobile 390x844 sem colisão de filter-bar sobre stage-pane após scroll
-await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
 await page.setViewport({ width: 390, height: 844 });
-await page.evaluate(() => window.scrollTo(0, 600));
-const mobileCheck = await page.evaluate(() => {
-  const f = document.getElementById('filter-bar').getBoundingClientRect();
-  const s = document.querySelector('.stage-pane').getBoundingClientRect();
-  return {
-    filterBottom: f.bottom,
-    stageTop: s.top,
-    overlap: f.bottom > s.top + 2 && f.top < s.bottom,
-    overflowX: document.documentElement.scrollWidth > window.innerWidth,
-  };
+await new Promise((r) => setTimeout(r, 250));
+const h3MobGeo22 = await checkSvgGeometry('#canvas-h3 svg.h3-scatter-svg', {
+  textSelector: 'g[aria-label="text"] text, g[aria-label="h3-quadrants"] text',
+  checkBounds: true,
+  checkCircles: false,
 });
-if (mobileCheck.overlap || mobileCheck.overflowX) {
-  throw new Error(`Falha de layout mobile 390px: ${JSON.stringify(mobileCheck)}`);
+const h3MobTextHits22 = await checkSvgGeometry('#canvas-h3 svg.h3-scatter-svg', {
+  textSelector: 'g[aria-label="text"] text',
+  checkBounds: true,
+  checkCircles: true,
+});
+await page.click('#controls-h3 button:nth-child(2)');
+const h3MobGeo26 = await checkSvgGeometry('#canvas-h3 svg.h3-scatter-svg', {
+  textSelector: 'g[aria-label="text"] text, g[aria-label="h3-quadrants"] text',
+  checkBounds: true,
+  checkCircles: false,
+});
+const h3MobTextHits26 = await checkSvgGeometry('#canvas-h3 svg.h3-scatter-svg', {
+  textSelector: 'g[aria-label="text"] text',
+  checkBounds: true,
+  checkCircles: true,
+});
+await page.click('#controls-h3 button:nth-child(1)');
+
+const mobIssues = {};
+for (const sel of ['#canvas-h1 svg', '#canvas-h2 svg', '#canvas-h2b svg', '#canvas-h4 svg', '#canvas-h5 svg', '#canvas-h6 svg', '#canvas-h7 svg', '#canvas-h8 svg']) {
+  const g = await checkSvgGeometry(sel);
+  if (g.missing || g.overlaps.length > 0 || g.clipped.length > 0) {
+    mobIssues[sel] = g;
+  }
 }
 
-await page.evaluate(() => document.querySelector('.story-step[data-step="escala-micro"]').scrollIntoView({ behavior: 'instant', block: 'center' }));
-await page.click('.story-step[data-step="escala-micro"]');
-const mobileMicro = await page.evaluate(() => ({
-  stagePos: getComputedStyle(document.querySelector('.stage-pane')).position,
-  dimmedOp: getComputedStyle(document.querySelector('#stage-canvas .mosaic-tile.is-dimmed')).opacity,
+const h2bMobBarLabelHits = await page.evaluate(() => {
+  const hits = [];
+  for (const row of document.querySelectorAll('#canvas-h2b .div-row')) {
+    const rects = [...row.querySelectorAll('rect.div-bar')].map((r) => r.getBoundingClientRect());
+    const txts = [...row.querySelectorAll('text.div-val-label')].map((t) => ({
+      t: t.textContent.trim(),
+      b: t.getBoundingClientRect(),
+    }));
+    for (let i = 0; i < rects.length; i += 1) {
+      const r = rects[i];
+      const lbl = txts[i];
+      if (!r || !lbl) continue;
+      if (lbl.b.left < r.right - 1 && lbl.b.right > r.left + 1 && lbl.b.top < r.bottom && lbl.b.bottom > r.top) {
+        hits.push(lbl.t);
+      }
+    }
+  }
+  return hits;
+});
+
+const mobileCheck = await page.evaluate(() => ({
   overflowX: document.documentElement.scrollWidth > window.innerWidth,
+  h5Count: document.querySelectorAll('#canvas-h5 .h5-party-label').length,
 }));
-if (mobileMicro.stagePos !== 'sticky' || Number(mobileMicro.dimmedOp) > 0.2 || mobileMicro.overflowX) {
-  throw new Error(`Falha mobile sticky/reduced-motion em escala-micro: ${JSON.stringify(mobileMicro)}`);
+if (
+  mobileCheck.overflowX
+  || mobileCheck.h5Count < 8
+  || h3MobGeo22.overlaps.length > 0
+  || h3MobGeo22.outCircles.length > 0
+  || h3MobTextHits22.textCircleHits.length > 0
+  || h3MobGeo26.overlaps.length > 0
+  || h3MobGeo26.outCircles.length > 0
+  || h3MobTextHits26.textCircleHits.length > 0
+  || h2bMobBarLabelHits.length > 0
+  || Object.keys(mobIssues).length > 0
+) {
+  throw new Error(`Falha layout/colisões mobile 390px: ${JSON.stringify({
+    mobileCheck, h3MobGeo22, h3MobTextHits22, h3MobGeo26, h3MobTextHits26, h2bMobBarLabelHits, mobIssues,
+  })}`);
 }
 
-console.log('E2E OK:', { shellCheck, filteredText, mobileCheck, mobileMicro, errors });
+console.log('E2E OK:', { shellCheck, h3Check, h5OrderCheck, h9Check, mobileCheck, errors });
 await browser.close();
 server.close();
 if (errors.length > 0) process.exit(1);

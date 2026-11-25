@@ -5,28 +5,26 @@
 - Install JS deps: `npm install`
 - Single test file: `.venv/bin/python -m pytest tests/<arquivo>.py -v`
 - Full Python test suite: `.venv/bin/python -m pytest -v`
-- Frontend build: `npm run build`
-- End-to-end check: `node tests/e2e.mjs`
+- Frontend build: `npm run build` (`npm run build:vercel` para `site/`)
+- End-to-end check: `node tests/e2e.mjs` (`E2E_ROOT=site node tests/e2e.mjs`)
 - Environment sanity check: `./init.sh`
 
 ---
 
-## 1. Task Contract
-- **Outcome:** Recriar o projeto final de Visualização de Dados conforme [SPEC.md](SPEC.md) e [Proposta do Projeto Final.md](../proposta_projeto_final.md), entregando: (1) Plano de Dados e Regras de Limpeza; (2) Pipeline ETL Python reprodutível, Base Analítica Validada de 2022 e Relatório de Cobertura por Fonte; (3) Indicadores auditáveis H1–H9 e visualizações em Observable Plot + D3.js; (4) SPA *Scrollytelling* split-screen nos 5 atos com filtros globais e testes automatizados.
+## 1. Task Contract (Revisão Geral UX, Paleta Semântica, Visões Coordenadas e H1–H9 · 2018–2026)
+- **Outcome:** Integrar `2018` no ETL (`analytical_base.json` com 2018, 2022 e 2026 para o Ato 4), remover o Panorama em Escala (`#escala`), adotar fluxo editorial vertical fluido com barra superior fina e controles locais nos gráficos, fixar paleta semântica única (Rosa `#FF7AE5` = Mulheres, Amarelo `#FCE34D` = Homens, Laranja `#FF5E2B` = Alerta/Déficit, Verde `#00D09C` = Cota respeitada, Branco/Ciano/Gelo = Anos), implementar visões coordenadas (`H1` → demais gráficos) e correção do clique em partidos, e atualizar/refazer `H1`–`H9`.
 - **Scope & Non-goals:**
-  - *In-scope:* Deputado Federal e Estadual (27 UFs); 2022 como âncora, 2018 e 2026 como comparações condicionais; arquivos em `docs/`, `etl/`, `tests/`, `data/`, `src/`, `index.html`, `styles.css`, `receipts/`.
-  - *Non-goals:* Deputado Distrital; exibição de nomes/CPFs de candidatos; deploy em servidor remoto antes da revisão final (28–30/nov); alteração dos CSVs brutos do TSE.
+  - *In-scope:* `etl/config.py`, `etl/report_coverage.py`, `data/` (`analytical_base.json`, `coverage.json`, `network_hubs.json`), `public/`, `src/`, `docs/guia_dos_graficos.md`, `docs/relatorio_cobertura_2022.md`, `docs/harness/`, `tests/test_etl.py`, `tests/test_indicators.py`, `tests/e2e.mjs`.
+  - *Non-goals:* `.github/workflows/ci-cd.yml`, `data/raw/`, remoção de `data/network_hubs.json` do disco, `git push` automático, exibição de PII.
 - **Acceptance Evidence:**
-  - `./init.sh` sai com código 0.
-  - `.venv/bin/python -m pytest -v` passa integralmente após cada alteração no ETL ou nos indicadores.
-  - `docs/plano_de_dados.md` e `docs/relatorio_cobertura_2022.md` gerados e consistentes com os CSVs reais do TSE.
-  - `npm run build` gera bundle sem erros e verificação E2E em navegador (Puppeteer) percorre os 5 atos e filtros sem erros de console.
+  - `npm run build:vercel` gera `dist/app.js` e `site/` sem erros.
+  - `./init.sh` sai com código `0` passando toda a suíte `pytest` (incluindo `test_etl.py`, `test_indicators.py` e `test_e2e.py`).
+  - `E2E_ROOT=site node tests/e2e.mjs` passa com `errors: []` em desktop (`1280×820`) e mobile (`390×844`).
+  - Avaliação adversarial independente em contexto frio (`research`, somente leitura) aprova sem gaps de corretude.
 - **Actions Needing Human Approval:**
-  - Alterar regras metodológicas fechadas em `SPEC.md` (ex.: corte `n >= 4`, exclusão de Distrital, critério `APTO` vs. `INAPTO`).
-  - Fazer `git push` ou publicar em ambiente externo.
-  - Aceitar desvios relevantes caso alguma fonte de 2026 esteja estruturalmente incompatível.
+  - `git push` ou deploy manual fora do escopo; alterar regras metodológicas estruturais em `docs/harness/SPEC.md`.
 - **Iteration Ceiling & Retry Budget:**
-  - Máximo de 3 tentativas de reparo por falha idêntica; se persistir, registrar bloqueio em `progress.md` e parar para decisão humana.
+  - Máximo de 2 falhas consecutivas na mesma verificação antes de acionar `enter_plan_mode`.
 
 ---
 
@@ -122,8 +120,26 @@
   - **Sistema Visual B1–B5 / B9 em [public/styles.css](../../public/styles.css) e [src/main.js](../../src/main.js):** escala tipográfica Tailwind (`--fs-xs` a `--fs-6xl`), tabela de espaçamentos `--space-0`–`--space-900`, raios aninhados, remoção de bordas unilaterais em todos os cartões, remoção total de itálico (inclusive em [h3Scatter.js](../../src/charts/h3Scatter.js)), `max-width: 680px` no hero, skeleton de carregamento em `#stage-canvas` substituído por `role="alert"` em erro e `:active { transform: scale(0.98) }`.
   - Auditoria adversarial independente (`research`, `8c503df9`) apontou 5 ajustes (`og:image`, erro inline substituindo skeleton, tokens residuais/sangria mobile em CSS, remoção de `font-style="italic"` em H3 e abertura de `#metodo-*` pelo rodapé); todos corrigidos e reavaliados como **`APROVADO`** (`npm run build:vercel` → `453.8kb`, `site/` `13 files / 7.66 MB`, `./init.sh` → `18 passed in 29.66s`, `E2E_ROOT=site node tests/e2e.mjs` → `errors: []`).
 
+- **2026-11-25 (Revisão Geral UX, Paleta Semântica, Série 2018–2026 e Auditoria Sênior Quadro a Quadro — Fases 1 e 2):**
+  - **Fase 1 — Alterações estruturais e de conteúdo ([proposta_projeto_final.md](../proposta_projeto_final.md)):**
+    - Integrado **2018** no ETL ([etl/config.py](../../etl/config.py), [etl/report_coverage.py](../../etl/report_coverage.py), [src/data.js](../../src/data.js)) somando **`73.045` candidaturas** (`2018`, `2022`, `2026`) sem PII (`0` vazamentos); `fetch('data/network_hubs.json')` removido mantendo o arquivo em disco para invariantes de CI.
+    - Removidos `#escala` (`scaleMosaic.js`), `reactiveStage.js`, `scrollyContainer.js`, funções mortas de [src/indicators.js](../../src/indicators.js) e CSS órfão em [public/styles.css](../../public/styles.css), adotando **fluxo editorial vertical fluido** com barra superior fina (`58px`), controles locais nos cabeçalhos dos gráficos e paleta semântica única ([src/charts/palette.js](../../src/charts/palette.js): `#FF7AE5` Mulheres, `#FCE34D` Homens, `#FF5E2B` Alerta/Déficit, `#00D09C` Cota respeitada, Branco/Ciano/Gelo para anos).
+    - Implementadas visões coordenadas (`H1` → `H2–H9`, sincronizando `Registradas | Aptas` via `syncH1BinParties` em [src/main.js](../../src/main.js)), clique reversível em todos os gráficos/matriz e refatoração de `H1`–`H9` (`H2` em dumbbell `2022 → 2026` ordenado pelo gap de 2026; `H2B` público vs. privado + barra 100%; `H3` escala linear fixa no modo foco com quadrantes e 100% das bolhas vermelhas rotuladas; `H4` Sankey 100% entre mulheres com `Competitivas Top 10%` vs. `Base 90%`; `H5` barras horizontais ordenadas por `% eleitas`; `H6`/`H7`/`H8` com série `2018 → 2022 → 2026`; `H9` mapa sincronizado à ordenação da matriz).
+  - **Fase 2 — Loop Iterativo Sênior em Visualização de Dados (Auditor Cético `09dc7e8a` · Padrão FT / NYT Upshot / The Pudding / The Economist):**
+    - *Rodada 0 → 1:* Substituição do resumo do hero por **funil visual de 3 etapas** (`1. No Papel → 2. No Dinheiro → 3. Na Urna`) com badges de variação; corte de ~45% da prosa lateral redundante; adoção de **Takeaway Headlines dinâmicas** (`#title-h1`..`#title-h9`); cartões de evidência interativos em 1 clique (`#ev-h1`, `#ev-h2`, `#ev-h5`); correção de falsy-zero em `H3` (`NOVO = 0,0%`), sincronismo completo de `H1` (`<30%`) e cliques de limpeza/extremos em `H9`.
+    - *Rodada 1 → 2:* Adicionadas anotações diretas no SVG (`H1` teto/avanço, `H2` setas direcionais + callout `UNIÃO`, `H4` `% eleitas`, `H5` faixa-resumo global, `H6` marco `ADI 5617 + Súmula 73`, `H7` bandas `Irregular`/`Piso legal` e stagger vertical com `2018`), legenda contínua + `.h9-scroll-hint` e encapsulamento de legendas em `390px`. Auditoria R2 pontuou `(9,1 / 8,5 / 9,5 / 9,4)` com apenas 2 pendências geométricas residuais (`H2B` mobile barra×rótulo e `H3` texto×círculo).
+    - *Rodada 2 → 3:* Ampliadas margens compactas em [divergentChart.js](../../src/charts/divergentChart.js) (`padLo/padHi = 0.64`), reforçada repulsão AABB + busca em grade em [h3Scatter.js](../../src/charts/h3Scatter.js) e corrigidos `checkSvgGeometry(..., { checkCircles: true })` e `lbl.b.bottom` em [tests/e2e.mjs](../../tests/e2e.mjs).
+    - **Avaliação Final Rodada 3 (`09dc7e8a`, contexto frio):** **`APROVADO`** — Critério 1 (Clareza 5s): **9,5/10** · Critério 2 (Tipografia/Legibilidade Desktop+Mobile): **9,4/10** · Critério 3 (UX/Visões Coordenadas): **9,5/10** · Critério 4 (Fidelidade/Escopo/LGPD/Higiene): **9,6/10** (**média ponderada 9,49/10**, 0 defeitos geométricos ou de corretude).
+  - **Suposições Adotadas:**
+    1. *Artefato de auditoria:* `https://viz-data-phi.vercel.app` atualmente serve `origin/master` (`e9d9ca4`); respeitando a trava contra `git push` sem aprovação humana (§1), toda a auditoria quadro a quadro (`R0`–`R3`) foi executada sobre o artefato estático idêntico da Vercel (`site/` via `npm run build:vercel`) em Chromium (`1440×900`, `1280×820` e `390×844`).
+    2. *Escopo e identidade:* Aderência estrita aos 5 atos e hipóteses de [proposta_projeto_final.md](../proposta_projeto_final.md) (Deputado Federal + Estadual nas 27 UFs, sem PII/LGPD) e ao flat design sem itálico (`Anton` + `Barlow`) de [DESIGN-SYSTEM.md](../DESIGN-SYSTEM.md).
+    3. *Universo do P90 em H2 (`UNIÃO` 2026):* Padronizado sobre candidaturas `APTO` com receita declarada (`c.apto && c.hasRec`, `R$ 2,70M` homens vs. `R$ 1,65M` mulheres), coerente com a mediana exibida em `computeH2`.
+    4. *Artefato `data/network_hubs.json`:* Mantido em disco para preservar invariantes LGPD dos testes de CI, embora o frontend não realize mais `fetch` nem exiba rede de hubs em `H4`.
+  - **Evidência final:** `npm run build:vercel` (`dist/app.js 234.3kb`, `site/` 13 arquivos / `11.27 MB`) && `./init.sh` (`16 passed in 18.04s`) && `E2E_ROOT=site node tests/e2e.mjs` (`E2E OK`, `errors: []`, `overflowX: false`, `h2bMobBarLabelHits: []`, `textCircleHits: []`).
+
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.
+- A URL remota `https://viz-data-phi.vercel.app` refletirá estas alterações assim que o usuário autorizar/executar `git push` da `master` atualizada.
 
 ## 5. Next Action
-1. Seguir na janela **24–27/nov** com inspeção visual na URL publicada na Vercel, validação cruzada pontual com o DivulgaCandContas/TSE e ajustes finais (28–30/nov).
+1. Revisão humana do commit local em `master` e execução autorizada de `git push` para publicar a atualização em `https://viz-data-phi.vercel.app`.

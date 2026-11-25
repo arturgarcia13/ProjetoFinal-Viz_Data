@@ -1,6 +1,57 @@
-# Relatório de Cobertura por Fonte — Baseline 2022 e Comparativo 2026
+# Relatório de Cobertura por Fonte — 2018 (Auxiliar), 2022 (Baseline) e 2026 (Comparativo)
 
 > Gerado automaticamente por `etl/build_dataset.py` (`etl/report_coverage.py`). Todos os números refletem os CSVs oficiais `*_BRASIL.csv` do TSE filtrados para `CD_CARGO IN ('6', '7')` e `CD_TIPO_ELEICAO = '2'`.
+
+## Ano 2018 — Referência Auxiliar
+
+### 1. Volumetria por Fonte Oficial (`*_BRASIL.csv`, Cargos 6 + 7)
+
+| Fonte | `DT_GERACAO` | Linhas Brutas | Linhas Cargos 6+7 | `SQ` Distintos | Observação |
+| :--- | :---: | ---: | ---: | ---: | :--- |
+| `consulta_cand_2018` | 13/11/2024 | 29.287 | 26.580 | 26.580 | Chave única 1:1 (`rows == unique_sq`: True) |
+| `votacao_munzona_2018` | 13/11/2024 | 8.680.108 | 8.438.852 | 23.666 | Agregada por `SQ_CANDIDATO` antes do join |
+| `receitas_candidatos_2018` | 18/10/2026 | 329.683 | 289.110 | 25.484 | Prioriza maior precedência de `TP_PRESTACAO_CONTAS` |
+| `despesas_contratadas_2018` | 18/10/2026 | 1.724.053 | 1.493.387 | 25.484 | Exclui contas internas `20330000`/`20340000` |
+| `doador_originario_2018` | 18/10/2026 | 151.448 | — | 8.421 (`SQ_RECEITA`) | 7.036 / 110.810 recibos de transferência casados (6,3%) |
+
+### 2. Universo Analítico, Elegibilidade e Micro-Chapas
+- **Candidaturas registradas (Cargos 6+7):** **26.580** → **23.697 APTO** (89,2%) e **2.883 INAPTO** (10,8%).
+- **Impacto das candidaturas `INAPTO` (2.883):** `184.049` votos válidos (`184.049` nominais totais), `R$ 44.605.693,82` em receita declarada (`R$ 18.931.769,13` de FEFC), `R$ 38.546.131,10` em despesa efetiva e `2` eleito(s) no recorte `INAPTO`.
+- **Gênero (Registradas, sobre F+M = 26.529):** Mulheres `8.511` (32,1%), Homens `18.018` (67,9%), Não divulgável `51` (excluído dos denominadores de gênero).
+- **Gênero (`APTO`, sobre F+M = 23.697):** Mulheres `7.422` (31,3%), Homens `16.275` (68,7%), Não divulgável `0`.
+- **Chapas (Registradas):** `716` chapas totais; **`76` micro-chapas (`n < 4`)** somando **`131` candidaturas** (mantidas nos totais individuais e excluídas da distribuição percentual de H1/H7).
+- **Chapas (`APTO`):** `682` chapas totais; `58` micro-chapas (`n < 4`, `95` candidaturas).
+
+### 3. Taxa de Casamento (*Match Rate*) e Status da Prestação de Contas
+
+| Cruzamento / Status | Sobre Registradas | % Registradas | Sobre `APTO` | % `APTO` |
+| :--- | ---: | ---: | ---: | ---: |
+| Presentes em `votacao` | 23.666 | 89,0% | 23.649 | 99,8% |
+| Presentes em `receitas` | 25.484 | 95,9% | 23.059 | 97,3% |
+| Presentes em `despesas_contratadas` | 25.484 | 95,9% | 23.059 | 97,3% |
+| Contas zeradas declaradas (`r=0` e `e=0`) | 2.221 | 8,4% | 1.480 | 6,2% |
+| Ausentes em `receitas` (sem linha) | 1.096 | 4,1% | 638 | 2,7% |
+
+**Distribuição por `TP_PRESTACAO_CONTAS` (candidaturas `APTO`):**
+
+| Tipo de Prestação (`APTO`) | Candidaturas | % `APTO` |
+| :--- | ---: | ---: |
+| `FINAL` | 22.127 | 93,4% |
+| `PARCIAL` | 645 | 2,7% |
+| `AUSENTE` | 638 | 2,7% |
+| `RELATÓRIO FINANCEIRO` | 287 | 1,2% |
+
+### 4. Checagens de Sanidade (Zero Inflação em Joins 1:N)
+
+| Métrica | Soma Direta na Fonte Bruta (Cargos 6+7) | Soma na Base Analítica Exportada | Diferença |
+| :--- | ---: | ---: | ---: |
+| Votos Nominais Válidos | 179.658.687 | 179.658.687 | 0 |
+| Votos Nominais Totais | 179.664.953 | 179.664.953 | 0 |
+| Receita Total Declarada | R$ 2.368.188.376,79 | R$ 2.368.188.376,79 | R$ 0,00 |
+| FEFC (`CD_FONTE_RECEITA = 2`) | R$ 1.251.192.072,59 | R$ 1.251.192.072,59 | R$ 0,00 |
+| Despesa Contratada Efetiva | R$ 2.161.770.122,10 | R$ 2.161.770.122,10 | R$ 0,00 |
+
+- **Rede Bipartida (Fornecedores-Hub):** `94` fornecedores-hub, `369` candidaturas anônimas ligadas e `559` arestas.
 
 ## Ano 2022 — Baseline Principal
 

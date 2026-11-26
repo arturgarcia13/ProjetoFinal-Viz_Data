@@ -313,15 +313,17 @@ function update() {
   const qVal26 = qBin ? (isApto ? qBin.a26.pct : qBin.r26.pct) : 0;
   const bVal22 = b27 ? (isApto ? b27.a22.pct : b27.r22.pct) : 0;
   const bVal26 = b27 ? (isApto ? b27.a26.pct : b27.r26.pct) : 0;
-  const lt30_22 = lt30Bins.reduce((s, b) => s + (isApto ? b.a22.pct : b.r22.pct), 0);
-  const lt30_26 = lt30Bins.reduce((s, b) => s + (isApto ? b.a26.pct : b.r26.pct), 0);
+  const lt30Reg22 = lt30Bins.reduce((s, b) => s + b.r22.pct, 0);
+  const lt30Reg26 = lt30Bins.reduce((s, b) => s + b.r26.pct, 0);
+  const lt30Apto22 = lt30Bins.reduce((s, b) => s + b.a22.pct, 0);
   const showYrH1 = curStepH1 >= 2 ? 2026 : 2022;
   const curQ = curStepH1 >= 2 ? qVal26 : qVal22;
   const curB = curStepH1 >= 2 ? bVal26 : bVal22;
   setText('h1-lead-pct', fmtPctDirect(qBin ? qBin.r22.pct : 0, 1));
-  setText('h1-dyn-lt30', `${fmtPctDirect(lt30_22, 1)} em 2022 e ${fmtPctDirect(lt30_26, 1)} em 2026 abaixo de 30%`);
+  setText('h1-dyn-lt30', `${fmtPctDirect(lt30Reg22, 1)} em 2022 e ${fmtPctDirect(lt30Reg26, 1)} em 2026 abaixo de 30%`);
+  setText('h1-dyn-apto-shift', `${fmtPctDirect(lt30Reg22, 1)} → ${fmtPctDirect(lt30Apto22, 1)} abaixo de 30% em 2022`);
   setText('title-h1', `Em ${showYrH1} (${isApto ? 'Aptas' : 'Registradas'}), ${fmtPctDirect(curQ, 0)} das chapas ficam em 30%–33%, contra ${fmtPctDirect(curB, 0)} logo abaixo (27%–30%)`);
-  setText('h1-dyn-text', `${fmtPctDirect(qVal22, 1)} das chapas de 2022 ficam entre 30% e 33% (${isApto ? 'Aptas' : 'Registradas'}); abaixo do piso (<30%) são ${fmtPctDirect(lt30_22, 1)}. O piso funciona como teto operacional.`);
+  setText('h1-dyn-text', `${fmtPctDirect(qVal22, 1)} das chapas de 2022 ficam entre 30% e 33% (${isApto ? 'Aptas' : 'Registradas'}); abaixo do piso (<30%) são ${fmtPctDirect(lt30Reg22, 1)}. O piso funciona como teto operacional.`);
 
   const cH1 = document.getElementById('canvas-h1');
   R.h1 = (step = stepOf('h1'), prevStep = stepOf('h1')) => renderH1Histogram(cH1, h1Data, {
@@ -595,16 +597,18 @@ function update() {
     update();
   };
 
-  R.h9 = (step = stepOf('h9')) => {
+  R.h9 = (step = stepOf('h9'), prevStep = step) => {
     syncAto5StepUI(step);
     renderAto5StepCards(cAto5Steps, ato5Data, {
       activeStep: step,
+      prevStep,
       selectedUF: state.ato5SelectedUf,
       onHoverUF: handleHoverAto5,
       onSelectUF: handleSelectAto5,
     });
     renderAto5MapStage(cAto5Map, cAto5Callouts, APP_DATA.brUf, ato5Data, {
       step,
+      prevStep,
       width: Math.min(500, Math.max(300, cAto5Map?.clientWidth || 440)),
       hoveredUF: state.ato5HoveredUf,
       selectedUF: state.ato5SelectedUf,
@@ -853,16 +857,16 @@ async function init() {
   initScrolly((key, idx, prevIdx) => {
     syncStepControlsVisibility(key, idx);
 
-    // Ato 1 (H1): transição automática Registradas -> Aptas ao entrar no passo 3 e reset de filtro ao sair
+    // Ato 1 (H1): passo 3 (2022 vs 2026 em Registradas), passo 4 (transição Registradas -> Aptas) e reset de filtro ao sair
     if (key === 'h1') {
       clearTimeout(h1AutoTimer);
-      if (prevIdx === 2 && idx !== 2) {
+      if ((prevIdx === 2 || prevIdx === 3) && idx !== prevIdx) {
         let changed = false;
         if (state.h1BinFilter) {
           state.h1BinFilter = null;
           changed = true;
         }
-        if (idx < 2 && state.h1Mode !== 'reg') {
+        if (idx < 3 && state.h1Mode !== 'reg') {
           state.h1PrevMode = state.h1Mode;
           state.h1Mode = 'reg';
           state.h1UserLocked = false;
@@ -871,16 +875,16 @@ async function init() {
         }
         if (changed) {
           update();
-          return;
+          if (idx !== 3) return;
         }
       }
-      if (idx === 2 && !state.h1UserLocked && state.h1Mode === 'reg') {
+      if (idx === 3 && !state.h1UserLocked && state.h1Mode === 'reg') {
         h1AutoTimer = setTimeout(() => {
           state.h1PrevMode = state.h1Mode;
           state.h1Mode = 'apto';
           syncH1ModeButtons();
           update();
-        }, 850);
+        }, 650);
       }
     }
 

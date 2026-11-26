@@ -108,8 +108,8 @@ export function renderH1Histogram(
   container,
   h1EightData,
   {
-    step = 2,
-    prevStep = 2,
+    step = 3,
+    prevStep = 3,
     width = 720,
     mode = 'reg',
     prevMode = mode,

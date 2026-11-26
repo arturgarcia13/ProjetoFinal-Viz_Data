@@ -1,6 +1,8 @@
 import * as d3 from 'd3';
+import gsap from 'gsap';
 import { IBGE_TO_UF, UF_NAMES } from '../data.js';
 import { SEMANTIC_PALETTE } from './palette.js';
+import { shouldAnimate } from './motion.js';
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtCompactBrl, fmtPct } from './tooltip.js';
 
 const UF_REGIONS = {
@@ -128,102 +130,148 @@ function buildStateTooltipCard(d, stepIdx) {
   });
 }
 
+function revealedStarsAt(d, stepIdx) {
+  if (!d) return 0;
+  return d.pillars.slice(0, Math.min(4, stepIdx + 1)).filter(Boolean).length;
+}
+
 /**
- * Renderiza os 5 cards narrativos do Ato 5 com pódio Top 5 clicável e card de síntese no Passo 5.
+ * Renderiza os 5 cards narrativos do Ato 5 com pódio Top 5 clicável, síntese e entrada GSAP escalonada.
  */
 export function renderAto5StepCards(container, geoData, {
   activeStep = 0,
+  prevStep = activeStep,
   selectedUF = '',
   onHoverUF = null,
   onSelectUF = null,
 } = {}) {
   if (!container || !geoData) return;
   const rows = geoData.rows || [];
+  const dataSig = `${geoData.year}|${geoData.cargo}|${geoData.eligibleCount}`;
+  const needsRebuild = container.dataset.ato5Sig !== dataSig;
 
-  ATO5_STEPS.forEach((step, sIdx) => {
-    const card = container.querySelector(`.step-card[data-step="${sIdx}"]`);
-    if (!card) return;
-    const top5 = rankTop5(rows, step);
+  if (needsRebuild) {
+    container.dataset.ato5Sig = dataSig;
+    ATO5_STEPS.forEach((step, sIdx) => {
+      const card = container.querySelector(`.step-card[data-step="${sIdx}"]`);
+      if (!card) return;
+      const top5 = rankTop5(rows, step);
 
-    let synthesisHtml = '';
-    if (step.isSynthesis) {
-      const twoPlus = top5.filter((d) => d.pillars.filter(Boolean).length >= 2).length;
-      const anyPillar = top5.filter((d) => d.pillars.filter(Boolean).length >= 1).length;
-      const zeroPillar = top5.filter((d) => d.pillars.filter(Boolean).length === 0).map((d) => d.uf);
-      const outlierNote = zeroPillar.length > 0
-        ? ` Exceções fora dos 4 pilares (${zeroPillar.join(', ')}) mostram que outros fatores regionais também influenciam a urna.`
-        : '';
-      synthesisHtml = `
-        <div class="ato5-synthesis-box">
-          <strong>Síntese Causa → Efeito (${geoData.year}):</strong>
-          <strong>${twoPlus} de 5</strong> líderes em mulheres eleitas acumularam <strong>≥ 2 pilares estruturais</strong> (★2/4–4/4), e <strong>${anyPillar} de 5</strong> pontuaram em ao menos um pilar.${outlierNote}
+      let synthesisHtml = '';
+      if (step.isSynthesis) {
+        const twoPlus = top5.filter((d) => d.pillars.filter(Boolean).length >= 2).length;
+        const anyPillar = top5.filter((d) => d.pillars.filter(Boolean).length >= 1).length;
+        const zeroPillar = top5.filter((d) => d.pillars.filter(Boolean).length === 0).map((d) => d.uf);
+        const outlierNote = zeroPillar.length > 0
+          ? ` Exceções fora dos 4 pilares (${zeroPillar.join(', ')}) mostram que outros fatores regionais também influenciam a urna.`
+          : '';
+        synthesisHtml = `
+          <div class="ato5-synthesis-box">
+            <strong>Síntese Causa → Efeito (${geoData.year}):</strong>
+            <strong>${twoPlus} de 5</strong> líderes em mulheres eleitas acumularam <strong>≥ 2 pilares estruturais</strong> (★2/4–4/4), e <strong>${anyPillar} de 5</strong> pontuaram em ao menos um pilar.${outlierNote}
+          </div>
+        `;
+      }
+
+      const miniCardsHtml = top5.map((d, rankIdx) => {
+        const revealedStars = revealedStarsAt(d, sIdx);
+        const isSelected = selectedUF === d.uf;
+        return `
+          <button
+            type="button"
+            class="ato5-podium-card${isSelected ? ' is-selected' : ''}"
+            data-podium-uf="${d.uf}"
+            aria-pressed="${isSelected ? 'true' : 'false'}"
+          >
+            <span class="ato5-podium-rank${rankIdx === 0 ? ' is-first' : ''}">#${rankIdx + 1}</span>
+            <span class="ato5-podium-meta">
+              <strong>${UF_NAMES[d.uf] || d.uf} <small>(${d.uf})</small></strong>
+              <small>${UF_REGIONS[d.uf] || ''}</small>
+            </span>
+            <span class="ato5-podium-vals tabular">
+              ${revealedStars > 0 ? `<span class="ato5-star-pill">★${revealedStars}/4</span>` : ''}
+              <span class="ato5-val-pill">${step.formatVal(d[step.metricKey])}</span>
+            </span>
+          </button>
+        `;
+      }).join('');
+
+      let slot = card.querySelector('.ato5-card-dynamic');
+      if (!slot) {
+        slot = document.createElement('div');
+        slot.className = 'ato5-card-dynamic';
+        card.appendChild(slot);
+      }
+      slot.innerHTML = `
+        ${synthesisHtml}
+        <div class="ato5-podium-wrap">
+          <div class="ato5-podium-head">${step.podiumHeader}</div>
+          <div class="ato5-podium-list">${miniCardsHtml}</div>
         </div>
       `;
-    }
 
-    const miniCardsHtml = top5.map((d, rankIdx) => {
-      const revealedStars = d.pillars.slice(0, Math.min(4, sIdx + 1)).filter(Boolean).length;
-      const isSelected = selectedUF === d.uf;
-      return `
-        <button
-          type="button"
-          class="ato5-podium-card${isSelected ? ' is-selected' : ''}"
-          data-podium-uf="${d.uf}"
-          aria-pressed="${isSelected ? 'true' : 'false'}"
-        >
-          <span class="ato5-podium-rank${rankIdx === 0 ? ' is-first' : ''}">#${rankIdx + 1}</span>
-          <span class="ato5-podium-meta">
-            <strong>${UF_NAMES[d.uf] || d.uf} <small>(${d.uf})</small></strong>
-            <small>${UF_REGIONS[d.uf] || ''}</small>
-          </span>
-          <span class="ato5-podium-vals tabular">
-            ${revealedStars > 0 ? `<span class="ato5-star-pill">★${revealedStars}/4</span>` : ''}
-            <span class="ato5-val-pill">${step.formatVal(d[step.metricKey])}</span>
-          </span>
-        </button>
-      `;
-    }).join('');
-
-    let slot = card.querySelector('.ato5-card-dynamic');
-    if (!slot) {
-      slot = document.createElement('div');
-      slot.className = 'ato5-card-dynamic';
-      card.appendChild(slot);
-    }
-    slot.innerHTML = `
-      ${synthesisHtml}
-      <div class="ato5-podium-wrap">
-        <div class="ato5-podium-head">${step.podiumHeader}</div>
-        <div class="ato5-podium-list">${miniCardsHtml}</div>
-      </div>
-    `;
-
-    slot.querySelectorAll('.ato5-podium-card').forEach((btn) => {
-      const uf = btn.dataset.podiumUf;
-      if (onHoverUF) {
-        btn.addEventListener('mouseenter', () => onHoverUF(uf));
-        btn.addEventListener('mouseleave', () => onHoverUF(null));
-      }
-      if (onSelectUF) {
-        btn.addEventListener('click', (evt) => {
-          evt.stopPropagation();
-          onSelectUF(uf);
-        });
-      }
+      slot.querySelectorAll('.ato5-podium-card').forEach((btn) => {
+        const uf = btn.dataset.podiumUf;
+        if (onHoverUF) {
+          btn.addEventListener('mouseenter', () => onHoverUF(uf));
+          btn.addEventListener('mouseleave', () => onHoverUF(null));
+        }
+        if (onSelectUF) {
+          btn.addEventListener('click', (evt) => {
+            evt.stopPropagation();
+            onSelectUF(uf);
+          });
+        }
+      });
     });
+  }
+
+  container.querySelectorAll('.ato5-podium-card').forEach((btn) => {
+    const isSel = selectedUF === btn.dataset.podiumUf;
+    btn.classList.toggle('is-selected', isSel);
+    btn.setAttribute('aria-pressed', isSel ? 'true' : 'false');
   });
 
-  // Atualiza destaque visual se hoveredUF/selectedUF mudar sem precisar refazer tudo
-  if (activeStep !== null) {
-    container.querySelectorAll('.ato5-podium-card').forEach((btn) => {
-      btn.classList.toggle('is-selected', selectedUF === btn.dataset.podiumUf);
-    });
+  // Coreografia HyperFrames Animation (spring-pop-entrance, power3.out, stagger <= 0.5s) ao trocar de passo
+  if (shouldAnimate() && (activeStep !== prevStep || needsRebuild)) {
+    const activeCard = container.querySelector(`.step-card[data-step="${activeStep}"]`);
+    if (activeCard) {
+      if (container.__ato5CardTl) container.__ato5CardTl.kill();
+      const tl = gsap.timeline();
+      const podiumItems = activeCard.querySelectorAll('.ato5-podium-card');
+      if (podiumItems.length > 0) {
+        tl.fromTo(
+          podiumItems,
+          { y: 12, opacity: 0, scale: 0.97 },
+          {
+            y: 0,
+            opacity: 1,
+            scale: 1,
+            duration: 0.38,
+            stagger: 0.055,
+            ease: 'power3.out',
+            clearProps: 'transform,opacity',
+          },
+          0,
+        );
+      }
+      const synthBox = activeCard.querySelector('.ato5-synthesis-box');
+      if (synthBox) {
+        tl.fromTo(
+          synthBox,
+          { y: 8, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.42, ease: 'power2.out', clearProps: 'transform,opacity' },
+          0.14,
+        );
+      }
+      container.__ato5CardTl = tl;
+    }
   }
 }
 
 /**
- * Renderiza o Mapa Geográfico Real do Brasil (data/br_uf.json) + Anéis Dourados Cumulativos
- * + Linhas-Guia e Callouts Laterais para os 8 Estados Compactos (RN, PB, PE, AL, SE, DF, ES, RJ).
+ * Renderiza e coreografa com GSAP (object constancy + svg-path-draw + spring-pop)
+ * o Mapa Geográfico Real do Brasil (data/br_uf.json), Anéis Dourados Cumulativos e Callouts Compactos.
  */
 export function renderAto5MapStage(
   mapContainer,
@@ -232,6 +280,7 @@ export function renderAto5MapStage(
   geoData,
   {
     step = 0,
+    prevStep = step,
     width = 480,
     hoveredUF = null,
     selectedUF = '',
@@ -241,183 +290,361 @@ export function renderAto5MapStage(
   } = {},
 ) {
   if (!mapContainer || !brUfGeo || !geoData) return;
-  mapContainer.innerHTML = '';
 
-  const stepMeta = ATO5_STEPS[Math.max(0, Math.min(ATO5_STEPS.length - 1, step))];
+  const svgW = Math.max(320, width);
+  const svgH = Math.round(svgW * 0.9);
+  const clampedStep = Math.max(0, Math.min(ATO5_STEPS.length - 1, step));
+  const stepMeta = ATO5_STEPS[clampedStep];
   const rows = geoData.rows || [];
   const byUf = new Map(rows.map((r) => [r.uf, r]));
   const top5 = rankTop5(rows, stepMeta);
   const top5RankMap = new Map(top5.map((d, idx) => [d.uf, idx + 1]));
 
-  const svgW = Math.max(320, width);
-  const svgH = Math.round(svgW * 0.9);
-  const mapRight = svgW - 18;
-  const projection = d3.geoMercator().fitExtent([[10, 10], [mapRight - 14, svgH - 12]], brUfGeo);
-  const pathGen = d3.geoPath(projection);
+  const geoSig = `${svgW}|${geoData.year}|${geoData.cargo}`;
+  let st = mapContainer.__ato5State;
+  const isFreshMount = !st || st.geoSig !== geoSig || !mapContainer.querySelector('svg.ato5-map-svg');
 
-  const tipCtrl = createChartTooltip(mapContainer, { wrapClass: 'ato5-map-wrap' });
-  const svg = d3.select(tipCtrl.wrap).append('svg')
-    .attr('class', 'h9-map-svg ato5-map-svg')
-    .attr('viewBox', `0 0 ${svgW} ${svgH}`)
-    .attr('width', svgW)
-    .attr('height', svgH)
-    .attr('role', 'img')
-    .attr('aria-label', `Mapa geográfico das 27 UFs: ${stepMeta.badge}`)
-    .style('font-family', 'Inter, system-ui, sans-serif');
+  if (isFreshMount) {
+    if (st?.tl) st.tl.kill();
+    mapContainer.innerHTML = '';
 
-  if (onClearUF) {
+    const mapRight = svgW - 18;
+    const projection = d3.geoMercator().fitExtent([[10, 10], [mapRight - 14, svgH - 12]], brUfGeo);
+    const pathGen = d3.geoPath(projection);
+
+    const tipCtrl = createChartTooltip(mapContainer, { wrapClass: 'ato5-map-wrap' });
+    const svg = d3.select(tipCtrl.wrap).append('svg')
+      .attr('class', 'h9-map-svg ato5-map-svg')
+      .attr('viewBox', `0 0 ${svgW} ${svgH}`)
+      .attr('width', svgW)
+      .attr('height', svgH)
+      .attr('role', 'img')
+      .attr('aria-label', `Mapa geográfico das 27 UFs: ${stepMeta.badge}`)
+      .style('font-family', 'Inter, system-ui, sans-serif');
+
+    const polyLayer = svg.append('g').attr('class', 'ato5-poly-layer');
+    const ringLayer = svg.append('g').attr('class', 'ato5-ring-layer').style('pointer-events', 'none');
+    const lineLayer = svg.append('g').attr('class', 'ato5-line-layer').style('pointer-events', 'none');
+    const labelLayer = svg.append('g').attr('class', 'ato5-label-layer').style('pointer-events', 'none');
+
+    const polyEls = new Map();
+    const ringEls = new Map();
+    const ringLens = new Map();
+    const labelEls = new Map();
+    const lineEls = new Map();
+    const dotEls = new Map();
+    const lineLens = new Map();
+    const centroids = new Map();
+
+    st = {
+      geoSig,
+      svg,
+      tipCtrl,
+      polyEls,
+      ringEls,
+      ringLens,
+      labelEls,
+      lineEls,
+      dotEls,
+      lineLens,
+      currentStep: clampedStep,
+      prevStep: clampedStep,
+      currentData: geoData,
+      byUf,
+      prevTop5Set: new Set(),
+      prevStarsMap: new Map(),
+      tl: null,
+      onHoverUF,
+      onSelectUF,
+      onClearUF,
+    };
+    mapContainer.__ato5State = st;
+
     svg.on('click', (evt) => {
-      if (selectedUF && !evt.target.closest('.ato5-state-path')) onClearUF();
+      if (st.selectedUF && !evt.target.closest('.ato5-state-path') && st.onClearUF) {
+        st.onClearUF();
+      }
     });
-  }
 
-  const polyLayer = svg.append('g').attr('class', 'ato5-poly-layer');
-  const ringLayer = svg.append('g').attr('class', 'ato5-ring-layer').style('pointer-events', 'none');
-  const lineLayer = svg.append('g').attr('class', 'ato5-line-layer').style('pointer-events', 'none');
-  const labelLayer = svg.append('g').attr('class', 'ato5-label-layer').style('pointer-events', 'none');
+    brUfGeo.features.forEach((feat) => {
+      const uf = IBGE_TO_UF[String(feat.properties.codarea)];
+      if (!uf) return;
+      const centroid = pathGen.centroid(feat);
+      centroids.set(uf, centroid);
 
-  const revealedCount = (d) => d.pillars.slice(0, Math.min(4, step + 1)).filter(Boolean).length;
-  const focusUF = hoveredUF || selectedUF;
+      const p = polyLayer.append('path')
+        .datum(feat)
+        .attr('d', pathGen)
+        .attr('data-uf', uf)
+        .attr('class', 'ato5-state-path')
+        .attr('fill', '#E6EEEA')
+        .attr('stroke', '#B9CAC2')
+        .attr('stroke-width', 0.9)
+        .attr('stroke-linejoin', 'round')
+        .style('cursor', 'pointer');
+      polyEls.set(uf, p.node());
 
-  const featureCentroids = new Map();
-  brUfGeo.features.forEach((feat) => {
-    const uf = IBGE_TO_UF[String(feat.properties.codarea)];
-    if (!uf) return;
-    const d = byUf.get(uf);
-    if (!d) return;
-    const rank = top5RankMap.get(uf);
-    const isTop5 = Boolean(rank);
-    const stars = revealedCount(d);
-    const centroid = pathGen.centroid(feat);
-    featureCentroids.set(uf, centroid);
-
-    const fill = isTop5
-      ? (rank === 1 ? '#C22D0C' : SEMANTIC_PALETTE.female)
-      : (stars > 0 && stepMeta.isSynthesis ? '#F9EFD4' : '#E6EEEA');
-
-    const isFocused = focusUF && focusUF === uf;
-    const isDimmed = Boolean(focusUF && focusUF !== uf);
-
-    const p = polyLayer.append('path')
-      .datum(feat)
-      .attr('d', pathGen)
-      .attr('data-uf', uf)
-      .attr('class', 'ato5-state-path')
-      .attr('fill', fill)
-      .attr('fill-opacity', isDimmed ? 0.45 : 1)
-      .attr('stroke', isFocused ? SEMANTIC_PALETTE.ink : (isTop5 ? '#FFFFFF' : '#B9CAC2'))
-      .attr('stroke-width', isFocused ? 2.4 : (isTop5 ? 1.5 : 0.9))
-      .attr('stroke-linejoin', 'round')
-      .style('cursor', 'pointer');
-
-    if (stars > 0) {
-      ringLayer.append('path')
+      // Anel dourado pré-montado para todas as 27 UFs (comprimento medido uma vez no setup)
+      const ring = ringLayer.append('path')
         .datum(feat)
         .attr('d', pathGen)
         .attr('data-uf-ring', uf)
         .attr('fill', 'none')
         .attr('stroke', SEMANTIC_PALETTE.highlightInk)
-        .attr('stroke-width', stars >= 2 ? 2.8 : 1.9)
+        .attr('stroke-width', 1.9)
         .attr('stroke-linejoin', 'round')
-        .attr('stroke-opacity', isDimmed ? 0.45 : 0.95);
-    }
+        .attr('stroke-opacity', 0);
+      const ringNode = ring.node();
+      const rLen = typeof ringNode.getTotalLength === 'function' ? ringNode.getTotalLength() : 0;
+      ringEls.set(uf, ringNode);
+      ringLens.set(uf, rLen);
 
-    if (!COMPACT_SET.has(uf) && Number.isFinite(centroid[0]) && Number.isFinite(centroid[1])) {
-      const hasSub = isTop5 || stars > 0;
-      const subText = isTop5 ? `#${rank}` : (stars > 0 ? `★${stars}` : '');
-      const lblG = labelLayer.append('g')
-        .attr('transform', `translate(${centroid[0]}, ${centroid[1]})`)
-        .style('opacity', isDimmed ? 0.4 : 1);
-
-      lblG.append('text')
-        .attr('text-anchor', 'middle')
-        .attr('dy', hasSub ? '-2' : '3')
-        .attr('font-size', svgW < 380 ? 8.5 : 9.5)
-        .attr('font-weight', 700)
-        .attr('fill', isTop5 ? '#FFFFFF' : SEMANTIC_PALETTE.ink)
-        .attr('paint-order', 'stroke')
-        .attr('stroke', isTop5 ? 'rgba(194,45,12,0.5)' : 'rgba(255,255,255,0.75)')
-        .attr('stroke-width', 2)
-        .text(uf);
-
-      if (hasSub) {
-        lblG.append('text')
+      if (!COMPACT_SET.has(uf) && Number.isFinite(centroid[0]) && Number.isFinite(centroid[1])) {
+        const lblG = labelLayer.append('g')
+          .attr('transform', `translate(${centroid[0]}, ${centroid[1]})`);
+        const ufTxt = lblG.append('text')
+          .attr('class', 'ato5-lbl-uf')
+          .attr('text-anchor', 'middle')
+          .attr('dy', '3')
+          .attr('font-size', svgW < 380 ? 8.5 : 9.5)
+          .attr('font-weight', 700)
+          .attr('fill', SEMANTIC_PALETTE.ink)
+          .attr('paint-order', 'stroke')
+          .attr('stroke', 'rgba(255,255,255,0.75)')
+          .attr('stroke-width', 2)
+          .text(uf);
+        const subTxt = lblG.append('text')
+          .attr('class', 'ato5-lbl-sub')
           .attr('text-anchor', 'middle')
           .attr('dy', '8.5')
           .attr('font-size', 8)
           .attr('font-weight', 700)
-          .attr('fill', isTop5 ? '#F8DF4F' : '#8A5D00')
-          .text(subText);
+          .attr('fill', '#8A5D00')
+          .text('');
+        labelEls.set(uf, { g: lblG.node(), uf: ufTxt.node(), sub: subTxt.node() });
       }
-    }
 
-    const node = p.node();
-    node.setAttribute('tabindex', '0');
-    node.setAttribute('role', 'button');
-    node.setAttribute('aria-label', `${UF_NAMES[uf] || uf}: ${stepMeta.formatVal(d[stepMeta.metricKey])}`);
+      const node = p.node();
+      node.setAttribute('tabindex', '0');
+      node.setAttribute('role', 'button');
+      bindTooltipEvents(node, tipCtrl, () => {
+        const curD = st.byUf.get(uf);
+        return curD ? buildStateTooltipCard(curD, st.currentStep) : '';
+      }, {
+        focusable: true,
+        onEnter: () => { if (st.onHoverUF) st.onHoverUF(uf); },
+        onLeave: () => { if (st.onHoverUF) st.onHoverUF(null); },
+      });
 
-    bindTooltipEvents(node, tipCtrl, () => buildStateTooltipCard(d, step), {
-      focusable: true,
-      onEnter: () => { if (onHoverUF) onHoverUF(uf); },
-      onLeave: () => { if (onHoverUF) onHoverUF(null); },
-    });
-
-    if (onSelectUF) {
       p.on('click', (evt) => {
         evt.stopPropagation();
-        onSelectUF(uf);
+        if (st.onSelectUF) st.onSelectUF(uf);
       });
       p.on('keydown', (evt) => {
         if (evt.key === 'Enter' || evt.key === ' ') {
           evt.preventDefault();
-          onSelectUF(uf);
+          if (st.onSelectUF) st.onSelectUF(uf);
         }
       });
+    });
+
+    // Leader lines pré-montadas para os 8 estados compactos (RN..RJ)
+    const topPad = 24;
+    const botPad = svgH - 22;
+    const stepY = (botPad - topPad) / Math.max(1, COMPACT_UFS.length - 1);
+    COMPACT_UFS.forEach((uf, idx) => {
+      const centroid = centroids.get(uf);
+      if (!centroid) return;
+      const calloutY = topPad + idx * stepY;
+      const elbowX = Math.max(centroid[0] + 18, svgW - 36);
+      const lg = lineLayer.append('g').attr('data-line-uf', uf);
+      const line = lg.append('polyline')
+        .attr('points', `${centroid[0]},${centroid[1]} ${elbowX},${calloutY} ${svgW},${calloutY}`)
+        .attr('fill', 'none')
+        .attr('stroke', '#94A3B8')
+        .attr('stroke-width', 1);
+      const dot = lg.append('circle')
+        .attr('cx', centroid[0])
+        .attr('cy', centroid[1])
+        .attr('r', 2.2)
+        .attr('fill', '#94A3B8');
+      const lNode = line.node();
+      const lLen = typeof lNode.getTotalLength === 'function' ? lNode.getTotalLength() : 0;
+      lineEls.set(uf, lNode);
+      dotEls.set(uf, dot.node());
+      lineLens.set(uf, lLen);
+    });
+  }
+
+  // Atualiza referências dinâmicas no estado persistido
+  st.currentStep = clampedStep;
+  st.prevStep = prevStep;
+  st.currentData = geoData;
+  st.byUf = byUf;
+  st.selectedUF = selectedUF;
+  st.onHoverUF = onHoverUF;
+  st.onSelectUF = onSelectUF;
+  st.onClearUF = onClearUF;
+  st.svg.attr('aria-label', `Mapa geográfico das 27 UFs: ${stepMeta.badge}`);
+
+  const animate = shouldAnimate();
+  const focusUF = hoveredUF || selectedUF;
+
+  if (clampedStep !== prevStep) st.tipCtrl.hide();
+  if (st.tl) st.tl.kill();
+  const tl = gsap.timeline();
+  st.tl = tl;
+
+  let newRingOrder = 0;
+  let newLineOrder = 0;
+
+  rows.forEach((d) => {
+    const uf = d.uf;
+    const polyNode = st.polyEls.get(uf);
+    const ringNode = st.ringEls.get(uf);
+    if (!polyNode) return;
+
+    const rank = top5RankMap.get(uf);
+    const isTop5 = Boolean(rank);
+    const stars = revealedStarsAt(d, clampedStep);
+    const prevStars = isFreshMount ? 0 : (st.prevStarsMap.get(uf) ?? 0);
+    const wasTop5 = !isFreshMount && st.prevTop5Set.has(uf);
+
+    const targetFill = isTop5
+      ? (rank === 1 ? '#C22D0C' : SEMANTIC_PALETTE.female)
+      : (stars > 0 && stepMeta.isSynthesis ? '#F9EFD4' : '#E6EEEA');
+    const isFocused = focusUF && focusUF === uf;
+    const isDimmed = Boolean(focusUF && focusUF !== uf);
+    const targetOpacity = isDimmed ? 0.45 : 1;
+    const targetStroke = isFocused ? SEMANTIC_PALETTE.ink : (isTop5 ? '#FFFFFF' : '#B9CAC2');
+    const targetStrokeW = isFocused ? 2.4 : (isTop5 ? 1.5 : 0.9);
+
+    polyNode.setAttribute('aria-label', `${UF_NAMES[uf] || uf}: ${stepMeta.formatVal(d[stepMeta.metricKey])}`);
+
+    if (animate) {
+      tl.to(polyNode, {
+        attr: { fill: targetFill, stroke: targetStroke, 'stroke-width': targetStrokeW },
+        fillOpacity: targetOpacity,
+        duration: 0.42,
+        ease: 'power2.inOut',
+      }, 0);
+    } else {
+      polyNode.setAttribute('fill', targetFill);
+      polyNode.setAttribute('fill-opacity', String(targetOpacity));
+      polyNode.setAttribute('stroke', targetStroke);
+      polyNode.setAttribute('stroke-width', String(targetStrokeW));
+    }
+
+    // Anel dourado cumulativo com svg-path-draw quando o estado entra no Top 5 estrutural
+    if (ringNode) {
+      const rLen = st.ringLens.get(uf) || 0;
+      const targetRingW = stars >= 2 ? 2.8 : 1.9;
+      const targetRingOp = stars > 0 ? (isDimmed ? 0.45 : 0.95) : 0;
+
+      if (animate && stars > 0 && prevStars === 0 && rLen > 0) {
+        const drawDelay = 0.08 + newRingOrder * 0.055;
+        newRingOrder += 1;
+        ringNode.style.strokeDasharray = `${rLen}`;
+        tl.fromTo(
+          ringNode,
+          { strokeDashoffset: rLen, strokeOpacity: 0.95, attr: { 'stroke-width': targetRingW } },
+          {
+            strokeDashoffset: 0,
+            strokeOpacity: targetRingOp,
+            duration: 0.56,
+            ease: 'power2.out',
+            onComplete: () => { ringNode.style.strokeDasharray = 'none'; },
+          },
+          drawDelay,
+        );
+      } else if (animate) {
+        ringNode.style.strokeDasharray = 'none';
+        ringNode.style.strokeDashoffset = '0';
+        tl.to(ringNode, {
+          strokeOpacity: targetRingOp,
+          attr: { 'stroke-width': targetRingW },
+          duration: stars === 0 ? 0.24 : 0.35,
+          ease: 'power1.out',
+        }, 0);
+      } else {
+        ringNode.style.strokeDasharray = 'none';
+        ringNode.style.strokeDashoffset = '0';
+        ringNode.setAttribute('stroke-opacity', String(targetRingOp));
+        ringNode.setAttribute('stroke-width', String(targetRingW));
+      }
+    }
+
+    // Rótulos internos apenas para os 19 estados amplos
+    const lbl = st.labelEls.get(uf);
+    if (lbl) {
+      const hasSub = isTop5 || stars > 0;
+      const subText = isTop5 ? `#${rank}` : (stars > 0 ? `★${stars}` : '');
+      lbl.uf.setAttribute('dy', hasSub ? '-2' : '3');
+      lbl.uf.setAttribute('fill', isTop5 ? '#FFFFFF' : SEMANTIC_PALETTE.ink);
+      lbl.uf.setAttribute('stroke', isTop5 ? 'rgba(194,45,12,0.5)' : 'rgba(255,255,255,0.75)');
+      lbl.sub.textContent = subText;
+      lbl.sub.setAttribute('fill', isTop5 ? '#F8DF4F' : '#8A5D00');
+      if (animate && isTop5 && !wasTop5) {
+        tl.fromTo(lbl.g, { opacity: 0.4, y: 4 }, { opacity: isDimmed ? 0.4 : 1, y: 0, duration: 0.3, ease: 'power2.out', clearProps: 'transform' }, 0.14);
+      } else {
+        lbl.g.style.opacity = isDimmed ? '0.4' : '1';
+      }
+    }
+
+    // Leader lines dos 8 estados compactos (svg-path-draw ao ganhar destaque)
+    if (COMPACT_SET.has(uf)) {
+      const lNode = st.lineEls.get(uf);
+      const dNode = st.dotEls.get(uf);
+      const lLen = st.lineLens.get(uf) || 0;
+      if (lNode && dNode) {
+        const lineColor = isTop5 ? SEMANTIC_PALETTE.female : (stars > 0 ? SEMANTIC_PALETTE.highlightInk : '#94A3B8');
+        const lineW = isTop5 || stars > 0 ? 1.65 : 1;
+        const dash = isTop5 || stars > 0 ? 'none' : '3,3';
+        const lineOp = isDimmed ? 0.35 : 0.92;
+        const dotR = isTop5 ? 3.4 : 2.2;
+
+        if (animate && ((isTop5 && !wasTop5) || (stars > 0 && prevStars === 0)) && lLen > 0) {
+          const lDelay = 0.06 + newLineOrder * 0.05;
+          newLineOrder += 1;
+          lNode.style.strokeDasharray = `${lLen}`;
+          tl.fromTo(
+            lNode,
+            { strokeDashoffset: lLen, opacity: lineOp, attr: { stroke: lineColor, 'stroke-width': lineW } },
+            {
+              strokeDashoffset: 0,
+              duration: 0.44,
+              ease: 'power2.out',
+              onComplete: () => { lNode.style.strokeDasharray = dash; },
+            },
+            lDelay,
+          );
+          tl.fromTo(
+            dNode,
+            { attr: { r: 0, fill: lineColor } },
+            { attr: { r: dotR }, duration: 0.3, ease: 'power3.out' },
+            lDelay,
+          );
+        } else {
+          lNode.style.strokeDasharray = dash;
+          lNode.style.strokeDashoffset = '0';
+          lNode.setAttribute('stroke', lineColor);
+          lNode.setAttribute('stroke-width', String(lineW));
+          lNode.style.opacity = String(lineOp);
+          dNode.setAttribute('fill', lineColor);
+          dNode.setAttribute('r', String(dotR));
+        }
+      }
     }
   });
 
-  // Leader lines conectando os 8 estados compactos aos seus callouts laterais (sem vazamento nos polígonos)
-  const topPad = 24;
-  const botPad = svgH - 22;
-  const stepY = (botPad - topPad) / Math.max(1, COMPACT_UFS.length - 1);
-
-  COMPACT_UFS.forEach((uf, idx) => {
-    const centroid = featureCentroids.get(uf);
-    const d = byUf.get(uf);
-    if (!centroid || !d) return;
-    const rank = top5RankMap.get(uf);
-    const isTop5 = Boolean(rank);
-    const stars = revealedCount(d);
-    const calloutY = topPad + idx * stepY;
-    const lineColor = isTop5
-      ? SEMANTIC_PALETTE.female
-      : (stars > 0 ? SEMANTIC_PALETTE.highlightInk : '#94A3B8');
-    const isDimmed = Boolean(focusUF && focusUF !== uf);
-
-    const lg = lineLayer.append('g').style('opacity', isDimmed ? 0.35 : 0.9);
-    lg.append('circle')
-      .attr('cx', centroid[0])
-      .attr('cy', centroid[1])
-      .attr('r', isTop5 ? 3.2 : 2.2)
-      .attr('fill', lineColor);
-
-    const elbowX = Math.max(centroid[0] + 18, svgW - 36);
-    lg.append('polyline')
-      .attr('points', `${centroid[0]},${centroid[1]} ${elbowX},${calloutY} ${svgW},${calloutY}`)
-      .attr('fill', 'none')
-      .attr('stroke', lineColor)
-      .attr('stroke-width', isTop5 || stars > 0 ? 1.6 : 1)
-      .attr('stroke-dasharray', isTop5 || stars > 0 ? null : '3,3');
-  });
-
-  // Callouts dedicados dos 8 estados compactos
+  // Atualiza os 8 callouts laterais dos estados compactos
   if (calloutsContainer) {
     calloutsContainer.innerHTML = COMPACT_UFS.map((uf) => {
       const d = byUf.get(uf);
       if (!d) return '';
       const rank = top5RankMap.get(uf);
       const isTop5 = Boolean(rank);
-      const stars = revealedCount(d);
+      const stars = revealedStarsAt(d, clampedStep);
       const isFocused = focusUF === uf;
 
       const cls = [
@@ -445,23 +672,38 @@ export function renderAto5MapStage(
       `;
     }).join('');
 
+    const newlyTopCallouts = [];
     calloutsContainer.querySelectorAll('.ato5-callout-pill').forEach((btn) => {
       const uf = btn.dataset.uf;
       const d = byUf.get(uf);
       if (!d) return;
-      bindTooltipEvents(btn, tipCtrl, () => buildStateTooltipCard(d, step), {
-        focusable: true,
-        onEnter: () => { if (onHoverUF) onHoverUF(uf); },
-        onLeave: () => { if (onHoverUF) onHoverUF(null); },
-      });
-      if (onSelectUF) {
-        btn.addEventListener('click', (evt) => {
-          evt.stopPropagation();
-          onSelectUF(uf);
-        });
+      if (top5RankMap.has(uf) && !st.prevTop5Set.has(uf)) {
+        newlyTopCallouts.push(btn);
       }
+      bindTooltipEvents(btn, st.tipCtrl, () => buildStateTooltipCard(d, st.currentStep), {
+        focusable: true,
+        onEnter: () => { if (st.onHoverUF) st.onHoverUF(uf); },
+        onLeave: () => { if (st.onHoverUF) st.onHoverUF(null); },
+      });
+      btn.addEventListener('click', (evt) => {
+        evt.stopPropagation();
+        if (st.onSelectUF) st.onSelectUF(uf);
+      });
     });
+
+    if (animate && newlyTopCallouts.length > 0 && clampedStep !== prevStep) {
+      tl.fromTo(
+        newlyTopCallouts,
+        { y: 5, scale: 0.96, opacity: 0.72 },
+        { y: 0, scale: 1, opacity: 1, duration: 0.34, stagger: 0.045, ease: 'power3.out', clearProps: 'transform,opacity' },
+        0.12,
+      );
+    }
   }
+
+  // Salva o snapshot deste passo para animar apenas deltas no próximo passo
+  st.prevTop5Set = new Set(top5.map((d) => d.uf));
+  st.prevStarsMap = new Map(rows.map((d) => [d.uf, revealedStarsAt(d, clampedStep)]));
 }
 
 export function highlightAto5UF(mapContainer, calloutsContainer, stepsContainer, targetUF) {
@@ -472,6 +714,13 @@ export function highlightAto5UF(mapContainer, calloutsContainer, stepsContainer,
         el.setAttribute('fill-opacity', '1');
       } else {
         el.setAttribute('fill-opacity', uf === targetUF ? '1' : '0.42');
+      }
+    });
+    mapContainer.querySelectorAll('.ato5-ring-layer path').forEach((el) => {
+      const uf = el.dataset.ufRing;
+      const curOp = Number(el.getAttribute('stroke-opacity') || 0);
+      if (curOp > 0) {
+        el.setAttribute('stroke-opacity', !targetUF || uf === targetUF ? '0.95' : '0.38');
       }
     });
   }

@@ -1,7 +1,8 @@
 import { SEMANTIC_PALETTE } from './palette.js';
+import { drawPath, revealAnnotation, shouldAnimate } from './motion.js';
 
 /**
- * Helper de anotação direta no SVG (callout curvo + ponto no alvo + halo legível).
+ * Helper de anotação direta no SVG (callout curvo + ponto no alvo + halo legível + entrada coreografada).
  */
 export function addDirectAnnotation(layer, {
   x1,
@@ -13,6 +14,7 @@ export function addDirectAnnotation(layer, {
   anchor = 'start',
   color = SEMANTIC_PALETTE.female,
   noLine = false,
+  animate = true,
 }) {
   const g = layer.append('g').attr('class', 'direct-annotation').style('pointer-events', 'none');
   const halo = (sel) => sel
@@ -24,19 +26,25 @@ export function addDirectAnnotation(layer, {
   if (!noLine) {
     const sy = y1 - 5 + (subtitle ? 19 : 5);
     const sx = anchor === 'end' ? x1 : x1 + 6;
-    g.append('path')
+    const p = g.append('path')
       .attr('d', `M ${sx},${sy} Q ${(sx + x2) / 2},${sy} ${x2},${y2}`)
       .attr('fill', 'none')
       .attr('stroke', color)
       .attr('stroke-width', 1.7)
       .attr('stroke-dasharray', '3,2');
-    g.append('circle')
+    if (animate && shouldAnimate()) {
+      drawPath(p, { duration: 420, delay: 180, preserveDash: '3,2' });
+    }
+    const dot = g.append('circle')
       .attr('cx', x2)
       .attr('cy', y2)
-      .attr('r', 4)
+      .attr('r', animate && shouldAnimate() ? 0 : 4)
       .attr('fill', color)
       .attr('stroke', '#FFFFFF')
       .attr('stroke-width', 1.5);
+    if (animate && shouldAnimate()) {
+      dot.transition().duration(240).delay(380).attr('r', 4);
+    }
   }
 
   const labelG = g.append('g').attr('transform', `translate(${x1}, ${y1 - 5})`);
@@ -61,5 +69,6 @@ export function addDirectAnnotation(layer, {
         .text(subtitle),
     );
   }
+  if (animate) revealAnnotation(labelG, { delay: 180, duration: 360 });
   return g;
 }

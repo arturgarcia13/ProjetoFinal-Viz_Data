@@ -1,19 +1,18 @@
 import * as d3 from 'd3';
 import { SEMANTIC_PALETTE } from './palette.js';
 import { addDirectAnnotation } from './annotate.js';
+import { animDelay, animDur, drawPath, MOTION, shouldAnimate } from './motion.js';
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtPct } from './tooltip.js';
 
 const SHORT = { REPUBLICANOS: 'REPUBL.', SOLIDARIEDADE: 'SOLID.', CIDADANIA: 'CIDAD.' };
 
 /**
- * H5 — Funil de conversão por partido (padrão do ensaio de referência).
- * Barras agrupadas (candidatas → votos → eleitas) ou linhas de queda (slopegraph).
- * Passos: 0 candidatas · 1 + votos nominais · 2 + eleitas.
+ * H5 — Funil de conversão por partido com constância de objeto bidirecional (step <-> prevStep).
  */
 export function renderH5Conversion(
   container,
   h5Data,
-  { step = 2, view = 'bars', width = 700, selectedParty = '', onSelectParty = null, onClearParty = null } = {},
+  { step = 2, prevStep = 2, view = 'bars', width = 700, selectedParty = '', onSelectParty = null, onClearParty = null } = {},
 ) {
   container.innerHTML = '';
   const parties = (h5Data?.byParty || []).map((p) => ({
@@ -29,15 +28,15 @@ export function renderH5Conversion(
   }
 
   const stages = [
-    { key: 'cand', label: '1. Candidatas', color: SEMANTIC_PALETTE.men, min: 0 },
+    { key: 'cand', label: '1. Candidatas', color: SEMANTIC_PALETTE.male, min: 0 },
     { key: 'votos', label: '2. Votos nominais', color: '#E5A910', min: 1 },
-    { key: 'eleitas', label: '3. Eleitas', color: SEMANTIC_PALETTE.alert, min: 2 },
+    { key: 'eleitas', label: '3. Eleitas', color: SEMANTIC_PALETTE.female, min: 2 },
   ];
 
   const isCompact = width < 460;
   const margin = { top: 34, right: 14, bottom: isCompact ? 64 : 44, left: 42 };
   const W = width - margin.left - margin.right;
-  const H = (isCompact ? 280 : 330);
+  const H = isCompact ? 280 : 330;
   const yMax = Math.max(44, Math.ceil((d3.max(parties, (p) => Math.max(p.cand, p.votos, p.eleitas)) + 4) / 10) * 10);
 
   const tipCtrl = createChartTooltip(container);
@@ -63,19 +62,23 @@ export function renderH5Conversion(
 
   const y30 = y(30);
   g.append('line').attr('x1', 0).attr('x2', W).attr('y1', y30).attr('y2', y30)
-    .attr('stroke', SEMANTIC_PALETTE.ok).attr('stroke-width', 2).attr('stroke-dasharray', '5,4');
+    .attr('stroke', SEMANTIC_PALETTE.emerald).attr('stroke-width', 2).attr('stroke-dasharray', '5,4');
   g.append('text').attr('x', W - 4).attr('y', y30 - 6).attr('text-anchor', 'end')
-    .attr('fill', SEMANTIC_PALETTE.ok).attr('font-size', 11).attr('font-weight', 700).text('Meta legal: 30%');
+    .attr('fill', SEMANTIC_PALETTE.emerald).attr('font-size', 11).attr('font-weight', 700).text('Meta legal: 30%');
 
   g.append('line').attr('x1', 0).attr('x2', W).attr('y1', H).attr('y2', H).attr('stroke', '#CBD5E1');
 
-  parties.forEach((p) => {
+  const animate = shouldAnimate();
+  const dur = animDur(520);
+
+  parties.forEach((p, pIdx) => {
     const gx = x0(p.party);
     const dimmed = selectedParty && selectedParty !== p.party;
+    const delay = animDelay(pIdx * 22);
     const row = g.append('g').attr('class', 'h5-party-row').attr('data-party', p.party)
       .attr('transform', `translate(${gx},0)`)
       .style('cursor', onSelectParty ? 'pointer' : 'default')
-      .style('opacity', dimmed ? 0.3 : 1).style('transition', 'opacity 0.4s ease');
+      .style('opacity', dimmed ? 0.3 : 1);
 
     row.append('rect').attr('x', -6).attr('y', 0).attr('width', x0.bandwidth() + 12).attr('height', H + margin.bottom - 6).attr('fill', 'transparent');
 
@@ -86,25 +89,41 @@ export function renderH5Conversion(
       .attr('transform', isCompact ? `rotate(-90 ${lx} ${H + 10})` : null)
       .attr('dy', isCompact ? '0.35em' : null)
       .attr('font-size', isCompact ? 9.5 : 10.5).attr('font-weight', 700)
-      .attr('fill', selectedParty === p.party ? SEMANTIC_PALETTE.alert : SEMANTIC_PALETTE.ink).text(label);
+      .attr('fill', selectedParty === p.party ? SEMANTIC_PALETTE.female : SEMANTIC_PALETTE.ink).text(label);
 
-    const visible = stages.filter((s) => step >= s.min);
     if (view === 'bars') {
-      visible.forEach((s) => {
-        row.append('rect').attr('class', `h5-bar h5-bar-${s.key}`)
+      stages.forEach((s) => {
+        const wasShown = prevStep >= s.min;
+        const isShown = step >= s.min;
+        if (!wasShown && !isShown) return;
+        const targetY = y(p[s.key]);
+        const targetH = H - targetY;
+        const bar = row.append('rect').attr('class', `h5-bar h5-bar-${s.key}`)
           .attr('x', x1(s.key)).attr('width', x1.bandwidth()).attr('rx', 2).attr('fill', s.color)
-          .attr('y', H).attr('height', 0)
-          .transition().duration(520).attr('y', y(p[s.key])).attr('height', H - y(p[s.key]));
+          .attr('y', animate ? (wasShown ? targetY : H) : (isShown ? targetY : H))
+          .attr('height', animate ? (wasShown ? targetH : 0) : (isShown ? targetH : 0));
+        if (animate && wasShown !== isShown) {
+          bar.transition().duration(dur).delay(delay).ease(MOTION.easeOut)
+            .attr('y', isShown ? targetY : H)
+            .attr('height', isShown ? targetH : 0);
+        }
       });
     } else {
+      const visible = stages.filter((s) => step >= s.min);
       const pts = visible.map((s) => ({ s, cx: x1(s.key) + x1.bandwidth() / 2, cy: y(p[s.key]) }));
       if (pts.length > 1) {
-        row.append('path').datum(pts).attr('d', d3.line().x((d) => d.cx).y((d) => d.cy))
-          .attr('fill', 'none').attr('stroke', p.eleitas >= 30 ? SEMANTIC_PALETTE.ok : '#94A3B8')
+        const slopePath = row.append('path').datum(pts).attr('d', d3.line().x((d) => d.cx).y((d) => d.cy))
+          .attr('fill', 'none').attr('stroke', p.eleitas >= 30 ? SEMANTIC_PALETTE.emerald : '#94A3B8')
           .attr('stroke-width', p.eleitas >= 30 ? 3 : 2).attr('stroke-opacity', 0.88);
+        if (animate && step > prevStep) drawPath(slopePath, { duration: 480, delay });
       }
       pts.forEach((pt) => {
-        row.append('circle').attr('class', 'h5-bar').attr('cx', pt.cx).attr('cy', pt.cy).attr('r', 4.6).attr('fill', pt.s.color);
+        const isNew = animate && step > prevStep && pt.s.min === step;
+        const c = row.append('circle').attr('class', 'h5-bar')
+          .attr('cx', pt.cx).attr('cy', pt.cy)
+          .attr('r', isNew ? 0 : 4.6)
+          .attr('fill', pt.s.color);
+        if (isNew) c.transition().duration(320).delay(delay + 120).ease(MOTION.easeOut).attr('r', 4.6);
       });
     }
 
@@ -117,7 +136,7 @@ export function renderH5Conversion(
       rows: [
         { label: '1. Candidatas', value: fmtPct(p.cand) },
         { label: '2. Votos nominais', value: fmtPct(p.votos) },
-        { label: '3. Eleitas', value: fmtPct(p.eleitas) },
+        { label: '3. Eleitas', value: fmtPct(p.eleitas), focus: true },
       ],
       hint: 'Clique para destacar o partido nos demais gráficos',
     }), { focusable: true });
@@ -127,7 +146,6 @@ export function renderH5Conversion(
     }
   });
 
-  // Anotações diretas por passo
   const annG = g.append('g');
   if (step === 1) {
     const worst = [...parties].sort((a, b) => (b.cand - b.votos) - (a.cand - a.votos))[0];
@@ -138,6 +156,7 @@ export function renderH5Conversion(
         x1: Math.max(70, tx - 110), y1: Math.max(24, ty - 40), x2: tx, y2: ty - 4,
         title: `${worst.party}: −${(worst.cand - worst.votos).toFixed(1).replace('.', ',')} p.p. já na urna`,
         subtitle: 'Votos concentram-se nos homens', color: '#7A5200',
+        animate: prevStep !== 1,
       });
     }
   }
@@ -147,8 +166,9 @@ export function renderH5Conversion(
       const tx = x0(best.party) + x1('eleitas') + x1.bandwidth() / 2;
       const ty = y(best.eleitas);
       addDirectAnnotation(annG, {
-        x1: Math.min(W - 120, tx + 40), y1: Math.max(24, ty - 24), x2: tx + 3, y2: ty - 3,
-        title: `${best.party}: maior fatia de eleitas`, subtitle: `${fmtPct(best.eleitas)} das cadeiras`, color: SEMANTIC_PALETTE.ok,
+        x1: Math.min(W - 140, tx + 40), y1: Math.max(24, ty - 24), x2: tx + 3, y2: ty - 3,
+        title: `${best.party}: maior fatia de eleitas`, subtitle: `${fmtPct(best.eleitas)} das cadeiras`, color: SEMANTIC_PALETTE.emerald,
+        animate: prevStep < 2,
       });
     }
   }

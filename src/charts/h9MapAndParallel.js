@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { IBGE_TO_UF, UF_NAMES } from '../data.js';
 import { SEMANTIC_PALETTE } from './palette.js';
+import { animDur, MOTION, shouldAnimate } from './motion.js';
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtPct } from './tooltip.js';
 
 export const H9_METRICS = [
@@ -28,10 +29,11 @@ function cellColors(val, kind) {
 }
 
 /**
- * H9 (Painel 1) — Mapa Coroplético Quantitativo das 27 UFs (data/br_uf.json).
+ * H9 (Painel 1) — Mapa Coroplético Quantitativo das 27 UFs com transição suave entre passos.
  */
 export function renderUFMap(container, brUfGeo, h9MatrixData, {
   step = 2,
+  prevStep = 2,
   width = 420,
   metric = 'pctEleitasF',
   selectedUF = '',
@@ -75,6 +77,13 @@ export function renderUFMap(container, brUfGeo, h9MatrixData, {
   const projection = d3.geoMercator().fitExtent([[12, 8], [width - 12, height - 50]], brUfGeo);
   const path = d3.geoPath(projection);
 
+  const opacityOf = (uf, st) => {
+    if (selectedUF) return selectedUF === uf ? 1 : 0.3;
+    if (st === 1 && extremeKeys.size > 0) return extremeKeys.has(uf) ? 1 : 0.32;
+    return 1;
+  };
+  const animate = shouldAnimate();
+
   const ufPaths = svg.append('g')
     .selectAll('path')
     .data(brUfGeo.features)
@@ -90,9 +99,7 @@ export function renderUFMap(container, brUfGeo, h9MatrixData, {
     })
     .attr('fill-opacity', (d) => {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
-      if (selectedUF) return selectedUF === uf ? 1 : 0.3;
-      if (step === 1 && extremeKeys.size > 0) return extremeKeys.has(uf) ? 1 : 0.35;
-      return 1;
+      return animate ? opacityOf(uf, prevStep) : opacityOf(uf, step);
     })
     .attr('stroke', (d) => {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
@@ -108,6 +115,11 @@ export function renderUFMap(container, brUfGeo, h9MatrixData, {
       const uf = IBGE_TO_UF[String(d.properties.codarea)];
       if (uf && onSelectUF) onSelectUF(uf);
     });
+
+  if (animate && step !== prevStep) {
+    ufPaths.transition().duration(animDur(420)).ease(MOTION.easeOut)
+      .attr('fill-opacity', (d) => opacityOf(IBGE_TO_UF[String(d.properties.codarea)], step));
+  }
 
   ufPaths.each(function (d) {
     const uf = IBGE_TO_UF[String(d.properties.codarea)];
@@ -151,7 +163,6 @@ export function renderUFMap(container, brUfGeo, h9MatrixData, {
     );
   });
 
-  // Legenda contínua
   const legW = Math.min(185, width - 110);
   const gradId = `h9-map-grad-${isAlert ? 'alert' : 'parity'}`;
   const grad = svg.append('defs').append('linearGradient')
@@ -329,9 +340,7 @@ export function renderH9HeatmapMatrix(container, h9MatrixData, {
   const clearBar = document.createElement('div');
   clearBar.className = 'h9-clear-bar';
   const hintSpan = document.createElement('span');
-  hintSpan.textContent = selectedEntity
-    ? `Destaque ativo: ${selectedEntity}`
-    : 'Clique na linha para destacar';
+  hintSpan.textContent = selectedEntity ? `Destaque ativo: ${selectedEntity}` : 'Clique na linha para destacar';
   clearBar.appendChild(hintSpan);
   if (selectedEntity && onClearEntity) {
     const clrBtn = document.createElement('button');

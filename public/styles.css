@@ -342,8 +342,11 @@ code {
 .story-progress i {
   display: block;
   height: 100%;
-  width: 0;
+  width: 100%;
   background: var(--color-highlight);
+  transform-origin: left center;
+  transform: scaleX(0);
+  will-change: transform;
 }
 
 .error-banner {
@@ -686,7 +689,10 @@ code {
   margin-bottom: 30vh;
   opacity: 0.4;
   transform: translateY(8px);
-  transition: opacity 0.35s ease, transform 0.35s ease, border-top-color 0.35s ease, box-shadow 0.35s ease;
+  transition: opacity 0.42s cubic-bezier(0.2, 0, 0, 1),
+    transform 0.42s cubic-bezier(0.2, 0, 0, 1),
+    border-top-color 0.35s ease,
+    box-shadow 0.42s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .step-card:first-child {
@@ -810,11 +816,19 @@ code {
   background: transparent;
   padding: 0;
   cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1),
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.step-dot:hover {
+  transform: scale(1.22);
 }
 
 .step-dot.is-on {
   background: var(--color-female);
   border-color: var(--color-female);
+  transform: scale(1.15);
 }
 
 .chart-conclusive-title {
@@ -1536,6 +1550,93 @@ code {
   }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .chart-tooltip {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.14s cubic-bezier(0.2, 0, 0, 1),
+      transform 0.14s cubic-bezier(0.2, 0, 0, 1),
+      display 0.14s allow-discrete;
+  }
+
+  .chart-tooltip[hidden] {
+    display: none;
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  @starting-style {
+    .chart-tooltip:not([hidden]) {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+
+  @keyframes heroFadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .hero-inner > * {
+    animation: heroFadeUp 0.58s cubic-bezier(0.2, 0, 0, 1) both;
+  }
+
+  @supports (animation-delay: calc(sibling-index() * 0.1s)) {
+    .hero-inner > * {
+      animation-delay: calc((sibling-index() - 1) * 75ms);
+    }
+  }
+
+  @supports not (animation-delay: calc(sibling-index() * 0.1s)) {
+    .hero-inner > *:nth-child(1) { animation-delay: 0ms; }
+    .hero-inner > *:nth-child(2) { animation-delay: 75ms; }
+    .hero-inner > *:nth-child(3) { animation-delay: 150ms; }
+    .hero-inner > *:nth-child(4) { animation-delay: 225ms; }
+    .hero-inner > *:nth-child(5) { animation-delay: 300ms; }
+    .hero-inner > *:nth-child(6) { animation-delay: 375ms; }
+  }
+
+  @supports ((animation-timeline: scroll()) and (animation-range: 0% 100%)) {
+    @keyframes heroSilhouetteParallax {
+      from {
+        transform: translateY(0);
+      }
+      to {
+        transform: translateY(48px);
+      }
+    }
+
+    .hero-section {
+      view-timeline: --hero-tl block;
+    }
+
+    .hero-silhouettes-bg {
+      will-change: transform;
+      animation: heroSilhouetteParallax linear both;
+      animation-timeline: --hero-tl;
+      animation-range: exit-crossing 0% exit 100%;
+    }
+  }
+
+  .reveal-ready {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s cubic-bezier(0.2, 0, 0, 1),
+      transform 0.6s cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  .reveal-ready.is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -1544,13 +1645,15 @@ code {
     transition: none !important;
     animation: none !important;
   }
-  .step-card {
+  .step-card,
+  .reveal-ready {
     opacity: 1 !important;
     transform: none !important;
   }
 }
 
-body.scrolly-static .step-card {
+body.scrolly-static .step-card,
+body.scrolly-static .reveal-ready {
   opacity: 1;
   transform: none;
 }

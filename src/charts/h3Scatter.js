@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { SEMANTIC_PALETTE } from './palette.js';
 import { addDirectAnnotation } from './annotate.js';
+import { animDelay, animDur, drawPath, MOTION, shouldAnimate } from './motion.js';
 import {
   bindTooltipEvents,
   buildTooltipCard,
@@ -22,13 +23,14 @@ function fmtDeficitCompact(deficitBrl) {
 
 /**
  * H3 — Dispersão % Candidatas × % Fundo Público por partido (ADI 5617)
- * Com diagonal Y=X, zoom (até 48% vs todos), crosshair e repulsão determinística de rótulos.
+ * Com desenho da diagonal Y=X no passo 0 e entrada coreografada das bolhas no passo 1.
  */
 export function renderH3Scatter(
   container,
   h3Data,
   {
     step = 2,
+    prevStep = 2,
     width = 720,
     zoomMode = 'majority',
     selectedParty = '',
@@ -108,13 +110,14 @@ export function renderH3Scatter(
     .style('font-weight', '700')
     .text(isCompact ? '↓ Subfinanciamento (< Y=X)' : '↓ ZONA DE SUBFINANCIAMENTO (Repasse menor que o peso na chapa)');
 
-  g.append('line')
-    .attr('x1', 0)
-    .attr('y1', H)
-    .attr('x2', W)
-    .attr('y2', 0)
+  const diagLine = g.append('path')
+    .attr('d', `M 0,${H} L ${W},0`)
+    .attr('fill', 'none')
     .attr('stroke', SEMANTIC_PALETTE.highlightInk)
     .attr('stroke-width', 2.4);
+  if (step === 0 && shouldAnimate()) {
+    drawPath(diagLine, { duration: 640 });
+  }
 
   if (domainMin <= 30 && domainMax >= 30) {
     const x30 = x(30);
@@ -164,7 +167,7 @@ export function renderH3Scatter(
   const annotG = g.append('g');
 
   if (step >= 1) {
-    // Maiores ao fundo, menores à frente
+    const animateEnter = shouldAnimate() && prevStep === 0;
     const ordered = [...visibleParties].sort((a, b) => b.pubTotal - a.pubTotal);
     const placedBoxes = [];
 
@@ -179,13 +182,20 @@ export function renderH3Scatter(
       .attr('data-party', (d) => d.party)
       .attr('cx', (d) => x(d.xPct))
       .attr('cy', (d) => y(d.yPct))
-      .attr('r', (d) => rScale(d.pubTotal))
+      .attr('r', (d) => (animateEnter ? 0 : rScale(d.pubTotal)))
       .attr('fill', (d) => (d.yPct < d.xPct ? SEMANTIC_PALETTE.female : SEMANTIC_PALETTE.emerald))
       .attr('fill-opacity', (d) => (selectedParty ? (selectedParty === d.party ? 0.95 : 0.22) : 0.82))
       .attr('stroke', (d) => (selectedParty === d.party ? SEMANTIC_PALETTE.ink : '#FFFFFF'))
       .attr('stroke-width', (d) => (selectedParty === d.party ? 2.4 : 1.6));
 
-    // Rótulos seletivos sem colisão entre si nem com círculos ou limites do plot
+    if (animateEnter) {
+      circles.transition()
+        .duration(animDur(480))
+        .delay((_, i) => animDelay(Math.min(280, i * 16)))
+        .ease(MOTION.easeOut)
+        .attr('r', (d) => rScale(d.pubTotal));
+    }
+
     ordered.forEach((d) => {
       const px = x(d.xPct);
       const py = y(d.yPct);
@@ -212,7 +222,7 @@ export function renderH3Scatter(
         });
         if (hitsCircle) continue;
         placedBoxes.push({ x: lx, y: ly, w, h });
-        labelsG.append('text')
+        const txt = labelsG.append('text')
           .attr('data-party', d.party)
           .attr('x', lx + w / 2)
           .attr('y', ly + h - 2)
@@ -223,8 +233,11 @@ export function renderH3Scatter(
           .attr('paint-order', 'stroke')
           .attr('stroke', '#FFFFFF')
           .attr('stroke-width', 3)
-          .style('opacity', selectedParty && selectedParty !== d.party ? 0.25 : 1)
+          .style('opacity', animateEnter ? 0 : (selectedParty && selectedParty !== d.party ? 0.25 : 1))
           .text(d.party);
+        if (animateEnter) {
+          txt.transition().duration(260).delay(240).style('opacity', selectedParty && selectedParty !== d.party ? 0.25 : 1);
+        }
         break;
       }
     });
@@ -289,6 +302,7 @@ export function renderH3Scatter(
         title: `${worstGap.party} (${fmtPct(worstGap.yPct)} verba)`,
         subtitle: `Déficit de ${fmtDeficitCompact(worstGap.deficitBrl)}`,
         color: '#D93814',
+        animate: animateEnter,
       });
     }
   }

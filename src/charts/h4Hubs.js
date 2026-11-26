@@ -1,13 +1,13 @@
 import * as d3 from 'd3';
 import { SEMANTIC_PALETTE } from './palette.js';
+import { animDelay, animDur, drawPath, MOTION, shouldAnimate } from './motion.js';
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtCompactBrl, fmtInt, fmtPct } from './tooltip.js';
 
 /**
- * H4 (Passo 2) — Rede Bipartida Real de Fornecedores-Hub (data/network_hubs.json).
- * Mostra os principais fornecedores compartilhados e a divisão entre candidaturas de baixa votação e demais.
- * Layout dimensionado para 0 cortes/clipping em desktop e mobile (390px).
+ * H4 (Passo 2) — Rede Bipartida Real de Fornecedores-Hub (data/network_hubs.json)
+ * com desenho progressivo dos elos a partir dos hubs centrais.
  */
-export function renderH4Hubs(container, yearData, { width = 740, year = 2022, uf = '', party = '' } = {}) {
+export function renderH4Hubs(container, yearData, { width = 740, year = 2022, uf = '', party = '', animate = true } = {}) {
   container.innerHTML = '';
   let hubsAll = yearData?.hubs || [];
   if (uf) hubsAll = hubsAll.filter((h) => h.uf === uf);
@@ -22,6 +22,7 @@ export function renderH4Hubs(container, yearData, { width = 740, year = 2022, uf
   const isCompact = width < 480;
   const svgW = width;
   const svgH = isCompact ? 310 : 350;
+  const doAnim = animate && shouldAnimate();
 
   const tipCtrl = createChartTooltip(container, { wrapClass: 'h4-hubs-wrap' });
   const svg = d3.select(tipCtrl.wrap).append('svg')
@@ -69,53 +70,63 @@ export function renderH4Hubs(container, yearData, { width = 740, year = 2022, uf
     const rest = Math.max(0, (h.candsN || 0) - low);
     const rawName = h.label || h.hid || `Hub ${i + 1}`;
     const shortName = rawName.length > (isCompact ? 22 : 32) ? `${rawName.slice(0, isCompact ? 21 : 31)}…` : rawName;
+    const delay = animDelay(i * 65);
 
-    svg.append('line')
-      .attr('x1', xL)
-      .attr('x2', cx - r)
-      .attr('y1', cy)
-      .attr('y2', cy)
+    const pLeft = svg.append('path')
+      .attr('d', `M ${cx - r},${cy} L ${xL},${cy}`)
+      .attr('fill', 'none')
       .attr('stroke', SEMANTIC_PALETTE.female)
       .attr('stroke-opacity', 0.56)
       .attr('stroke-width', wScale(low));
+    if (doAnim) drawPath(pLeft, { duration: 480, delay });
 
-    svg.append('line')
-      .attr('x1', cx + r)
-      .attr('x2', xR)
-      .attr('y1', cy)
-      .attr('y2', cy)
+    const pRight = svg.append('path')
+      .attr('d', `M ${cx + r},${cy} L ${xR},${cy}`)
+      .attr('fill', 'none')
       .attr('stroke', SEMANTIC_PALETTE.male)
       .attr('stroke-opacity', 0.5)
       .attr('stroke-width', wScale(rest));
+    if (doAnim) drawPath(pRight, { duration: 480, delay });
 
-    svg.append('text')
+    const txtL = svg.append('text')
       .attr('x', xL - 8)
       .attr('y', cy + 4)
       .attr('text-anchor', 'end')
       .attr('fill', '#D93814')
       .style('font-size', isCompact ? '9.5px' : '11px')
       .style('font-weight', '700')
+      .style('opacity', doAnim ? 0 : 1)
       .text(isCompact ? `${low} cand.` : `${low} candidaturas`);
 
-    svg.append('text')
+    const txtR = svg.append('text')
       .attr('x', xR + 8)
       .attr('y', cy + 4)
       .attr('text-anchor', 'start')
       .attr('fill', SEMANTIC_PALETTE.ink)
       .style('font-size', isCompact ? '9.5px' : '11px')
       .style('font-weight', '700')
+      .style('opacity', doAnim ? 0 : 1)
       .text(isCompact ? `${rest} cand.` : `${rest} candidaturas`);
+
+    if (doAnim) {
+      txtL.transition().duration(260).delay(delay + 260).style('opacity', 1);
+      txtR.transition().duration(260).delay(delay + 260).style('opacity', 1);
+    }
 
     const node = svg.append('circle')
       .attr('class', 'h4-hub')
       .attr('cx', cx)
       .attr('cy', cy)
-      .attr('r', r)
+      .attr('r', doAnim ? 0 : r)
       .attr('fill', SEMANTIC_PALETTE.highlight)
       .attr('stroke', SEMANTIC_PALETTE.emerald)
       .attr('stroke-width', 2.2)
       .attr('tabindex', 0)
       .style('cursor', 'pointer');
+
+    if (doAnim) {
+      node.transition().duration(animDur(360)).delay(delay).ease(MOTION.easeOut).attr('r', r);
+    }
 
     halo(
       svg.append('text')

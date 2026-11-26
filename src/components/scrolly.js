@@ -1,7 +1,7 @@
 /**
  * Scrolly — passos de rolagem em split-screen (35% narrativa / 65% gráfico sticky).
- * Cria os botões .step-dots em cada palco, sincroniza o passo ativo via IntersectionObserver
- * (com rootMargin distinto para desktop e mobile) e suporta ?steps=full / prefers-reduced-motion.
+ * Cria os botões .step-dots em cada palco, envia (key, step, prevStep) para transições
+ * bidirecionais com constância de objeto e suporta ?steps=full / prefers-reduced-motion.
  */
 export const steps = {};
 
@@ -57,6 +57,26 @@ export function initScrolly(onStep) {
     applyStepUI(block, isStaticMode() ? FINAL_STEP : 0);
   });
 
+  // Revela divisores de atos e blocos finais suavemente ao entrarem no viewport
+  if (!isStaticMode() && typeof IntersectionObserver !== 'undefined') {
+    const revealEls = [...document.querySelectorAll('.act-divider, .recap, .boca-da-taca-section')];
+    revealEls.forEach((el) => el.classList.add('reveal-ready'));
+    const revObs = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-revealed');
+            revObs.unobserve(e.target);
+          }
+        });
+      },
+      { rootMargin: '0px 0px -10% 0px', threshold: 0.05 },
+    );
+    revealEls.forEach((el) => revObs.observe(el));
+  } else {
+    document.querySelectorAll('.act-divider, .recap, .boca-da-taca-section').forEach((el) => el.classList.add('is-revealed'));
+  }
+
   if (isStaticMode()) {
     document.body.classList.add('scrolly-static');
     return;
@@ -73,9 +93,10 @@ export function initScrolly(onStep) {
           if (!block) return;
           const key = block.dataset.chart;
           const idx = Number(entry.target.dataset.step);
-          if (steps[key] === idx) return;
+          const prevIdx = steps[key] ?? 0;
+          if (prevIdx === idx) return;
           applyStepUI(block, idx);
-          onStep(key, idx);
+          onStep(key, idx, prevIdx);
         });
       },
       { rootMargin: mobileMQ.matches ? '-62% 0px -22% 0px' : '-40% 0px -40% 0px' },

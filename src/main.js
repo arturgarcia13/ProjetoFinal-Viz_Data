@@ -14,6 +14,7 @@ import {
   countSignals,
 } from './indicators.js';
 import { renderHeroFunnel } from './charts/heroFunnel.js';
+import { tweenPctText } from './charts/motion.js';
 import { computeH1EightBins, renderH1Histogram } from './charts/h1Histogram.js';
 import { renderH2Dumbbell } from './charts/h2Dumbbell.js';
 import { renderH3Scatter } from './charts/h3Scatter.js';
@@ -257,21 +258,21 @@ function update() {
   const femAlerts = femApto.filter((c) => countSignals(c, state.threshold).total >= 2).length;
   const pctAlerts = femApto.length > 0 ? femAlerts / femApto.length : 0;
 
-  // Hero & Boca da Taça Readouts
-  setText('hero-val-cand', fmtPct(statsH5.pctCandF));
-  setText('hero-val-verba', fmtPct(statsH3.pctPubF));
-  setText('hero-val-eleitas', fmtPct(statsH5.pctEleitasF));
+  // Hero & Boca da Taça Readouts (com interpolação tabular suave)
+  tweenPctText(document.getElementById('hero-val-cand'), statsH5.pctCandF);
+  tweenPctText(document.getElementById('hero-val-verba'), statsH3.pctPubF);
+  tweenPctText(document.getElementById('hero-val-eleitas'), statsH5.pctEleitasF);
   renderHeroFunnel(document.getElementById('hero-funnel-holder'), {
     cand: statsH5.pctCandF * 100,
     verba: statsH3.pctPubF * 100,
     eleitas: statsH5.pctEleitasF * 100,
   });
 
-  setText('readout-cand', fmtPct(statsH5.pctCandF));
-  setText('readout-verba', fmtPct(statsH3.pctPubF));
-  setText('readout-votos', fmtPct(statsH5.pctVotosF));
-  setText('readout-eleitas', fmtPct(statsH5.pctEleitasF));
-  setText('readout-alertas', fmtPct(pctAlerts));
+  tweenPctText(document.getElementById('readout-cand'), statsH5.pctCandF);
+  tweenPctText(document.getElementById('readout-verba'), statsH3.pctPubF);
+  tweenPctText(document.getElementById('readout-votos'), statsH5.pctVotosF);
+  tweenPctText(document.getElementById('readout-eleitas'), statsH5.pctEleitasF);
+  tweenPctText(document.getElementById('readout-alertas'), pctAlerts);
 
   const extraBin = state.h1BinFilter ? ` · H1 ${state.h1BinFilter.range}` : '';
   const recorteLabel = `${state.year} · ${CARGO_LABEL[state.cargo]} · ${state.uf ? UF_NAMES[state.uf] : 'Brasil (27 UFs)'}${state.party ? ` · ${state.party}` : ''}${extraBin}`;
@@ -305,8 +306,9 @@ function update() {
   setText('h1-dyn-text', `${fmtPctDirect(qVal22, 1)} das chapas de 2022 ficam entre 30% e 33%; logo abaixo do piso (27%–30%) são ${fmtPctDirect(bVal22, 1)}. O piso funciona como alvo máximo.`);
 
   const cH1 = document.getElementById('canvas-h1');
-  R.h1 = () => renderH1Histogram(cH1, h1Data, {
-    step: stepOf('h1'),
+  R.h1 = (step = stepOf('h1'), prevStep = stepOf('h1')) => renderH1Histogram(cH1, h1Data, {
+    step,
+    prevStep,
     width: getCanvasWidth(cH1),
     mode: state.h1Mode,
     selectedBinId: state.h1BinFilter?.id || null,
@@ -343,8 +345,9 @@ function update() {
   setText('h2-dyn-pub', fmtPct(h2b.pubShareF));
 
   const cH2 = document.getElementById('canvas-h2');
-  R.h2 = () => renderH2Dumbbell(cH2, h2Gap, h2b, {
-    step: stepOf('h2'),
+  R.h2 = (step = stepOf('h2'), prevStep = stepOf('h2')) => renderH2Dumbbell(cH2, h2Gap, h2b, {
+    step,
+    prevStep,
     width: getCanvasWidth(cH2),
     activeYear: state.year,
     selectedParty: state.party,
@@ -364,8 +367,9 @@ function update() {
   setText('h3-dyn-deficit', `−${fmtCompactBrl(h3.totalDeficitBrl)}`);
 
   const cH3 = document.getElementById('canvas-h3');
-  R.h3 = () => renderH3Scatter(cH3, h3, {
-    step: stepOf('h3'),
+  R.h3 = (step = stepOf('h3'), prevStep = stepOf('h3')) => renderH3Scatter(cH3, h3, {
+    step,
+    prevStep,
     width: getCanvasWidth(cH3),
     zoomMode: state.h3Zoom,
     selectedParty: state.party,
@@ -382,17 +386,18 @@ function update() {
     : `Cerca de ${Math.round(flowStats.sharedPct)}% dos recursos (${fmtCompactBrl(flowStats.totShared)}) fluem para fornecedores compartilhados e ${fmtPctDirect(flowStats.partyPct, 1)} para partidos/terceiros`);
 
   const cH4 = document.getElementById('canvas-h4');
-  R.h4 = () => {
-    if (stepOf('h4') >= 2) {
+  R.h4 = (step = stepOf('h4'), prevStep = stepOf('h4')) => {
+    if (step >= 2) {
       const hubYear = APP_DATA.hubs?.years?.[String(state.year)] || APP_DATA.hubs?.years?.['2022'];
       renderH4Hubs(cH4, hubYear, {
         width: getCanvasWidth(cH4),
         year: state.year,
         uf: state.uf,
         party: state.party,
+        animate: prevStep < 2,
       });
     } else {
-      renderH4Sankey(cH4, flowStats, { step: stepOf('h4'), width: getCanvasWidth(cH4) });
+      renderH4Sankey(cH4, flowStats, { step, prevStep, width: getCanvasWidth(cH4) });
     }
   };
   R.h4();
@@ -406,8 +411,9 @@ function update() {
   setText('h5-dyn-drop', `${(h5.dropUrna * 100).toFixed(1).replace('.', ',')} p.p.`);
 
   const cH5 = document.getElementById('canvas-h5');
-  R.h5 = () => renderH5Conversion(cH5, h5, {
-    step: stepOf('h5'),
+  R.h5 = (step = stepOf('h5'), prevStep = stepOf('h5')) => renderH5Conversion(cH5, h5, {
+    step,
+    prevStep,
     view: state.h5View,
     width: getCanvasWidth(cH5),
     selectedParty: state.party,
@@ -431,7 +437,11 @@ function update() {
   setText('h6-dyn-ratio18', `${r18.toFixed(1).replace('.', ',')}×`);
 
   const cH6 = document.getElementById('canvas-h6');
-  R.h6 = () => renderH6Signals(cH6, h6Series, { step: stepOf('h6'), width: getCanvasWidth(cH6) });
+  R.h6 = (step = stepOf('h6'), prevStep = stepOf('h6')) => renderH6Signals(cH6, h6Series, {
+    step,
+    prevStep,
+    width: getCanvasWidth(cH6),
+  });
   R.h6();
 
   // H7
@@ -449,8 +459,9 @@ function update() {
   setText('title-h7', `Alertas no piso (30%–33,3%) caem de ${fmtPctDirect(fFloor22)} (2022) para ${fmtPctDirect(fFloor26)} (2026), migrando para chapas <30% (${fmtPctDirect(fLt30_26)})`);
 
   const cH7 = document.getElementById('canvas-h7');
-  R.h7 = () => renderH7Boxplot(cH7, h7Comp, {
-    step: stepOf('h7'),
+  R.h7 = (step = stepOf('h7'), prevStep = stepOf('h7')) => renderH7Boxplot(cH7, h7Comp, {
+    step,
+    prevStep,
     width: getCanvasWidth(cH7),
     show2018: state.h7Show2018,
   });
@@ -470,7 +481,11 @@ function update() {
   setText('h8-dyn-std', `${fmtPct(h8.byYear[2018].pctStd)} → ${fmtPct(h8.byYear[2026].pctStd)}`);
 
   const cH8 = document.getElementById('canvas-h8');
-  R.h8 = () => renderH8Temporal(cH8, h8, { step: stepOf('h8'), width: getCanvasWidth(cH8) });
+  R.h8 = (step = stepOf('h8'), prevStep = stepOf('h8')) => renderH8Temporal(cH8, h8, {
+    step,
+    prevStep,
+    width: getCanvasWidth(cH8),
+  });
   R.h8();
 
   // H9
@@ -512,9 +527,10 @@ function update() {
 
   const cH9Map = document.getElementById('canvas-h9-map');
   const cH9Mat = document.getElementById('canvas-h9-matrix');
-  R.h9 = () => {
+  R.h9 = (step = stepOf('h9'), prevStep = stepOf('h9')) => {
     renderUFMap(cH9Map, APP_DATA.brUf, h9MapData, {
-      step: stepOf('h9'),
+      step,
+      prevStep,
       width: Math.min(440, Math.max(280, cH9Map?.clientWidth || 380)),
       metric: state.h9Metric,
       selectedUF: state.uf,
@@ -673,7 +689,8 @@ function bindEvents() {
     const sinteseEl = document.getElementById('sintese');
     if (progressEl && sinteseEl) {
       const end = y + sinteseEl.getBoundingClientRect().bottom - vh;
-      progressEl.style.width = `${Math.max(0, Math.min(1, y / Math.max(1, end))) * 100}%`;
+      const ratio = Math.max(0, Math.min(1, y / Math.max(1, end)));
+      progressEl.style.transform = `scaleX(${ratio})`;
     }
     if (jumpBtn) jumpBtn.classList.toggle('is-ready', cur >= 6);
   };
@@ -704,11 +721,28 @@ async function init() {
   populateSelects();
   renderCoverageTable(APP_DATA.coverage);
 
-  initScrolly((key, idx) => {
+  initScrolly((key, idx, prevIdx) => {
     syncStepControlsVisibility(key, idx);
-    if (R[key]) R[key]();
-    // Atualiza título dinâmico dependente do passo (H1, H4)
-    if (key === 'h1' || key === 'h4') update();
+    if (R[key]) R[key](idx, prevIdx);
+    // Atualiza título dinâmico dependente do passo (H1, H4) sem re-executar animação de abertura
+    if (key === 'h1') {
+      const yr = idx >= 2 ? 2026 : 2022;
+      const h1B = computeH1EightBins(APP_DATA.candidates, { cargo: state.cargo, uf: state.uf, party: state.party });
+      const qB = h1B.bins.find((b) => b.isQuota);
+      const b27B = h1B.bins.find((b) => b.id === '27-30');
+      const isA = state.h1Mode === 'apto';
+      if (qB && b27B) {
+        const curQ = yr === 2026 ? (isA ? qB.a26.pct : qB.r26.pct) : (isA ? qB.a22.pct : qB.r22.pct);
+        const curB = yr === 2026 ? (isA ? b27B.a26.pct : b27B.r26.pct) : (isA ? b27B.a22.pct : b27B.r22.pct);
+        setText('title-h1', `Em ${yr}, ${fmtPctDirect(curQ, 0)} das chapas ficam na faixa de 30%–33%, contra ${fmtPctDirect(curB, 0)} na faixa logo abaixo (27%–30%)`);
+      }
+    }
+    if (key === 'h4') {
+      const fS = computeH4FlowStats(getScopedRows({ year: state.year }), { cohort: state.h4Cohort });
+      setText('title-h4', idx >= 2
+        ? `Principais fornecedores-hub (${state.year}) atendem dezenas de candidaturas simultaneamente, incluindo campanhas de baixa votação`
+        : `Cerca de ${Math.round(fS.sharedPct)}% dos recursos (${fmtCompactBrl(fS.totShared)}) fluem para fornecedores compartilhados e ${fmtPctDirect(fS.partyPct, 1)} para partidos/terceiros`);
+    }
   });
 
   ['h1', 'h3'].forEach((k) => syncStepControlsVisibility(k, stepOf(k)));

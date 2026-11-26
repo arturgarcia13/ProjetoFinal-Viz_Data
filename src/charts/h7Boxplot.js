@@ -2,16 +2,17 @@ import * as d3 from 'd3';
 import * as Plot from '@observablehq/plot';
 import { SEMANTIC_PALETTE } from './palette.js';
 import { addDirectAnnotation } from './annotate.js';
+import { animDelay, animDur, MOTION, shouldAnimate } from './motion.js';
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtInt, fmtPct } from './tooltip.js';
 
 /**
  * H7 — Lollipop Comparativo por Faixa de Cota na Chapa (Observable Plot + D3):
- * Taxa agregada de mulheres APTO com ≥2 sinais por faixa (< 30%, 30%–33,3%, 33,3%–40%, > 40%).
+ * Hastes sobem a partir do zero no passo 1; anotação direta destaca o piso no passo 2.
  */
 export function renderH7Boxplot(
   container,
   h7Comp,
-  { step = 2, width = 720, show2018 = false } = {},
+  { step = 2, prevStep = 2, width = 720, show2018 = false } = {},
 ) {
   container.innerHTML = '';
   const rows = h7Comp?.rows || [];
@@ -30,7 +31,6 @@ export function renderH7Boxplot(
     (d3.max(rows.flatMap((r) => activeYears.map((yr) => r[`y${yr}`]?.aggRatePct || 0))) || 4) * 1.28,
   );
 
-  // Estrutura de pontos para Observable Plot (grade, eixos e escala)
   const bandOrder = rows.map((r) => r.band);
   const tipCtrl = createChartTooltip(container, { wrapClass: 'h7-wrap' });
 
@@ -72,7 +72,6 @@ export function renderH7Boxplot(
   const x = d3.scaleBand().domain(bandOrder).range([margin.left, width - margin.right]).padding(0.2);
   const y = d3.scaleLinear().domain([0, maxY]).range([height - margin.bottom, margin.top]);
 
-  // Zonas de destaque para < 30% e 30%–33,3%
   rows.forEach((r) => {
     if (r.band === '30%–33,3%' || r.band === '< 30%') {
       svg.insert('rect', ':first-child')
@@ -95,6 +94,8 @@ export function renderH7Boxplot(
   });
 
   if (step >= 1) {
+    const animateEnter = shouldAnimate() && prevStep === 0;
+    const dur = animDur(540);
     const offsetStep = show2018
       ? Math.min(24, Math.max(15, x.bandwidth() * 0.26))
       : Math.min(18, Math.max(12, x.bandwidth() * 0.2));
@@ -106,35 +107,42 @@ export function renderH7Boxplot(
     };
 
     const baseY = y(0);
-    rows.forEach((r) => {
+    rows.forEach((r, bIdx) => {
       const cxCenter = x(r.band) + x.bandwidth() / 2;
       const bandLabels = [];
 
-      activeYears.forEach((yr) => {
+      activeYears.forEach((yr, yIdx) => {
         const ym = yearMeta[yr];
         const st = r[`y${yr}`];
         const cx = cxCenter + ym.offset;
         const cy = y(st.aggRatePct);
+        const delay = animDelay(bIdx * 55 + yIdx * 45);
 
-        svg.append('line')
+        const stem = svg.append('line')
           .attr('x1', cx)
           .attr('x2', cx)
           .attr('y1', baseY)
-          .attr('y2', cy)
+          .attr('y2', animateEnter ? baseY : cy)
           .attr('stroke', ym.color)
           .attr('stroke-opacity', 0.72)
           .attr('stroke-width', 2.4);
+        if (animateEnter) {
+          stem.transition().duration(dur).delay(delay).ease(MOTION.easeOut).attr('y2', cy);
+        }
 
         const dot = svg.append('circle')
           .attr('class', 'h7-agg-dot')
           .attr('cx', cx)
-          .attr('cy', cy)
-          .attr('r', 5.8)
+          .attr('cy', animateEnter ? baseY : cy)
+          .attr('r', animateEnter ? 0 : 5.8)
           .attr('fill', ym.hollow ? '#FFFFFF' : ym.color)
           .attr('stroke', ym.color)
           .attr('stroke-width', ym.hollow ? 2.2 : 1.2)
           .attr('tabindex', 0)
           .style('cursor', 'pointer');
+        if (animateEnter) {
+          dot.transition().duration(dur).delay(delay).ease(MOTION.easeOut).attr('cy', cy).attr('r', 5.8);
+        }
 
         bandLabels.push({
           cx,
@@ -142,6 +150,7 @@ export function renderH7Boxplot(
           ly: cy - 10,
           color: ym.color,
           text: fmtPct(st.aggRatePct, 1),
+          delay,
         });
 
         bindTooltipEvents(dot.node(), tipCtrl, () => {
@@ -166,7 +175,6 @@ export function renderH7Boxplot(
         }, { focusable: true });
       });
 
-      // Evita sobreposição entre rótulos da mesma faixa
       const minDx = isCompact ? 24 : 30;
       for (let pass = 0; pass < 4; pass += 1) {
         for (let i = 0; i < bandLabels.length; i += 1) {
@@ -182,7 +190,7 @@ export function renderH7Boxplot(
       }
 
       bandLabels.forEach((lbl) => {
-        svg.append('text')
+        const txt = svg.append('text')
           .attr('x', lbl.cx)
           .attr('y', lbl.ly)
           .attr('text-anchor', 'middle')
@@ -192,8 +200,12 @@ export function renderH7Boxplot(
           .attr('paint-order', 'stroke')
           .attr('stroke', '#FFFFFF')
           .attr('stroke-width', 2.8)
+          .style('opacity', animateEnter ? 0 : 1)
           .style('pointer-events', 'none')
           .text(lbl.text);
+        if (animateEnter) {
+          txt.transition().duration(260).delay(lbl.delay + 260).style('opacity', 1);
+        }
       });
     });
 
@@ -210,6 +222,7 @@ export function renderH7Boxplot(
           title: `Piso 2022: ${fmtPct(floorRow.y2022.aggRatePct, 1)}`,
           subtitle: `Cai p/ ${fmtPct(floorRow.y2026.aggRatePct, 1)} em 2026`,
           color: '#7A5200',
+          animate: prevStep < 2,
         });
       }
     }

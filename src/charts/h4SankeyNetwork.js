@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import { SEMANTIC_PALETTE } from './palette.js';
+import { animDur, MOTION, shouldAnimate } from './motion.js';
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtCompactBrl, fmtInt, fmtPct } from './tooltip.js';
 
 export function computeH4FlowStats(candidates, { cohort = 'all' } = {}) {
@@ -59,10 +60,9 @@ export function computeH4FlowStats(candidates, { cohort = 'all' } = {}) {
 }
 
 /**
- * H4 (Passos 0 e 1) — Sankey de Rastreamento de Receitas e Despesas TSE:
- * Fundo Público (FEFC/FP) → Candidatas (F) / Candidatos (M) → Fornecedor Compartilhado / Própria / Direção Partidária.
+ * H4 (Passos 0 e 1) — Sankey de Rastreamento de Receitas e Despesas TSE com revelação progressiva da 3ª coluna.
  */
-export function renderH4Sankey(container, flowStats, { step = 1, width = 740 } = {}) {
+export function renderH4Sankey(container, flowStats, { step = 1, prevStep = 1, width = 740 } = {}) {
   container.innerHTML = '';
   if (!flowStats || flowStats.totPub <= 0 || flowStats.totExp <= 0) {
     container.innerHTML = '<p class="chart-empty">Sem dados financeiros suficientes neste recorte.</p>';
@@ -93,6 +93,7 @@ export function renderH4Sankey(container, flowStats, { step = 1, width = 740 } =
   const col2X = W;
   const nodeW = isCompact ? 14 : 18;
   const showCol3 = step >= 1;
+  const animateCol3 = shouldAnimate() && showCol3 && prevStep === 0;
 
   const nTotal = {
     x: col0X,
@@ -128,7 +129,6 @@ export function renderH4Sankey(container, flowStats, { step = 1, width = 740 } =
   const avail2 = nTotal.h - gap2 * 2;
   const sharedShare = flowStats.totShared / flowStats.totExp;
   const partyShare = flowStats.totParty / flowStats.totExp;
-  const directShare = Math.max(0.05, 1 - sharedShare - partyShare);
 
   const hPartyNode = Math.max(10, avail2 * partyShare);
   const hSharedNode = Math.max(18, avail2 * sharedShare);
@@ -194,11 +194,15 @@ export function renderH4Sankey(container, flowStats, { step = 1, width = 740 } =
     ],
   }));
 
+  const col3G = g.append('g')
+    .style('opacity', animateCol3 ? 0 : 1)
+    .attr('transform', animateCol3 ? 'translate(-14, 0)' : 'translate(0, 0)');
+
   if (showCol3) {
     const fToSharedH = Math.min(nShared.h - 3, Math.max(3, nShared.h * (flowStats.fRatioShared / 100)));
     const mToSharedH = Math.max(3, nShared.h - fToSharedH);
 
-    const pFS = g.append('path')
+    const pFS = col3G.append('path')
       .attr('d', ribbonPath(nF.x + nodeW, nF.y, Math.min(nF.h * 0.65, fToSharedH), nShared.x, nShared.y, fToSharedH))
       .attr('fill', SEMANTIC_PALETTE.pink)
       .attr('fill-opacity', 0.68)
@@ -213,7 +217,7 @@ export function renderH4Sankey(container, flowStats, { step = 1, width = 740 } =
       ],
     }));
 
-    const pMS = g.append('path')
+    const pMS = col3G.append('path')
       .attr('d', ribbonPath(nM.x + nodeW, nM.y, Math.min(nM.h * 0.55, mToSharedH), nShared.x, nShared.y + fToSharedH, mToSharedH))
       .attr('fill', SEMANTIC_PALETTE.pink)
       .attr('fill-opacity', 0.36)
@@ -230,31 +234,36 @@ export function renderH4Sankey(container, flowStats, { step = 1, width = 740 } =
     const fDirectY0 = nF.y + Math.min(nF.h * 0.65, fToSharedH);
     const fDirectH = Math.max(3, nF.h - (fDirectY0 - nF.y) - 3);
     const fToDirectOut = Math.max(3, nDirect.h * (flowStats.fDirect / Math.max(1, flowStats.totDirect)));
-    g.append('path')
+    col3G.append('path')
       .attr('d', ribbonPath(nF.x + nodeW, fDirectY0, fDirectH, nDirect.x, nDirect.y, fToDirectOut))
       .attr('fill', SEMANTIC_PALETTE.female)
       .attr('fill-opacity', 0.18);
 
     const mDirectY0 = nM.y + Math.min(nM.h * 0.55, mToSharedH);
     const mDirectH = Math.max(3, nM.h - (mDirectY0 - nM.y) - 3);
-    g.append('path')
+    col3G.append('path')
       .attr('d', ribbonPath(nM.x + nodeW, mDirectY0, mDirectH, nDirect.x, nDirect.y + fToDirectOut, Math.max(3, nDirect.h - fToDirectOut)))
       .attr('fill', SEMANTIC_PALETTE.male)
       .attr('fill-opacity', 0.16);
 
-    g.append('path')
+    col3G.append('path')
       .attr('d', ribbonPath(nF.x + nodeW, nF.y + nF.h - 3, 3, nTransfer.x, nTransfer.y, nTransfer.h * 0.5))
       .attr('fill', SEMANTIC_PALETTE.female)
       .attr('fill-opacity', 0.3);
-    g.append('path')
+    col3G.append('path')
       .attr('d', ribbonPath(nM.x + nodeW, nM.y + nM.h - 3, 3, nTransfer.x, nTransfer.y + nTransfer.h * 0.5, nTransfer.h * 0.5))
       .attr('fill', SEMANTIC_PALETTE.male)
       .attr('fill-opacity', 0.25);
+
+    if (animateCol3) {
+      col3G.transition().duration(animDur(540)).ease(MOTION.easeOut)
+        .style('opacity', 1)
+        .attr('transform', 'translate(0, 0)');
+    }
   }
 
-  const activeNodes = showCol3 ? [nTotal, nF, nM, nShared, nDirect, nTransfer] : [nTotal, nF, nM];
-  activeNodes.forEach((n, idx) => {
-    const rect = g.append('rect')
+  const drawNode = (targetG, n, idx) => {
+    const rect = targetG.append('rect')
       .attr('x', n.x)
       .attr('y', n.y)
       .attr('width', nodeW)
@@ -267,7 +276,7 @@ export function renderH4Sankey(container, flowStats, { step = 1, width = 740 } =
     const textX = isRightCol ? n.x + nodeW + 9 : n.x;
     const textY = isRightCol ? n.y + n.h / 2 - 3 : n.y - 7;
 
-    g.append('text')
+    targetG.append('text')
       .attr('x', textX)
       .attr('y', textY)
       .attr('fill', SEMANTIC_PALETTE.ink)
@@ -278,7 +287,7 @@ export function renderH4Sankey(container, flowStats, { step = 1, width = 740 } =
       .attr('stroke-width', 3)
       .text(n.label);
 
-    g.append('text')
+    targetG.append('text')
       .attr('x', textX)
       .attr('y', textY + (isRightCol ? 13 : -12))
       .attr('fill', idx === 3 ? '#B8299E' : SEMANTIC_PALETTE.muted)
@@ -295,5 +304,10 @@ export function renderH4Sankey(container, flowStats, { step = 1, width = 740 } =
       badgeTone: idx === 3 ? 'floor' : 'neutral',
       rows: [{ label: 'Universo no recorte', value: `${fmtInt(flowStats.n)} candidaturas` }],
     }));
-  });
+  };
+
+  [nTotal, nF, nM].forEach((n, idx) => drawNode(g, n, idx));
+  if (showCol3) {
+    [nShared, nDirect, nTransfer].forEach((n, idx) => drawNode(col3G, n, idx + 3));
+  }
 }

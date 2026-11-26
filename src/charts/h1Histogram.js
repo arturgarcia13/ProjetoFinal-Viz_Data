@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { SEMANTIC_PALETTE } from './palette.js';
 import { addDirectAnnotation } from './annotate.js';
+import { animDelay, animDur, MOTION, shouldAnimate } from './motion.js';
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtInt, fmtPct, fmtSignedPP } from './tooltip.js';
 
 const BIN_DEFS = [
@@ -101,13 +102,14 @@ export function computeH1EightBins(candidates, { cargo = 'all', uf = '', party =
 }
 
 /**
- * H1 — Histograma Vertical (8 faixas) do Teto Burocrático (2022 vs. 2026).
+ * H1 — Histograma Vertical (8 faixas) com constância de objeto bidirecional (step <-> prevStep).
  */
 export function renderH1Histogram(
   container,
   h1EightData,
   {
     step = 2,
+    prevStep = 2,
     width = 720,
     mode = 'apto',
     selectedBinId = null,
@@ -216,9 +218,13 @@ export function renderH1Histogram(
 
   const show22 = step >= 1;
   const show26 = step >= 2;
+  const prevShow22 = prevStep >= 1;
+  const prevShow26 = prevStep >= 2;
+  const dur = animDur(560);
+  const animate = shouldAnimate();
   const barsG = g.append('g');
 
-  bins.forEach((b) => {
+  bins.forEach((b, idx) => {
     const v22 = val22(b);
     const v26 = val26(b);
     const col = barsG.append('g')
@@ -239,26 +245,43 @@ export function renderH1Histogram(
       .attr('stroke-width', 2);
 
     const w22 = show26 ? x.bandwidth() * 0.46 : x.bandwidth();
-    col.append('rect')
+    const prevW22 = prevShow26 ? x.bandwidth() * 0.46 : x.bandwidth();
+    const delay = animDelay(idx * 28);
+
+    const bar22 = col.append('rect')
       .attr('class', 'bar-2022')
       .attr('x', x(b.range))
-      .attr('width', w22)
+      .attr('width', animate ? prevW22 : w22)
       .attr('rx', 3)
-      .attr('fill', show26 ? SEMANTIC_PALETTE.male : SEMANTIC_PALETTE.female)
-      .attr('y', show22 ? y(v22) : H)
-      .attr('height', show22 ? H - y(v22) : 0);
+      .attr('fill', animate ? (prevShow26 ? SEMANTIC_PALETTE.male : SEMANTIC_PALETTE.female) : (show26 ? SEMANTIC_PALETTE.male : SEMANTIC_PALETTE.female))
+      .attr('y', animate ? (prevShow22 ? y(v22) : H) : (show22 ? y(v22) : H))
+      .attr('height', animate ? (prevShow22 ? H - y(v22) : 0) : (show22 ? H - y(v22) : 0));
 
-    col.append('rect')
+    if (animate) {
+      bar22.transition().duration(dur).delay(delay).ease(MOTION.easeOut)
+        .attr('width', w22)
+        .attr('fill', show26 ? SEMANTIC_PALETTE.male : SEMANTIC_PALETTE.female)
+        .attr('y', show22 ? y(v22) : H)
+        .attr('height', show22 ? H - y(v22) : 0);
+    }
+
+    const bar26 = col.append('rect')
       .attr('class', 'bar-2026')
       .attr('x', x(b.range) + x.bandwidth() * 0.52)
       .attr('width', x.bandwidth() * 0.46)
       .attr('rx', 3)
       .attr('fill', SEMANTIC_PALETTE.female)
-      .attr('y', show26 ? y(v26) : H)
-      .attr('height', show26 ? H - y(v26) : 0);
+      .attr('y', animate ? (prevShow26 ? y(v26) : H) : (show26 ? y(v26) : H))
+      .attr('height', animate ? (prevShow26 ? H - y(v26) : 0) : (show26 ? H - y(v26) : 0));
+
+    if (animate) {
+      bar26.transition().duration(dur).delay(delay).ease(MOTION.easeOut)
+        .attr('y', show26 ? y(v26) : H)
+        .attr('height', show26 ? H - y(v26) : 0);
+    }
 
     if (show22 && v22 >= 1) {
-      col.append('text')
+      const lbl22 = col.append('text')
         .attr('class', 'bar-label')
         .attr('x', x(b.range) + w22 / 2)
         .attr('y', y(v22) - 4)
@@ -266,10 +289,14 @@ export function renderH1Histogram(
         .attr('font-size', isCompact ? 8.5 : 10)
         .attr('font-weight', 700)
         .attr('fill', show26 ? SEMANTIC_PALETTE.male : '#D93814')
+        .style('opacity', animate && !prevShow22 ? 0 : 1)
         .text(fmtPct(v22, 0));
+      if (animate && !prevShow22) {
+        lbl22.transition().duration(260).delay(delay + 240).style('opacity', 1);
+      }
     }
     if (show26 && v26 >= 1) {
-      col.append('text')
+      const lbl26 = col.append('text')
         .attr('class', 'bar-label')
         .attr('x', x(b.range) + x.bandwidth() * 0.75)
         .attr('y', y(v26) - 4)
@@ -277,7 +304,11 @@ export function renderH1Histogram(
         .attr('font-size', isCompact ? 8.5 : 10)
         .attr('font-weight', 700)
         .attr('fill', '#D93814')
+        .style('opacity', animate && !prevShow26 ? 0 : 1)
         .text(fmtPct(v26, 0));
+      if (animate && !prevShow26) {
+        lbl26.transition().duration(260).delay(delay + 260).style('opacity', 1);
+      }
     }
 
     const node = col.node();
@@ -324,6 +355,7 @@ export function renderH1Histogram(
       title: `${fmtPct(peakVal)} no limite mínimo`,
       subtitle: `${fmtPct(belowVal)} logo abaixo do piso (27–30%)`,
       color: '#D93814',
+      animate: prevStep < 1,
     });
   }
 }

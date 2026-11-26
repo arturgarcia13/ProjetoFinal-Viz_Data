@@ -1,13 +1,14 @@
 import * as d3 from 'd3';
 import { SEMANTIC_PALETTE } from './palette.js';
 import { addDirectAnnotation } from './annotate.js';
+import { animDelay, animDur, drawPath, MOTION, shouldAnimate } from './motion.js';
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtInt, fmtPct, fmtSignedPP } from './tooltip.js';
 
 /**
  * H8 — Adaptação Tática 2018 → 2022 → 2026 (Contas Zeradas vs. Pacotes Padronizados em Lote).
- * Layout agrupado com linha tracejada da soma combinada no passo 2 (padrão do ensaio V2).
+ * Passo 0: 2018 e 2022 · Passo 1: iluminação suave de 2026 · Passo 2: desenho da soma combinada.
  */
-export function renderH8Temporal(container, h8Data, { step = 2, width = 720 } = {}) {
+export function renderH8Temporal(container, h8Data, { step = 2, prevStep = 2, width = 720 } = {}) {
   container.innerHTML = '';
   const byYear = h8Data?.byYear || {};
   const years = ['2018', '2022', '2026'].filter((yr) => byYear[yr] && byYear[yr].n > 0);
@@ -77,6 +78,8 @@ export function renderH8Temporal(container, h8Data, { step = 2, width = 720 } = 
     .call((a) => a.select('.domain').attr('stroke', '#CBD5E1'))
     .call((a) => a.selectAll('.tick text').attr('fill', SEMANTIC_PALETTE.ink).style('font-size', '12px').style('font-weight', '700'));
 
+  const animate = shouldAnimate();
+  const dur = animDur(500);
   const barsG = g.append('g');
   const grp = barsG.selectAll('.yr-g')
     .data(series)
@@ -91,29 +94,39 @@ export function renderH8Temporal(container, h8Data, { step = 2, width = 720 } = 
       { key: 'minStdPct', label: 'Lote Padronizado (Sinal C)', val: d.minStdPct, count: d.stdCount, color: SEMANTIC_PALETTE.pinkDeep },
     ];
 
-    items.forEach((it) => {
-      const dimmed = step === 0 && d.yr === '2026';
+    items.forEach((it, idx) => {
+      const wasDimmed = prevStep === 0 && d.yr === '2026';
+      const isDimmed = step === 0 && d.yr === '2026';
       const rect = rowG.append('rect')
         .attr('class', 'h8-dot')
         .attr('x', x1(it.key))
         .attr('width', x1.bandwidth())
         .attr('rx', 4)
         .attr('fill', it.color)
-        .attr('opacity', dimmed ? 0.2 : 1)
+        .attr('opacity', animate ? (wasDimmed ? 0.2 : 1) : (isDimmed ? 0.2 : 1))
         .attr('y', y(it.val))
         .attr('height', H - y(it.val))
         .attr('tabindex', 0)
         .style('cursor', 'pointer');
 
-      if (!dimmed) {
-        rowG.append('text')
+      if (animate && wasDimmed !== isDimmed) {
+        rect.transition().duration(dur).delay(animDelay(idx * 70)).ease(MOTION.easeOut)
+          .attr('opacity', isDimmed ? 0.2 : 1);
+      }
+
+      if (!isDimmed) {
+        const lbl = rowG.append('text')
           .attr('x', x1(it.key) + x1.bandwidth() / 2)
           .attr('y', y(it.val) - 5)
           .attr('text-anchor', 'middle')
           .attr('font-size', isCompact ? 9 : 10)
           .attr('font-weight', 700)
           .attr('fill', it.color)
+          .style('opacity', animate && wasDimmed ? 0 : 1)
           .text(fmtPct(it.val, 1));
+        if (animate && wasDimmed) {
+          lbl.transition().duration(260).delay(180).style('opacity', 1);
+        }
       }
 
       const s18 = series[0];
@@ -133,26 +146,28 @@ export function renderH8Temporal(container, h8Data, { step = 2, width = 720 } = 
   });
 
   if (step >= 2) {
+    const animateLine = animate && prevStep < 2;
     const lineGen = d3.line()
       .x((d) => x0(d.yr) + x0.bandwidth() / 2)
       .y((d) => y(d.combined));
 
-    barsG.append('path')
+    const combPath = barsG.append('path')
       .datum(series)
       .attr('d', lineGen)
       .attr('fill', 'none')
       .attr('stroke', SEMANTIC_PALETTE.male)
       .attr('stroke-width', 2.4)
       .attr('stroke-dasharray', '5,4');
+    if (animateLine) drawPath(combPath, { duration: 640, preserveDash: '5,4' });
 
-    series.forEach((d) => {
-      barsG.append('circle')
+    series.forEach((d, idx) => {
+      const delay = animDelay(idx * 150);
+      const dot = barsG.append('circle')
         .attr('cx', x0(d.yr) + x0.bandwidth() / 2)
         .attr('cy', y(d.combined))
-        .attr('r', 4.5)
+        .attr('r', animateLine ? 0 : 4.5)
         .attr('fill', SEMANTIC_PALETTE.male);
-
-      barsG.append('text')
+      const txt = barsG.append('text')
         .attr('x', x0(d.yr) + x0.bandwidth() / 2)
         .attr('y', y(d.combined) - 9)
         .attr('text-anchor', 'middle')
@@ -162,7 +177,12 @@ export function renderH8Temporal(container, h8Data, { step = 2, width = 720 } = 
         .attr('paint-order', 'stroke')
         .attr('stroke', '#FFFFFF')
         .attr('stroke-width', 3)
+        .style('opacity', animateLine ? 0 : 1)
         .text(`Total: ${fmtPct(d.combined, 1)}`);
+      if (animateLine) {
+        dot.transition().duration(300).delay(delay).ease(MOTION.easeOut).attr('r', 4.5);
+        txt.transition().duration(260).delay(delay + 120).style('opacity', 1);
+      }
     });
   }
 
@@ -180,6 +200,7 @@ export function renderH8Temporal(container, h8Data, { step = 2, width = 720 } = 
         title: 'Salto nos lotes padronizados',
         subtitle: `2026 atinge ${fmtPct(s26.minStdPct, 1)}`,
         color: '#B8299E',
+        animate: prevStep === 0,
       });
     }
   }

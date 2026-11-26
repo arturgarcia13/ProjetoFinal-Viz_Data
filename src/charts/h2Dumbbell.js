@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { SEMANTIC_PALETTE } from './palette.js';
 import { addDirectAnnotation } from './annotate.js';
+import { animDelay, animDur, MOTION, shouldAnimate } from './motion.js';
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtCompactBrl, fmtPct, fmtRatio } from './tooltip.js';
 
 const SHORT = { REPUBLICANOS: 'REPUBL.', SOLIDARIEDADE: 'SOLID.', CIDADANIA: 'CIDAD.' };
@@ -15,6 +16,7 @@ export function renderH2Dumbbell(
   h2bData,
   {
     step = 2,
+    prevStep = 2,
     width = 720,
     activeYear = 2022,
     selectedParty = '',
@@ -135,12 +137,16 @@ export function renderH2Dumbbell(
     .text('Paridade (1,0×)');
 
   const show26 = step >= 1;
+  const prevShow26 = prevStep >= 1;
+  const animate = shouldAnimate();
+  const dur = animDur(580);
   const tracksG = g.append('g');
 
-  rows.forEach((d) => {
+  rows.forEach((d, idx) => {
     const st = getRowStyle(d);
     const cy = y(d.party);
     const dimmed = Boolean(selectedParty && selectedParty !== d.party);
+    const delay = animDelay(idx * 24);
     const row = tracksG.append('g')
       .attr('class', 'h2-row')
       .attr('data-party', d.party)
@@ -154,14 +160,20 @@ export function renderH2Dumbbell(
       .attr('height', rowH)
       .attr('fill', 'transparent');
 
-    row.append('line')
+    const startX = animate && prevShow26 ? x(d.r26) : x(d.r22);
+    const endX = show26 ? x(d.r26) : x(d.r22);
+    const line = row.append('line')
       .attr('y1', cy)
       .attr('y2', cy)
       .attr('x1', x(d.r22))
-      .attr('x2', show26 ? x(d.r26) : x(d.r22))
+      .attr('x2', animate ? startX : endX)
       .attr('stroke', st.color)
       .attr('stroke-width', 2.8)
       .attr('marker-end', show26 ? st.marker : null);
+
+    if (animate && startX !== endX) {
+      line.transition().duration(dur).delay(delay).ease(MOTION.easeOut).attr('x2', endX);
+    }
 
     row.append('circle')
       .attr('cx', x(d.r22))
@@ -169,22 +181,32 @@ export function renderH2Dumbbell(
       .attr('r', 5.2)
       .attr('fill', SEMANTIC_PALETTE.male);
 
-    if (show26) {
-      row.append('circle')
-        .attr('cx', x(d.r26))
-        .attr('cy', cy)
-        .attr('r', 6)
-        .attr('fill', st.color);
+    const dot26 = row.append('circle')
+      .attr('cx', animate ? startX : endX)
+      .attr('cy', cy)
+      .attr('r', animate ? (prevShow26 ? 6 : 0) : (show26 ? 6 : 0))
+      .attr('fill', st.color);
 
+    if (animate) {
+      dot26.transition().duration(dur).delay(delay).ease(MOTION.easeOut)
+        .attr('cx', endX)
+        .attr('r', show26 ? 6 : 0);
+    }
+
+    if (show26) {
       const goLeft = d.r26 < d.r22;
       const lblX = goLeft ? Math.max(4, x(d.r26) - 44) : x(d.r26) + 10;
-      row.append('text')
+      const valTxt = row.append('text')
         .attr('x', lblX)
         .attr('y', cy + 4)
         .style('font-size', '10.5px')
         .style('font-weight', '700')
+        .style('opacity', animate && !prevShow26 ? 0 : 1)
         .attr('fill', st.color)
         .text(fmtRatio(d.r26));
+      if (animate && !prevShow26) {
+        valTxt.transition().duration(260).delay(delay + 280).style('opacity', 1);
+      }
     }
 
     const node = row.node();
@@ -230,6 +252,7 @@ export function renderH2Dumbbell(
       y2: y(worst.party),
       title: `${worst.party}: menor razão (${fmtRatio(worst.r26)})`,
       color: '#D93814',
+      animate: !prevShow26,
     });
     if (best.r26 >= 1.0) {
       addDirectAnnotation(annG, {
@@ -239,6 +262,7 @@ export function renderH2Dumbbell(
         y2: y(best.party) - 4,
         title: `${best.party} supera paridade (${fmtRatio(best.r26)})`,
         color: SEMANTIC_PALETTE.emerald,
+        animate: !prevShow26,
       });
     }
   }
@@ -251,10 +275,16 @@ export function renderH2Dumbbell(
     { label: 'Homens', publico: pubShareM, privado: Math.max(0, 100 - pubShareM) },
   ];
 
+  const showSrc = step >= 2;
+  const prevShowSrc = prevStep >= 2;
   const sourceG = svg.append('g')
     .attr('class', 'h2b-src-group')
     .attr('transform', `translate(${margin.left}, ${srcTop})`)
-    .style('opacity', step >= 2 ? 1 : 0.16);
+    .style('opacity', animate ? (prevShowSrc ? 1 : 0.16) : (showSrc ? 1 : 0.16));
+
+  if (animate) {
+    sourceG.transition().duration(420).ease(MOTION.easeOut).style('opacity', showSrc ? 1 : 0.16);
+  }
 
   sourceG.append('text')
     .attr('x', 0)
@@ -278,13 +308,18 @@ export function renderH2Dumbbell(
       .style('font-weight', '700')
       .text(row.label);
 
-    barRow.append('rect')
+    const targetW = Math.max(0, xSrc(row.publico));
+    const pubBar = barRow.append('rect')
       .attr('x', 0)
       .attr('y', yPos)
-      .attr('width', Math.max(0, xSrc(row.publico)))
+      .attr('width', animate && showSrc && !prevShowSrc ? 0 : targetW)
       .attr('height', 19)
       .attr('rx', 3)
       .attr('fill', idx === 0 ? SEMANTIC_PALETTE.female : SEMANTIC_PALETTE.male);
+
+    if (animate && showSrc && !prevShowSrc) {
+      pubBar.transition().duration(dur).delay(idx * 90).ease(MOTION.easeOut).attr('width', targetW);
+    }
 
     if (row.publico > 24) {
       barRow.append('text')
@@ -296,13 +331,18 @@ export function renderH2Dumbbell(
         .text(`Fundo Público: ${fmtPct(row.publico)}`);
     }
 
-    barRow.append('rect')
+    const privW = Math.max(0, xSrc(row.privado) - 2);
+    const privBar = barRow.append('rect')
       .attr('x', xSrc(row.publico) + 2)
       .attr('y', yPos)
-      .attr('width', Math.max(0, xSrc(row.privado) - 2))
+      .attr('width', animate && showSrc && !prevShowSrc ? 0 : privW)
       .attr('height', 19)
       .attr('rx', 3)
       .attr('fill', SEMANTIC_PALETTE.highlight);
+
+    if (animate && showSrc && !prevShowSrc) {
+      privBar.transition().duration(400).delay(180 + idx * 90).ease(MOTION.easeOut).attr('width', privW);
+    }
 
     if (row.privado > 18) {
       barRow.append('text')

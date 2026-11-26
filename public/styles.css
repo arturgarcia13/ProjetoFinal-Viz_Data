@@ -1234,6 +1234,302 @@ code {
   cursor: pointer;
 }
 
+.deprecation-notice {
+  margin: 0.7rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: rgba(248, 223, 79, 0.25);
+  border: 1px dashed #C98A00;
+  color: #5B3F00;
+  font-size: 0.77rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* =====================================================================
+   ATO 5 — ONDE A COTA VIRA VOTO (5 PASSOS + CALLOUTS COMPACTOS)
+   ===================================================================== */
+.ato5-nav-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.55rem;
+}
+
+.ato5-nav-pill {
+  border: 1px solid var(--border-card);
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 0.22rem 0.62rem;
+  font-family: var(--font-sans);
+  font-size: 0.71rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.ato5-nav-pill:hover {
+  border-color: var(--color-emerald);
+  color: var(--text-primary);
+}
+
+.ato5-nav-pill.is-active {
+  background: var(--color-female);
+  border-color: var(--color-female);
+  color: #FFFFFF;
+}
+
+.ato5-nav-pill.is-synthesis.is-active {
+  background: var(--color-emerald);
+  border-color: var(--color-emerald);
+}
+
+.ato5-stage-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 172px;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .ato5-stage-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ato5-callouts-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ato5-callouts-head {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 0.1rem;
+}
+
+.ato5-callouts-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.35rem;
+}
+
+@media (max-width: 640px) {
+  .ato5-callouts-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ato5-line-layer {
+    display: none;
+  }
+}
+
+.ato5-callout-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.34rem 0.55rem;
+  border-radius: 7px;
+  border: 1px solid var(--border-card);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: transform 0.18s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.ato5-callout-pill:hover,
+.ato5-callout-pill.is-focused {
+  transform: translateX(-2px);
+  border-color: var(--text-primary);
+}
+
+.ato5-callout-pill.has-stars {
+  background: rgba(248, 223, 79, 0.24);
+  border: 1.5px solid var(--color-highlight-ink);
+}
+
+.ato5-callout-pill.is-top5 {
+  background: var(--color-female);
+  border-color: #C22D0C;
+  color: #FFFFFF;
+}
+
+.ato5-callout-pill.is-top5.has-stars {
+  border: 2px solid var(--color-highlight);
+}
+
+.ato5-callout-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.ato5-callout-rank {
+  background: var(--color-highlight);
+  color: #142620;
+  border-radius: 4px;
+  padding: 0.04rem 0.28rem;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.ato5-callout-stars {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #8A5D00;
+}
+
+.ato5-callout-pill.is-top5 .ato5-callout-stars {
+  color: var(--color-highlight);
+}
+
+.ato5-callout-val {
+  font-size: 0.69rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.ato5-callout-pill.is-top5 .ato5-callout-val {
+  color: #FFFFFF;
+}
+
+.ato5-stage-foot {
+  margin-top: 0.55rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--border-card);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.ato5-card-dynamic {
+  margin-top: 0.85rem;
+}
+
+.ato5-synthesis-box {
+  margin-bottom: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(248, 223, 79, 0.22);
+  border: 1px solid var(--color-highlight-ink);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  line-height: 1.45;
+}
+
+.ato5-podium-head {
+  font-size: 0.69rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.ato5-podium-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.38rem;
+}
+
+.ato5-podium-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.44rem 0.62rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-card);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.ato5-podium-card:hover,
+.ato5-podium-card.is-focused,
+.ato5-podium-card.is-selected {
+  border-color: var(--color-female);
+  background: var(--color-female-soft);
+}
+
+.ato5-podium-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--color-female);
+  color: #FFFFFF;
+  font-size: 0.71rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.ato5-podium-rank.is-first {
+  background: var(--color-highlight-ink);
+}
+
+.ato5-podium-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.ato5-podium-meta strong {
+  font-size: 0.77rem;
+  color: var(--text-primary);
+}
+
+.ato5-podium-meta small {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+}
+
+.ato5-podium-vals {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.ato5-star-pill {
+  padding: 0.12rem 0.38rem;
+  border-radius: 5px;
+  background: rgba(248, 223, 79, 0.42);
+  border: 1px solid rgba(201, 138, 0, 0.45);
+  color: #7A5200;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.ato5-val-pill {
+  padding: 0.16rem 0.44rem;
+  border-radius: 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--border-card);
+  color: #C22D0C;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 /* =====================================================================
    MOMENTO 3: RECAP + BOCA DA TAÇA (EXPLORAÇÃO LIVRE)
    ===================================================================== */

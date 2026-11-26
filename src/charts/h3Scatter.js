@@ -57,13 +57,10 @@ export function renderH3Scatter(
   const W = svgW - margin.left - margin.right;
   const H = svgH - margin.top - margin.bottom;
 
-  const maxDataVal = d3.max(allParties, (d) => Math.max(d.xPct, d.yPct)) || 55;
-  const domainMin = zoomMode === 'majority' ? 15 : 0;
-  const domainMax = zoomMode === 'majority' ? 48 : Math.min(100, Math.ceil(Math.max(60, maxDataVal + 4) / 5) * 5);
-
-  const visibleParties = zoomMode === 'majority'
-    ? allParties.filter((d) => d.xPct <= 48 && d.yPct <= 48 && d.xPct >= 15 && d.yPct >= 15)
-    : allParties;
+  const maxDataVal = d3.max(allParties, (d) => Math.max(d.xPct, d.yPct)) || 60;
+  const domainMin = 0;
+  const domainMax = Math.min(100, Math.ceil(Math.max(60, maxDataVal + 5) / 10) * 10);
+  const visibleParties = allParties;
 
   const x = d3.scaleLinear().domain([domainMin, domainMax]).range([0, W]);
   const y = d3.scaleLinear().domain([domainMin, domainMax]).range([H, 0]);
@@ -169,7 +166,29 @@ export function renderH3Scatter(
   if (step >= 1) {
     const animateEnter = shouldAnimate() && prevStep === 0;
     const ordered = [...visibleParties].sort((a, b) => b.pubTotal - a.pubTotal);
-    const placedBoxes = [];
+    const placedBoxes = [
+      { x: 0, y: 0, w: isCompact ? 170 : 340, h: 28 },
+      { x: W - (isCompact ? 180 : 360), y: H - 28, w: isCompact ? 180 : 360, h: 28 },
+    ];
+
+    const worstGap = visibleParties.filter((d) => d.yPct < d.xPct).sort((a, b) => a.deficitBrl - b.deficitBrl)[0];
+    if (worstGap && !isCompact) {
+      const wcx = x(worstGap.xPct);
+      const wcy = y(worstGap.yPct);
+      const ax = Math.max(20, Math.min(W - 180, wcx - 130));
+      const ay = Math.min(H - 64, wcy + 48);
+      placedBoxes.push({ x: ax - 6, y: ay - 14, w: 175, h: 36 });
+      addDirectAnnotation(annotG, {
+        x1: ax,
+        y1: ay,
+        x2: wcx,
+        y2: wcy + rScale(worstGap.pubTotal) * 0.5,
+        title: `${worstGap.party} (${fmtPct(worstGap.yPct)} verba)`,
+        subtitle: `Déficit de ${fmtDeficitCompact(worstGap.deficitBrl)}`,
+        color: '#D93814',
+        animate: animateEnter,
+      });
+    }
 
     const nodes = bubblesG.selectAll('.party-bubble')
       .data(ordered, (d) => d.party)
@@ -196,7 +215,8 @@ export function renderH3Scatter(
         .attr('r', (d) => rScale(d.pubTotal));
     }
 
-    ordered.forEach((d) => {
+    // Rotular apenas legendas que não cumprem a meta proporcional (< Y=X), evitando excesso de nomes
+    ordered.filter((d) => d.yPct < d.xPct || (selectedParty && d.party === selectedParty)).forEach((d) => {
       const px = x(d.xPct);
       const py = y(d.yPct);
       const pr = rScale(d.pubTotal);
@@ -209,7 +229,7 @@ export function renderH3Scatter(
         [px - pr - 4 - w, py - h / 2],
       ];
       for (const [lx, ly] of tries) {
-        if (lx < 4 || lx + w > W - 4 || ly < 24 || ly + h > H - 24) continue;
+        if (lx < 4 || lx + w > W - 4 || ly < 26 || ly + h > H - 26) continue;
         const hitsBox = placedBoxes.some((b) => lx < b.x + b.w && lx + w > b.x && ly < b.y + b.h && ly + h > b.y);
         if (hitsBox) continue;
         const hitsCircle = ordered.some((other) => {
@@ -289,29 +309,5 @@ export function renderH3Scatter(
         });
       }
     });
-
-    const worstGap = visibleParties.filter((d) => d.yPct < d.xPct).sort((a, b) => a.deficitBrl - b.deficitBrl)[0];
-    if (worstGap && !isCompact) {
-      const cx = x(worstGap.xPct);
-      const cy = y(worstGap.yPct);
-      addDirectAnnotation(annotG, {
-        x1: Math.max(20, Math.min(W - 180, cx - 130)),
-        y1: Math.min(H - 52, cy + 48),
-        x2: cx,
-        y2: cy + rScale(worstGap.pubTotal) * 0.5,
-        title: `${worstGap.party} (${fmtPct(worstGap.yPct)} verba)`,
-        subtitle: `Déficit de ${fmtDeficitCompact(worstGap.deficitBrl)}`,
-        color: '#D93814',
-        animate: animateEnter,
-      });
-    }
-  }
-
-  const omittedCount = allParties.length - visibleParties.length;
-  if (omittedCount > 0 && zoomMode === 'majority') {
-    const note = document.createElement('p');
-    note.className = 'chart-note';
-    note.textContent = `${omittedCount} legenda(s) fora do zoom (15%–48%); clique em "Ver Todos" para exibir a escala completa.`;
-    container.appendChild(note);
   }
 }

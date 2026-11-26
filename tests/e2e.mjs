@@ -83,25 +83,25 @@ const shellCheck = await page.evaluate(() => {
   };
 });
 
-if (
-  shellCheck.bodyBg !== 'rgb(251, 248, 241)'
-  || shellCheck.h1Color !== 'rgb(248, 223, 79)'
-  || !shellCheck.h1Font.includes('Newsreader')
-  || !shellCheck.bodyFont.includes('Inter')
-  || shellCheck.skipHref !== '#main-content'
-  || !shellCheck.skipIsFirst
-  || shellCheck.topBarH > 72
-  || !shellCheck.heroFunnelSvg
-  || shellCheck.roadmapLinks !== 5
-  || shellCheck.stepDotsGroups !== 9
-  || shellCheck.covRows !== 3
-  || shellCheck.readouts.some((v) => !v.endsWith('%'))
-  || shellCheck.heroVals.some((v) => !v.endsWith('%'))
-  || !shellCheck.dataStatus?.includes('Dados TSE')
-  || shellCheck.overflowX
-) {
-  throw new Error(`Shell/UX check falhou: ${JSON.stringify(shellCheck)}`);
-}
+  if (
+    shellCheck.bodyBg !== 'rgb(251, 248, 241)'
+    || shellCheck.h1Color !== 'rgb(248, 223, 79)'
+    || !shellCheck.h1Font.includes('Newsreader')
+    || !shellCheck.bodyFont.includes('Inter')
+    || shellCheck.skipHref !== '#main-content'
+    || !shellCheck.skipIsFirst
+    || shellCheck.topBarH > 72
+    || !shellCheck.heroFunnelSvg
+    || shellCheck.roadmapLinks !== 5
+    || shellCheck.stepDotsGroups !== 10
+    || shellCheck.covRows !== 3
+    || shellCheck.readouts.some((v) => !v.endsWith('%'))
+    || shellCheck.heroVals.some((v) => !v.endsWith('%'))
+    || !shellCheck.dataStatus?.includes('Dados TSE')
+    || shellCheck.overflowX
+  ) {
+    throw new Error(`Shell/UX check falhou: ${JSON.stringify(shellCheck)}`);
+  }
 
 // Helper de hover unificado
 async function assertUnifiedHover(targetSelector, containerSelector, wrapIndex = 0) {
@@ -163,67 +163,90 @@ async function checkSvgGeometry(svgSelector, { textSelector = 'text', checkBound
   }, svgSelector, textSelector, checkBounds);
 }
 
-// 1. Verifica todos os 9 gráficos renderizados
-for (const cid of ['#canvas-h1', '#canvas-h2', '#canvas-h3', '#canvas-h4', '#canvas-h5', '#canvas-h6', '#canvas-h7', '#canvas-h8', '#canvas-h9-map']) {
+// 1. Verifica todos os gráficos renderizados (incluindo Ato 4 comparativo 30–33% vs >33% e Ato 5)
+for (const cid of ['#canvas-h1', '#canvas-h2', '#canvas-h3', '#canvas-h4', '#canvas-h5', '#canvas-h6', '#canvas-limiar', '#canvas-h7', '#canvas-h8', '#canvas-h9-map']) {
   const hasSvg = await page.$(`${cid} svg`);
   if (!hasSvg) throw new Error(`SVG ausente em ${cid}`);
 }
-if (!(await page.$('#canvas-h9-matrix table.h9-matrix-table'))) {
-  throw new Error('Matriz heatmap H9 ausente');
-}
 
-// 2. H1: Hover + alternância Aptas/Registradas + filtro coordenado e chip de recorte
+// 2. H1: Inicia em Todas Registradas, alternância para Aptas + filtro coordenado e chip de recorte
+const h1InitialMode = await page.$eval('#controls-h1 button.active', (el) => el.dataset.h1Mode);
+if (h1InitialMode !== 'reg') throw new Error(`H1 deveria iniciar em 'reg', obteve ${h1InitialMode}`);
 await assertUnifiedHover('#canvas-h1 .h1-col[data-bin="30-33"] .h1-col-hit', '#canvas-h1', 0);
-await page.click('#controls-h1 button[data-h1-mode="reg"]');
 await page.click('#controls-h1 button[data-h1-mode="apto"]');
+await page.click('#controls-h1 button[data-h1-mode="reg"]');
 await page.click('#canvas-h1 .h1-col[data-bin="lt24"]');
 await page.waitForFunction(() => !document.getElementById('btn-recorte-chip').hidden);
 await page.click('#btn-recorte-chip');
 await page.waitForFunction(() => document.getElementById('btn-recorte-chip').hidden);
 
-// 3. H2: Dumbbell + clique em partido + barras de composição
+// 3. H2: Dumbbell + clique em partido + barras de composição sem sobreposição
 const h2RowsCount = await page.$$eval('#canvas-h2 .h2-row', (els) => els.length);
 if (h2RowsCount < 8) throw new Error(`H2 deveria ter ≥8 partidos, obteve ${h2RowsCount}`);
 await assertUnifiedHover('#canvas-h2 .h2-row', '#canvas-h2', 0);
+const h2Geo = await checkSvgGeometry('#canvas-h2 svg', { checkBounds: true });
+if (h2Geo.overlaps.length > 0) {
+  throw new Error(`H2 textos sobrepostos: ${JSON.stringify(h2Geo.overlaps)}`);
+}
 await page.click('#canvas-h2 .h2-row[data-party="PT"]');
 if ((await page.$eval('#filter-party', (el) => el.value)) !== 'PT') {
   throw new Error('Clique em PT em H2 não atualizou #filter-party');
 }
 await page.click('#canvas-h2 .h2-row[data-party="PT"]');
 
-// 4. H3: Zoom + Cargo + Hover + zero colisões nos rótulos
+// 4. H3: Escala fixa sem zoom + Cargo + Hover + zero colisões nos rótulos
+if (await page.$('#zoom-h3-group')) {
+  throw new Error('H3 não deveria mais exibir controle de zoom');
+}
 await assertUnifiedHover('#canvas-h3 .party-bubble', '#canvas-h3', 0);
 const h3Geo = await checkSvgGeometry('#canvas-h3 svg', { textSelector: 'g[aria-label="text"] text', checkBounds: true });
 if (h3Geo.overlaps.length > 0 || h3Geo.clipped.length > 0) {
   throw new Error(`H3 rótulos colidiram ou saíram do SVG: ${JSON.stringify(h3Geo)}`);
 }
-await page.click('[data-h3-zoom="all"]');
-await page.click('[data-h3-zoom="majority"]');
 
-// 5. H4 (Hubs em step 2) + H5 + H6 (Observable Plot) + H7 (Observable Plot + 2018) + H8
+// 5. H4 (Hubs em step 2) + H5 + H6 (Consolidado) + Comparativo 30–33% vs >33% + H7/H8 sinalizados
 await assertUnifiedHover('#canvas-h4 .h4-hub', '#canvas-h4', 0);
 await assertUnifiedHover('#canvas-h5 .h5-party-row', '#canvas-h5', 0);
 await page.click('[data-h5-view="slope"]');
 await page.click('[data-h5-view="bars"]');
 await assertUnifiedHover('#canvas-h6 .h6-dot', '#canvas-h6', 0);
+await page.click('[data-h6-year="2026"]');
+await page.click('[data-h6-year="2022"]');
+await assertUnifiedHover('#canvas-limiar .limiar-panel', '#canvas-limiar', 0);
+await page.click('[data-limiar-unit="party"]');
+await page.click('[data-limiar-unit="chapa"]');
 await assertUnifiedHover('#canvas-h7 .h7-agg-dot', '#canvas-h7', 0);
 await page.click('#btn-h7-2018');
 await assertUnifiedHover('#canvas-h8 .h8-dot', '#canvas-h8', 0);
 
-// 6. H9: 27 UFs no mapa, 27 na matriz, ordenação e filtro por UF
+// 6. Ato 5 ("Onde a Cota Vira Voto"): 27 UFs reais, 8 callouts compactos, 5 passos, síntese e controles
 const h9Check = await page.evaluate(() => ({
-  ufPaths: document.querySelectorAll('#canvas-h9-map svg path').length,
-  matRows: document.querySelectorAll('#canvas-h9-matrix tbody tr').length,
+  ufPaths: document.querySelectorAll('#canvas-h9-map svg path.ato5-state-path').length,
+  compactCallouts: document.querySelectorAll('#ato5-compact-callouts .ato5-callout-pill').length,
+  stepsCount: document.querySelectorAll('#sec-h9 .step-card').length,
+  navPills: document.querySelectorAll('#ato5-nav-pills .ato5-nav-pill').length,
+  hasSynthesis: Boolean(document.querySelector('#sec-h9 .ato5-synthesis-box')),
+  podiumCards: document.querySelectorAll('#sec-h9 .ato5-podium-card').length,
 }));
-if (h9Check.ufPaths !== 27 || h9Check.matRows !== 27) {
-  throw new Error(`H9 incompleto: ${JSON.stringify(h9Check)}`);
+if (
+  h9Check.ufPaths !== 27
+  || h9Check.compactCallouts !== 8
+  || h9Check.stepsCount !== 5
+  || h9Check.navPills !== 5
+  || !h9Check.hasSynthesis
+  || h9Check.podiumCards !== 25
+) {
+  throw new Error(`Ato 5 incompleto: ${JSON.stringify(h9Check)}`);
 }
-await assertUnifiedHover('#canvas-h9-map svg path', '#canvas-h9-map', 0);
-await assertUnifiedHover('#canvas-h9-matrix .h9-heat-cell', '#canvas-h9-matrix', 0);
-await page.click('#canvas-h9-map svg path[data-uf="CE"]');
-await page.waitForFunction(() => document.getElementById('filter-uf').value === 'CE');
+await assertUnifiedHover('#canvas-h9-map svg path.ato5-state-path[data-uf="SP"]', '#canvas-h9-map', 0);
+await page.click('#ato5-compact-callouts .ato5-callout-pill[data-uf="DF"]');
+await page.waitForFunction(() => !document.getElementById('btn-map-reset-uf').hidden);
 await page.click('#btn-map-reset-uf');
-await page.waitForFunction(() => document.getElementById('filter-uf').value === '');
+await page.waitForFunction(() => document.getElementById('btn-map-reset-uf').hidden);
+await page.click('[data-ato5-year="2026"]');
+await page.click('[data-ato5-cargo="6"]');
+await page.click('[data-ato5-year="2022"]');
+await page.click('[data-ato5-cargo="all"]');
 
 // 7. Boca da Taça: troca para 2026 recalcula readouts e volta ao padrão
 const cand22 = await page.$eval('#readout-cand', (el) => el.textContent);
@@ -240,7 +263,7 @@ const mobileCheck = await page.evaluate(() => ({
   h5Count: document.querySelectorAll('#canvas-h5 .h5-party-label').length,
 }));
 const mobIssues = {};
-for (const sel of ['#canvas-h1 svg', '#canvas-h3 svg', '#canvas-h4 svg', '#canvas-h6 svg', '#canvas-h7 svg', '#canvas-h8 svg']) {
+for (const sel of ['#canvas-h1 svg', '#canvas-h3 svg', '#canvas-h4 svg', '#canvas-h6 svg', '#canvas-limiar svg', '#canvas-h7 svg', '#canvas-h8 svg', '#canvas-h9-map svg']) {
   const g = await checkSvgGeometry(sel, {
     textSelector: sel.includes('h3') ? 'g[aria-label="text"] text' : 'text',
     checkBounds: true,

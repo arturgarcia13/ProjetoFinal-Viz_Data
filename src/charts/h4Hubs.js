@@ -49,6 +49,11 @@ export function renderH4Hubs(container, yearData, { width = 740, year = 2022, uf
       ? `Top ${topHubs.length} fornecedores-hub (${year})`
       : `Top ${topHubs.length} fornecedores-hub (${year}): candidaturas atendidas e baixa votação`);
 
+  const notice = document.createElement('p');
+  notice.className = 'deprecation-notice';
+  notice.textContent = 'Em revisão metodológica: esta visualização de hubs está sinalizada para remoção na próxima etapa.';
+  container.appendChild(notice);
+
   svg.append('text').attr('x', xL).attr('y', 40).attr('text-anchor', 'middle').attr('fill', '#D93814')
     .style('font-size', isCompact ? '9.2px' : '10.5px').style('font-weight', '700').text('Baixa votação');
   svg.append('text').attr('x', cx).attr('y', 40).attr('text-anchor', 'middle').attr('fill', '#7A5200')

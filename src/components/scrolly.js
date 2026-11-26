@@ -9,14 +9,12 @@ export function stepOf(key) {
   return steps[key] ?? 0;
 }
 
-const FINAL_STEP = 2;
-
 export function isStaticMode() {
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   return reduced || new URLSearchParams(window.location.search).get('steps') === 'full';
 }
 
-export function initScrolly(onStep) {
+export function initScrolly(onStep, { onExitBlock = null } = {}) {
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const mobileMQ = window.matchMedia('(max-width: 960px)');
   const blocks = [...document.querySelectorAll('.scrolly-block')];
@@ -33,7 +31,6 @@ export function initScrolly(onStep) {
   }
 
   blocks.forEach((block) => {
-    const key = block.dataset.chart;
     const cards = [...block.querySelectorAll('.step-card')];
     const metaRow = block.querySelector('.chart-meta-row');
     if (metaRow && !metaRow.querySelector('.step-dots')) {
@@ -54,7 +51,8 @@ export function initScrolly(onStep) {
       });
       metaRow.appendChild(dots);
     }
-    applyStepUI(block, isStaticMode() ? FINAL_STEP : 0);
+    const finalStep = Math.max(0, cards.length - 1);
+    applyStepUI(block, isStaticMode() ? finalStep : 0);
   });
 
   // Revela divisores de atos e blocos finais suavemente ao entrarem no viewport
@@ -83,8 +81,10 @@ export function initScrolly(onStep) {
   }
 
   let observer = null;
+  let exitObserver = null;
   function buildObserver() {
     if (observer) observer.disconnect();
+    if (exitObserver) exitObserver.disconnect();
     observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -102,6 +102,24 @@ export function initScrolly(onStep) {
       { rootMargin: mobileMQ.matches ? '-62% 0px -22% 0px' : '-40% 0px -40% 0px' },
     );
     document.querySelectorAll('.scrolly-block .step-card').forEach((c) => observer.observe(c));
+
+    if (onExitBlock && typeof IntersectionObserver !== 'undefined') {
+      const seen = new Set();
+      exitObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const key = entry.target.dataset.chart;
+            if (entry.isIntersecting) {
+              seen.add(key);
+            } else if (seen.has(key)) {
+              onExitBlock(key);
+            }
+          });
+        },
+        { threshold: 0 },
+      );
+      blocks.forEach((b) => exitObserver.observe(b));
+    }
   }
 
   buildObserver();

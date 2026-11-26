@@ -1,6 +1,7 @@
 import 'd3-transition';
 import { loadAppData, filterCandidates, UF_NAMES, CARGO_LABEL } from './data.js';
 import {
+  computeAto5Geography,
   computeH1,
   computeH2,
   computeH2GapEvolution,
@@ -10,7 +11,7 @@ import {
   computeH6Series,
   computeH7Comparison,
   computeH8,
-  computeH9MatrixAndMap,
+  computeThresholdBandComparison,
   countSignals,
 } from './indicators.js';
 import { renderHeroFunnel } from './charts/heroFunnel.js';
@@ -22,10 +23,16 @@ import { computeH4FlowStats, renderH4Sankey } from './charts/h4SankeyNetwork.js'
 import { renderH4Hubs } from './charts/h4Hubs.js';
 import { renderH5Conversion } from './charts/h5Conversion.js';
 import { renderH6Signals } from './charts/h6Signals.js';
+import { renderThresholdCompare } from './charts/h6ThresholdCompare.js';
 import { renderH7Boxplot } from './charts/h7Boxplot.js';
 import { renderH8Temporal } from './charts/h8Temporal.js';
-import { renderUFMap, renderH9HeatmapMatrix, H9_METRICS } from './charts/h9MapAndParallel.js';
-import { initScrolly, stepOf } from './components/scrolly.js';
+import {
+  ATO5_STEPS,
+  highlightAto5UF,
+  renderAto5MapStage,
+  renderAto5StepCards,
+} from './charts/h9MapAndParallel.js';
+import { initScrolly, isStaticMode, stepOf } from './components/scrolly.js';
 
 const state = {
   year: 2022,
@@ -33,19 +40,25 @@ const state = {
   uf: '',
   party: '',
   threshold: 10,
-  h1Mode: 'apto',
+  h1Mode: 'reg',
+  h1PrevMode: 'reg',
+  h1UserLocked: false,
   h1BinFilter: null,
-  h3Zoom: 'majority',
   h3Cargo: 'all',
   h3CargoLocked: false,
   h4Cohort: 'all',
   h5View: 'bars',
+  h6Year: 2022,
+  limiarUnit: 'chapa',
+  limiarYear: 2022,
   h7Show2018: false,
-  h9Metric: 'pctEleitasF',
-  h9MatrixUnit: 'uf',
-  h9SortBy: 'pctEleitasF',
-  h9SortDir: 'desc',
+  ato5Year: 2022,
+  ato5Cargo: 'all',
+  ato5HoveredUf: null,
+  ato5SelectedUf: '',
 };
+
+let h1AutoTimer = null;
 
 const R = {};
 let APP_DATA = null;
@@ -293,17 +306,22 @@ function update() {
   renderVerdictPill('verdict-h1', h1Classic.verdict);
   const qBin = h1Data.bins.find((b) => b.isQuota);
   const b27 = h1Data.bins.find((b) => b.id === '27-30');
+  const lt30Bins = h1Data.bins.filter((b) => b.zone === 'below');
   const isApto = state.h1Mode === 'apto';
   const curStepH1 = stepOf('h1');
   const qVal22 = qBin ? (isApto ? qBin.a22.pct : qBin.r22.pct) : 0;
   const qVal26 = qBin ? (isApto ? qBin.a26.pct : qBin.r26.pct) : 0;
   const bVal22 = b27 ? (isApto ? b27.a22.pct : b27.r22.pct) : 0;
   const bVal26 = b27 ? (isApto ? b27.a26.pct : b27.r26.pct) : 0;
+  const lt30_22 = lt30Bins.reduce((s, b) => s + (isApto ? b.a22.pct : b.r22.pct), 0);
+  const lt30_26 = lt30Bins.reduce((s, b) => s + (isApto ? b.a26.pct : b.r26.pct), 0);
   const showYrH1 = curStepH1 >= 2 ? 2026 : 2022;
   const curQ = curStepH1 >= 2 ? qVal26 : qVal22;
   const curB = curStepH1 >= 2 ? bVal26 : bVal22;
-  setText('title-h1', `Em ${showYrH1}, ${fmtPctDirect(curQ, 0)} das chapas ficam na faixa de 30%–33%, contra ${fmtPctDirect(curB, 0)} na faixa logo abaixo (27%–30%)`);
-  setText('h1-dyn-text', `${fmtPctDirect(qVal22, 1)} das chapas de 2022 ficam entre 30% e 33%; logo abaixo do piso (27%–30%) são ${fmtPctDirect(bVal22, 1)}. O piso funciona como alvo máximo.`);
+  setText('h1-lead-pct', fmtPctDirect(qBin ? qBin.r22.pct : 0, 1));
+  setText('h1-dyn-lt30', `${fmtPctDirect(lt30_22, 1)} em 2022 e ${fmtPctDirect(lt30_26, 1)} em 2026 abaixo de 30%`);
+  setText('title-h1', `Em ${showYrH1} (${isApto ? 'Aptas' : 'Registradas'}), ${fmtPctDirect(curQ, 0)} das chapas ficam em 30%–33%, contra ${fmtPctDirect(curB, 0)} logo abaixo (27%–30%)`);
+  setText('h1-dyn-text', `${fmtPctDirect(qVal22, 1)} das chapas de 2022 ficam entre 30% e 33% (${isApto ? 'Aptas' : 'Registradas'}); abaixo do piso (<30%) são ${fmtPctDirect(lt30_22, 1)}. O piso funciona como teto operacional.`);
 
   const cH1 = document.getElementById('canvas-h1');
   R.h1 = (step = stepOf('h1'), prevStep = stepOf('h1')) => renderH1Histogram(cH1, h1Data, {
@@ -311,6 +329,7 @@ function update() {
     prevStep,
     width: getCanvasWidth(cH1),
     mode: state.h1Mode,
+    prevMode: state.h1PrevMode,
     selectedBinId: state.h1BinFilter?.id || null,
     onSelectBin: (bin) => {
       if (!bin || state.h1BinFilter?.id === bin.id) {
@@ -325,6 +344,7 @@ function update() {
     },
   });
   R.h1();
+  state.h1PrevMode = state.h1Mode;
 
   // H2
   const h2Gap = computeH2GapEvolution(APP_DATA.candidates, {
@@ -341,7 +361,7 @@ function update() {
   const belowParityPct = ratioValid.length > 0
     ? Math.round((ratioValid.filter((r) => r.medF2026 < r.medM2026).length / ratioValid.length) * 100)
     : 0;
-  setText('title-h2', `Em ${belowParityPct}% dos grandes partidos analisados, a mediana do investimento nas mulheres permanece menor que a dos homens em 2026`);
+  setText('title-h2', `Em ${belowParityPct}% dos ${ratioValid.length} maiores partidos (2026), mulheres têm mediana menor; no total das legendas (${state.year}), ${fmtPct(h2b.pubShareF)} da receita feminina vem do fundo público`);
   setText('h2-dyn-pub', fmtPct(h2b.pubShareF));
 
   const cH2 = document.getElementById('canvas-h2');
@@ -356,14 +376,14 @@ function update() {
   });
   R.h2();
 
-  // H3
+  // H3 (escala fixa sem zoom, rotulando apenas legendas abaixo da meta proporcional)
   const h3Rows = getScopedRows({ year: state.year, cargo: state.h3Cargo, ignoreParty: true });
   const h3 = computeH3(h3Rows);
   renderVerdictPill('verdict-h3', h3.verdict);
   setText('recorte-h3-label', `${state.year} · ${CARGO_LABEL[state.h3Cargo]} · ${state.uf ? UF_NAMES[state.uf] : 'Brasil'}`);
   setText('title-h3', h3.subfinancedCount > 0
-    ? `Mesmo superando 30% de candidatas, ${h3.subfinancedCount} legendas repassam fatia inferior ao peso feminino (déficit de −${fmtCompactBrl(h3.totalDeficitBrl).replace('R$ ', 'R$ ')})`
-    : `Partidos acima da linha proporcional em ${state.year} (razão ${h3.equityRatio.toFixed(2).replace('.', ',')}×)`);
+    ? `${h3.subfinancedCount} de ${h3.parties.length} legendas repassam às mulheres fatia inferior ao peso na chapa em ${state.year} (déficit de −${fmtCompactBrl(h3.totalDeficitBrl).replace('R$ ', 'R$ ')})`
+    : `Todas as ${h3.parties.length} legendas analisadas em ${state.year} alcançam proporcionalidade no Fundo Público (razão ${h3.equityRatio.toFixed(2).replace('.', ',')}×)`);
   setText('h3-dyn-deficit', `−${fmtCompactBrl(h3.totalDeficitBrl)}`);
 
   const cH3 = document.getElementById('canvas-h3');
@@ -371,7 +391,7 @@ function update() {
     step,
     prevStep,
     width: getCanvasWidth(cH3),
-    zoomMode: state.h3Zoom,
+    zoomMode: 'all',
     selectedParty: state.party,
     onSelectParty: toggleParty,
     onClearParty: clearParty,
@@ -422,7 +442,7 @@ function update() {
   });
   R.h5();
 
-  // H6
+  // H6 (Consolidado — Sinais A, B, C e >=2 comparando Mulheres vs. Homens)
   const h6Series = computeH6Series(APP_DATA.candidates, {
     cargo: state.cargo,
     uf: state.uf || null,
@@ -430,21 +450,46 @@ function update() {
     parties: binParties,
     voteThreshold: state.threshold,
   });
-  renderVerdictPill('verdict-h6', h6Series.verdict);
-  const r18 = h6Series.byYear[2018]?.ratio2Plus || 0;
-  const r26 = h6Series.byYear[2026]?.ratio2Plus || 0;
-  setText('title-h6', `Disparidade F/M em ≥ 2 sinais despenca de ${r18.toFixed(1).replace('.', ',')}× (2018) para ${r26.toFixed(1).replace('.', ',')}× (2026) após a ADI 5617 e a Súmula 73`);
-  setText('h6-dyn-ratio18', `${r18.toFixed(1).replace('.', ',')}×`);
+  const h6YearObj = h6Series.byYear[state.h6Year] || h6Series.byYear[2022];
+  const fS6 = h6YearObj?.summary?.F || { n: 1, sigA: 0, sigB: 0, sigC: 0, twoPlus: 0 };
+  const mS6 = h6YearObj?.summary?.M || { n: 1, sigA: 0, sigB: 0, sigC: 0, twoPlus: 0 };
+  const h6InconclusiveVerdict = {
+    status: 'inconclusivo',
+    label: 'Inconclusivo',
+    reason: `Em ${state.h6Year}, sinais individuais são próximos entre mulheres e homens (Sinal A: ${fmtPct(fS6.sigA / (fS6.n || 1))} F vs. ${fmtPct(mS6.sigA / (mS6.n || 1))} M; ≥2 sinais: ${fmtPct(h6YearObj?.pct2PlusF || 0)} F vs. ${fmtPct(h6YearObj?.pct2PlusM || 0)} M). Indicadores isolados são inconclusivos sem prova documental.`,
+  };
+  renderVerdictPill('verdict-h6', h6InconclusiveVerdict);
+  setText('h6-dyn-summary', `Sinal A ${fmtPct(fS6.sigA / (fS6.n || 1))} vs. ${fmtPct(mS6.sigA / (mS6.n || 1))}, Sinal B ${fmtPct(fS6.sigB / (fS6.n || 1))} vs. ${fmtPct(mS6.sigB / (mS6.n || 1))}, Sinal C ${fmtPct(fS6.sigC / (fS6.n || 1))} vs. ${fmtPct(mS6.sigC / (mS6.n || 1))}`);
+  setText('title-h6', `Em ${state.h6Year}, sinais A, B e C têm taxas próximas entre mulheres (${fmtPct(h6YearObj?.pct2PlusF || 0)} ≥2) e homens (${fmtPct(h6YearObj?.pct2PlusM || 0)} ≥2) — quadro inconclusivo`);
 
   const cH6 = document.getElementById('canvas-h6');
   R.h6 = (step = stepOf('h6'), prevStep = stepOf('h6')) => renderH6Signals(cH6, h6Series, {
     step,
     prevStep,
     width: getCanvasWidth(cH6),
+    year: state.h6Year,
   });
   R.h6();
 
-  // H7
+  // Comparativo 30%–33% vs. >33% (excluindo <30%; alternável Por Chapa | Por Partido)
+  const limiarRows = getScopedRows({ year: state.limiarYear, ignoreParty: state.limiarUnit === 'party' });
+  const limiarData = computeThresholdBandComparison(limiarRows, { unit: state.limiarUnit });
+  renderVerdictPill('verdict-limiar', limiarData.verdict);
+  const unitNameLimiar = state.limiarUnit === 'party' ? 'Por Partido' : 'Por Chapa';
+  setText('recorte-limiar-label', `${state.limiarYear} · ${unitNameLimiar} (exclui <30%)`);
+  setText('title-limiar', `${unitNameLimiar} (${state.limiarYear}): faixa >33% tem ${fmtPctDirect(limiarData.above.pctEleitasF, 1)} de eleitas e mediana F de ${fmtCompactBrl(limiarData.above.medF)}, contra ${fmtPctDirect(limiarData.floor.pctEleitasF, 1)} e ${fmtCompactBrl(limiarData.floor.medF)} em 30%–33%`);
+  setText('limiar-dyn-text', `No recorte ${unitNameLimiar.toLowerCase()} de ${state.limiarYear}, eleitas passam de ${fmtPctDirect(limiarData.floor.pctEleitasF, 1)} (30%–33%) para ${fmtPctDirect(limiarData.above.pctEleitasF, 1)} (>33%)`);
+
+  const cLimiar = document.getElementById('canvas-limiar');
+  R.limiar = (step = stepOf('limiar'), prevStep = stepOf('limiar')) => renderThresholdCompare(cLimiar, limiarData, {
+    step,
+    prevStep,
+    width: getCanvasWidth(cLimiar),
+    year: state.limiarYear,
+  });
+  R.limiar();
+
+  // H7 (Sinalizado para remoção na próxima etapa)
   const h7Comp = computeH7Comparison(APP_DATA.candidates, {
     cargo: state.cargo,
     uf: state.uf || null,
@@ -467,7 +512,7 @@ function update() {
   });
   R.h7();
 
-  // H8
+  // H8 (Sinalizado para remoção na próxima etapa)
   const h8 = computeH8(APP_DATA.candidates, {
     cargo: state.cargo,
     uf: state.uf || null,
@@ -488,86 +533,107 @@ function update() {
   });
   R.h8();
 
-  // H9
-  const h9MapRows = getScopedRows({ year: state.year, ignoreUF: true, ignoreParty: true });
-  const h9MatrixRows = getScopedRows({
-    year: state.year,
-    ignoreUF: state.h9MatrixUnit === 'uf',
-    ignoreParty: state.h9MatrixUnit === 'party',
+  // Ato 5 — Onde a Cota Vira Voto (5 Passos Causa -> Efeito com dados reais TSE e contorno IBGE)
+  const ato5Data = computeAto5Geography(APP_DATA.candidates, {
+    year: state.ato5Year,
+    cargo: state.ato5Cargo,
+    party: state.party || '',
+    parties: binParties,
+    ufList: Object.keys(UF_NAMES).sort(),
   });
-  const h9MapData = computeH9MatrixAndMap(h9MapRows, { voteThreshold: state.threshold, selectedParty: state.party });
-  const h9MatrixData = computeH9MatrixAndMap(h9MatrixRows, { voteThreshold: state.threshold, selectedParty: state.party });
-  renderVerdictPill('verdict-h9', h9MapData.verdict);
-  const validUfsH9 = (h9MapData.ufRows || []).filter((u) => !u.inconclusive && u.pctEleitasF !== null);
-  const ufsGe30 = validUfsH9.filter((u) => u.pctEleitasF >= 30).length;
-  setText('title-h9', ufsGe30 === 0
-    ? `Nenhuma UF atinge 30% de eleitas em ${state.year}; gargalo alterna entre financiamento, votos e sobras`
-    : `${ufsGe30} de ${validUfsH9.length} UFs atingem ≥ 30% de eleitas em ${state.year}; disparidade regional persiste`);
-  setText('h9-step1-text', h9MapData.verdict.reason);
+  renderVerdictPill('verdict-h9', ato5Data.verdict);
 
-  buildSegmentedControls('controls-h9', [
-    H9_METRICS.map((m) => ({
-      label: m.short,
-      active: state.h9Metric === m.key,
-      onClick: () => {
-        state.h9Metric = m.key;
-        state.h9SortBy = m.key;
-        state.h9SortDir = 'desc';
-        update();
-      },
-    })),
-    [
-      { label: '27 UFs', active: state.h9MatrixUnit === 'uf', onClick: () => { state.h9MatrixUnit = 'uf'; update(); } },
-      { label: 'Top 15 Partidos', active: state.h9MatrixUnit === 'party', onClick: () => { state.h9MatrixUnit = 'party'; update(); } },
-    ],
-  ]);
+  const cargoTagAto5 = state.ato5Cargo === 'all' ? 'Todos os cargos' : CARGO_LABEL[state.ato5Cargo];
+  setText('ato5-context-tag', `${state.ato5Year} · ${cargoTagAto5} · Dados reais TSE`);
+  setText('ato5-eligible-note', `${ato5Data.eligibleCount} de 27 UFs com amostra válida · contorno geográfico real (IBGE)`);
 
   const mapResetBtn = document.getElementById('btn-map-reset-uf');
-  if (mapResetBtn) mapResetBtn.hidden = !state.uf;
+  if (mapResetBtn) {
+    mapResetBtn.hidden = !state.ato5SelectedUf;
+    if (state.ato5SelectedUf) mapResetBtn.textContent = `Limpar ${state.ato5SelectedUf} ×`;
+  }
 
-  const cH9Map = document.getElementById('canvas-h9-map');
-  const cH9Mat = document.getElementById('canvas-h9-matrix');
-  R.h9 = (step = stepOf('h9'), prevStep = stepOf('h9')) => {
-    renderUFMap(cH9Map, APP_DATA.brUf, h9MapData, {
-      step,
-      prevStep,
-      width: Math.min(440, Math.max(280, cH9Map?.clientWidth || 380)),
-      metric: state.h9Metric,
-      selectedUF: state.uf,
-      onSelectUF: toggleUF,
-      onClearUF: clearUF,
+  const cAto5Steps = document.getElementById('ato5-steps-col');
+  const cAto5Map = document.getElementById('canvas-h9-map');
+  const cAto5Callouts = document.getElementById('ato5-compact-callouts');
+  const navPillsEl = document.getElementById('ato5-nav-pills');
+
+  const syncAto5StepUI = (stepIdx) => {
+    const stepMeta = ATO5_STEPS[Math.max(0, Math.min(ATO5_STEPS.length - 1, stepIdx))];
+    setText('ato5-active-pill', `Passo ${stepIdx + 1}/5 · ${stepMeta.badge}`);
+    setText('ato5-legend-top5', stepMeta.isSynthesis ? 'Top 5 Mulheres Eleitas' : 'Top 5 neste pilar');
+    setText('title-h9', stepMeta.isSynthesis
+      ? `Em ${state.ato5Year}, ${ato5Data.twoPlusCount} de 5 líderes em mulheres eleitas acumularam ≥ 2 pilares estruturais`
+      : `${stepMeta.title} (${state.ato5Year} · ${cargoTagAto5})`);
+
+    if (navPillsEl) {
+      navPillsEl.innerHTML = ATO5_STEPS.map((s, i) => `
+        <button
+          type="button"
+          class="ato5-nav-pill${i === stepIdx ? ' is-active' : ''}${s.isSynthesis ? ' is-synthesis' : ''}"
+          data-ato5-jump="${i}"
+        >${s.shortPill}</button>
+      `).join('');
+      navPillsEl.querySelectorAll('[data-ato5-jump]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const targetIdx = Number(btn.dataset.ato5Jump);
+          const card = cAto5Steps?.querySelector(`.step-card[data-step="${targetIdx}"]`);
+          if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (isStaticMode() && R.h9) R.h9(targetIdx, stepOf('h9'));
+        });
+      });
+    }
+  };
+
+  const handleHoverAto5 = (uf) => {
+    state.ato5HoveredUf = uf;
+    highlightAto5UF(cAto5Map, cAto5Callouts, cAto5Steps, state.ato5HoveredUf || state.ato5SelectedUf);
+  };
+
+  const handleSelectAto5 = (uf) => {
+    state.ato5SelectedUf = state.ato5SelectedUf === uf ? '' : uf;
+    update();
+  };
+
+  R.h9 = (step = stepOf('h9')) => {
+    syncAto5StepUI(step);
+    renderAto5StepCards(cAto5Steps, ato5Data, {
+      activeStep: step,
+      selectedUF: state.ato5SelectedUf,
+      onHoverUF: handleHoverAto5,
+      onSelectUF: handleSelectAto5,
     });
-    renderH9HeatmapMatrix(cH9Mat, h9MatrixData, {
-      unit: state.h9MatrixUnit,
-      sortBy: state.h9SortBy,
-      sortDir: state.h9SortDir,
-      selectedEntity: state.h9MatrixUnit === 'uf' ? state.uf : state.party,
-      onSort: (colKey) => {
-        if (state.h9SortBy === colKey) state.h9SortDir = state.h9SortDir === 'desc' ? 'asc' : 'desc';
-        else { state.h9SortBy = colKey; state.h9SortDir = colKey === 'key' ? 'asc' : 'desc'; }
+    renderAto5MapStage(cAto5Map, cAto5Callouts, APP_DATA.brUf, ato5Data, {
+      step,
+      width: Math.min(500, Math.max(300, cAto5Map?.clientWidth || 440)),
+      hoveredUF: state.ato5HoveredUf,
+      selectedUF: state.ato5SelectedUf,
+      onHoverUF: handleHoverAto5,
+      onSelectUF: handleSelectAto5,
+      onClearUF: () => {
+        state.ato5SelectedUf = '';
         update();
       },
-      onSelectEntity: (key, unit) => (unit === 'uf' ? toggleUF(key) : toggleParty(key)),
-      onClearEntity: () => (state.h9MatrixUnit === 'uf' ? clearUF() : clearParty()),
     });
   };
   R.h9();
+}
+
+function syncH1ModeButtons() {
+  document.querySelectorAll('[data-h1-mode]').forEach((b) => {
+    b.classList.toggle('active', b.dataset.h1Mode === state.h1Mode);
+  });
 }
 
 function bindEvents() {
   // Controles locais dos gráficos
   document.querySelectorAll('[data-h1-mode]').forEach((btn) => {
     btn.addEventListener('click', () => {
+      clearTimeout(h1AutoTimer);
+      state.h1UserLocked = true;
+      state.h1PrevMode = state.h1Mode;
       state.h1Mode = btn.dataset.h1Mode;
-      document.querySelectorAll('[data-h1-mode]').forEach((b) => b.classList.toggle('active', b === btn));
-      update();
-    });
-  });
-
-  document.querySelectorAll('[data-h3-zoom]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      state.h3Zoom = btn.dataset.h3Zoom;
-      document.querySelectorAll('[data-h3-zoom]').forEach((b) => b.classList.toggle('active', b === btn));
+      syncH1ModeButtons();
       update();
     });
   });
@@ -597,6 +663,46 @@ function bindEvents() {
     });
   });
 
+  document.querySelectorAll('[data-h6-year]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.h6Year = Number(btn.dataset.h6Year);
+      document.querySelectorAll('[data-h6-year]').forEach((b) => b.classList.toggle('active', b === btn));
+      update();
+    });
+  });
+
+  document.querySelectorAll('[data-limiar-unit]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.limiarUnit = btn.dataset.limiarUnit;
+      document.querySelectorAll('[data-limiar-unit]').forEach((b) => b.classList.toggle('active', b === btn));
+      update();
+    });
+  });
+
+  document.querySelectorAll('[data-limiar-year]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.limiarYear = Number(btn.dataset.limiarYear);
+      document.querySelectorAll('[data-limiar-year]').forEach((b) => b.classList.toggle('active', b === btn));
+      update();
+    });
+  });
+
+  document.querySelectorAll('[data-ato5-cargo]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.ato5Cargo = btn.dataset.ato5Cargo;
+      document.querySelectorAll('[data-ato5-cargo]').forEach((b) => b.classList.toggle('active', b === btn));
+      update();
+    });
+  });
+
+  document.querySelectorAll('[data-ato5-year]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.ato5Year = Number(btn.dataset.ato5Year);
+      document.querySelectorAll('[data-ato5-year]').forEach((b) => b.classList.toggle('active', b === btn));
+      update();
+    });
+  });
+
   document.getElementById('btn-h7-2018')?.addEventListener('click', (e) => {
     state.h7Show2018 = !state.h7Show2018;
     e.currentTarget.classList.toggle('active', state.h7Show2018);
@@ -613,6 +719,8 @@ function bindEvents() {
   // Filtros da Boca da Taça
   document.getElementById('filter-year')?.addEventListener('change', (e) => {
     state.year = Number(e.target.value);
+    state.ato5Year = state.year;
+    document.querySelectorAll('[data-ato5-year]').forEach((b) => b.classList.toggle('active', Number(b.dataset.ato5Year) === state.ato5Year));
     populateSelects();
     update();
   });
@@ -620,6 +728,8 @@ function bindEvents() {
   document.getElementById('filter-cargo')?.addEventListener('change', (e) => {
     state.cargo = e.target.value;
     if (!state.h3CargoLocked) state.h3Cargo = state.cargo;
+    state.ato5Cargo = state.cargo;
+    document.querySelectorAll('[data-ato5-cargo]').forEach((b) => b.classList.toggle('active', b.dataset.ato5Cargo === state.ato5Cargo));
     update();
   });
 
@@ -634,14 +744,24 @@ function bindEvents() {
   });
 
   const resetAll = () => {
+    clearTimeout(h1AutoTimer);
     state.year = 2022;
     state.cargo = 'all';
     state.uf = '';
     state.party = '';
     state.threshold = 10;
+    state.h1Mode = 'reg';
+    state.h1PrevMode = 'reg';
+    state.h1UserLocked = false;
     state.h1BinFilter = null;
     state.h3Cargo = 'all';
     state.h3CargoLocked = false;
+    state.h6Year = 2022;
+    state.limiarUnit = 'chapa';
+    state.limiarYear = 2022;
+    state.ato5Year = 2022;
+    state.ato5Cargo = 'all';
+    state.ato5SelectedUf = '';
     document.getElementById('filter-year').value = '2022';
     document.getElementById('filter-cargo').value = 'all';
     document.getElementById('filter-uf').value = '';
@@ -649,21 +769,30 @@ function bindEvents() {
     const thr = document.getElementById('filter-threshold');
     if (thr) thr.value = '10';
     setText('threshold-out', '10');
+    syncH1ModeButtons();
     document.querySelectorAll('[data-h3-cargo]').forEach((b) => b.classList.toggle('active', b.dataset.h3Cargo === 'all'));
+    document.querySelectorAll('[data-h6-year]').forEach((b) => b.classList.toggle('active', Number(b.dataset.h6Year) === 2022));
+    document.querySelectorAll('[data-limiar-unit]').forEach((b) => b.classList.toggle('active', b.dataset.limiarUnit === 'chapa'));
+    document.querySelectorAll('[data-limiar-year]').forEach((b) => b.classList.toggle('active', Number(b.dataset.limiarYear) === 2022));
+    document.querySelectorAll('[data-ato5-cargo]').forEach((b) => b.classList.toggle('active', b.dataset.ato5Cargo === 'all'));
+    document.querySelectorAll('[data-ato5-year]').forEach((b) => b.classList.toggle('active', Number(b.dataset.ato5Year) === 2022));
     populateSelects();
     update();
   };
 
   document.getElementById('btn-reset-filters')?.addEventListener('click', resetAll);
   document.getElementById('btn-recorte-chip')?.addEventListener('click', resetAll);
-  document.getElementById('btn-map-reset-uf')?.addEventListener('click', clearUF);
+  document.getElementById('btn-map-reset-uf')?.addEventListener('click', () => {
+    state.ato5SelectedUf = '';
+    update();
+  });
 
   // Scrollspy & barra de progresso da haste da taça
   const sectionIds = ['topo', 'ato-01', 'ato-02', 'ato-03', 'ato-04', 'ato-05', 'sintese', 'boca-da-taca'];
   const secs = sectionIds.map((id) => document.getElementById(id)).filter(Boolean);
   const ACT_LABELS = [
     'Introdução', 'Ato 1 de 5 · No papel', 'Ato 2 de 5 · No dinheiro',
-    'Ato 3 de 5 · Na urna', 'Ato 4 de 5 · Sinais de alerta', 'Ato 5 de 5 · No território',
+    'Ato 3 de 5 · Na urna', 'Ato 4 de 5 · Sinais e limiar', 'Ato 5 de 5 · Onde a Cota Vira Voto',
     'Síntese', 'Sua vez: explore',
   ];
   const actNow = document.getElementById('act-now');
@@ -723,8 +852,39 @@ async function init() {
 
   initScrolly((key, idx, prevIdx) => {
     syncStepControlsVisibility(key, idx);
+
+    // Ato 1 (H1): transição automática Registradas -> Aptas ao entrar no passo 3 e reset de filtro ao sair
+    if (key === 'h1') {
+      clearTimeout(h1AutoTimer);
+      if (prevIdx === 2 && idx !== 2) {
+        let changed = false;
+        if (state.h1BinFilter) {
+          state.h1BinFilter = null;
+          changed = true;
+        }
+        if (idx < 2 && state.h1Mode !== 'reg') {
+          state.h1PrevMode = state.h1Mode;
+          state.h1Mode = 'reg';
+          state.h1UserLocked = false;
+          syncH1ModeButtons();
+          changed = true;
+        }
+        if (changed) {
+          update();
+          return;
+        }
+      }
+      if (idx === 2 && !state.h1UserLocked && state.h1Mode === 'reg') {
+        h1AutoTimer = setTimeout(() => {
+          state.h1PrevMode = state.h1Mode;
+          state.h1Mode = 'apto';
+          syncH1ModeButtons();
+          update();
+        }, 850);
+      }
+    }
+
     if (R[key]) R[key](idx, prevIdx);
-    // Atualiza título dinâmico dependente do passo (H1, H4) sem re-executar animação de abertura
     if (key === 'h1') {
       const yr = idx >= 2 ? 2026 : 2022;
       const h1B = computeH1EightBins(APP_DATA.candidates, { cargo: state.cargo, uf: state.uf, party: state.party });
@@ -734,7 +894,7 @@ async function init() {
       if (qB && b27B) {
         const curQ = yr === 2026 ? (isA ? qB.a26.pct : qB.r26.pct) : (isA ? qB.a22.pct : qB.r22.pct);
         const curB = yr === 2026 ? (isA ? b27B.a26.pct : b27B.r26.pct) : (isA ? b27B.a22.pct : b27B.r22.pct);
-        setText('title-h1', `Em ${yr}, ${fmtPctDirect(curQ, 0)} das chapas ficam na faixa de 30%–33%, contra ${fmtPctDirect(curB, 0)} na faixa logo abaixo (27%–30%)`);
+        setText('title-h1', `Em ${yr} (${isA ? 'Aptas' : 'Registradas'}), ${fmtPctDirect(curQ, 0)} das chapas ficam em 30%–33%, contra ${fmtPctDirect(curB, 0)} logo abaixo (27%–30%)`);
       }
     }
     if (key === 'h4') {
@@ -743,6 +903,16 @@ async function init() {
         ? `Principais fornecedores-hub (${state.year}) atendem dezenas de candidaturas simultaneamente, incluindo campanhas de baixa votação`
         : `Cerca de ${Math.round(fS.sharedPct)}% dos recursos (${fmtCompactBrl(fS.totShared)}) fluem para fornecedores compartilhados e ${fmtPctDirect(fS.partyPct, 1)} para partidos/terceiros`);
     }
+  }, {
+    onExitBlock: (key) => {
+      if (key === 'h1') {
+        clearTimeout(h1AutoTimer);
+        if (state.h1BinFilter) {
+          state.h1BinFilter = null;
+          update();
+        }
+      }
+    },
   });
 
   ['h1', 'h3'].forEach((k) => syncStepControlsVisibility(k, stepOf(k)));

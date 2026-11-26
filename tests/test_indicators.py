@@ -223,3 +223,47 @@ def test_h1_to_h5_2026_comparative_consistency():
     assert res["h2"]["nAptoM"] == cov["population"]["gender_apto"]["M"]
     assert res["h2"]["verdict"]["status"] != "inconclusivo"
     assert res["h5"]["elF"] + res["h5"]["elM"] > 1000
+
+
+def test_ato4_threshold_band_comparison_and_ato5_geography():
+    script = """
+    import fs from 'node:fs';
+    import { decodeAnalyticalBase, filterCandidates, UF_NAMES } from './src/data.js';
+    import { computeThresholdBandComparison, computeAto5Geography } from './src/indicators.js';
+
+    const raw = JSON.parse(fs.readFileSync('data/analytical_base.json', 'utf8'));
+    const { candidates } = decodeAnalyticalBase(raw);
+    const rows22 = filterCandidates(candidates, { year: 2022, cargo: 'all' });
+
+    const byChapa = computeThresholdBandComparison(rows22, { unit: 'chapa' });
+    const byParty = computeThresholdBandComparison(rows22, { unit: 'party' });
+    const geo22 = computeAto5Geography(candidates, { year: 2022, cargo: 'all', ufList: Object.keys(UF_NAMES).sort() });
+    const geo26 = computeAto5Geography(candidates, { year: 2026, cargo: '7', ufList: Object.keys(UF_NAMES).sort() });
+
+    console.log(JSON.stringify({
+      chapaFloorEleitas: byChapa.floor.pctEleitasF,
+      chapaAboveEleitas: byChapa.above.pctEleitasF,
+      chapaExcluded: byChapa.excludedBelow30,
+      partyFloorUnits: byParty.floor.units,
+      partyAboveUnits: byParty.above.units,
+      geo22Count: geo22.rows.length,
+      geo22Eligible: geo22.eligibleCount,
+      geo22Top5Len: geo22.top5Eleitas.length,
+      geo22AnyPillar: geo22.anyPillarCount,
+      geo26Count: geo26.rows.length,
+    }));
+    """
+    proc = subprocess.run(
+        ["node", "--input-type=module", "-e", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    out = json.loads(proc.stdout)
+    assert out["chapaAboveEleitas"] > out["chapaFloorEleitas"]
+    assert out["chapaExcluded"] > 0
+    assert out["partyFloorUnits"] >= 5 and out["partyAboveUnits"] >= 10
+    assert out["geo22Count"] == 27 and out["geo22Eligible"] == 27
+    assert out["geo22Top5Len"] == 5 and out["geo22AnyPillar"] >= 1
+    assert out["geo26Count"] == 27

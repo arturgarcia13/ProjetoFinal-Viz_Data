@@ -1463,9 +1463,9 @@ export function computeH6Series(
     };
   } else {
     verdict = {
-      status: 'funcionou',
-      label: 'Disparidade Reduzida',
-      reason: `A razão F/M em ≥2 sinais caiu de ${y18.ratio2Plus.toFixed(1)}× em 2018 para ${y22.ratio2Plus.toFixed(2)}× em 2022 e ${y26.ratio2Plus.toFixed(2)}× em 2026 (limiar ≤ ${voteThreshold} votos).`,
+      status: 'inconclusivo',
+      label: 'Inconclusivo',
+      reason: `Em ${y26.summary.F.n > 0 ? '2026' : '2022'}, as taxas por gênero são próximas (${(y26.pct2PlusF * 100).toFixed(1)}% F vs. ${(y26.pct2PlusM * 100).toFixed(1)}% M; razão ${y26.ratio2Plus.toFixed(2)}× após queda desde ${y18.ratio2Plus.toFixed(1)}× em 2018). Indicadores isolados são inconclusivos sem prova documental.`,
     };
   }
 
@@ -1609,6 +1609,254 @@ export function computeH9MatrixAndMap(
   return {
     ufRows,
     partyRows,
+    verdict,
+  };
+}
+
+/**
+ * Ato 4B — Investigação Comparativa por Faixa de Limiar (30%–33% vs. > 33%, excluindo < 30%)
+ * Suporta agrupamento por 'chapa' (UF × Cargo × Federação/Partido, n >= 4) ou por 'party' (partido, n >= 10).
+ */
+export function computeThresholdBandComparison(candidates, { unit = 'chapa' } = {}) {
+  const validG = candidates.filter((c) => c.g === 'F' || c.g === 'M');
+
+  const bands = {
+    '30-33': { label: '30%–33%', units: 0, rows: [] },
+    gt33: { label: '> 33%', units: 0, rows: [] },
+  };
+  let excludedBelow30 = 0;
+
+  if (unit === 'party') {
+    const byParty = groupBy(validG, (c) => c.p);
+    for (const [, rows] of byParty.entries()) {
+      if (rows.length < 10) continue;
+      const pctF = (rows.filter((c) => c.g === 'F').length / rows.length) * 100;
+      if (pctF < 30) {
+        excludedBelow30 += 1;
+        continue;
+      }
+      const target = pctF <= 33.34 ? bands['30-33'] : bands.gt33;
+      target.units += 1;
+      target.rows.push(...rows.filter((c) => c.apto));
+    }
+  } else {
+    const bySlate = groupBy(validG, (c) => c.slateKey || `${c.y}|${c.uf}|${c.cargo}|${c.chapa}`);
+    for (const [, rows] of bySlate.entries()) {
+      const sample = rows[0];
+      const nReg = Number.isFinite(sample.slateNReg) && sample.slateNReg > 0 ? sample.slateNReg : rows.length;
+      const pctReg = (Number.isFinite(sample.slatePctReg) ? sample.slatePctReg : safeDiv(rows.filter((c) => c.g === 'F').length, rows.length)) * 100;
+      if (nReg < 4) continue;
+      if (pctReg < 30) {
+        excludedBelow30 += 1;
+        continue;
+      }
+      const target = pctReg <= 33.34 ? bands['30-33'] : bands.gt33;
+      target.units += 1;
+      target.rows.push(...rows.filter((c) => c.apto));
+    }
+  }
+
+  function summarizeBand(key, def) {
+    const apto = def.rows;
+    const f = apto.filter((c) => c.g === 'F');
+    const m = apto.filter((c) => c.g === 'M');
+    const fRec = f.filter((c) => c.hasRec).map((c) => c.r);
+    const mRec = m.filter((c) => c.hasRec).map((c) => c.r);
+
+    const medF = median(fRec);
+    const medM = median(mRec);
+    const medAll = median(apto.filter((c) => c.hasRec).map((c) => c.r));
+
+    const pctCandF = safeDiv(f.length, apto.length) * 100;
+    const pubF = f.reduce((s, c) => s + c.fefc + c.fp, 0);
+    const pubTot = apto.reduce((s, c) => s + c.fefc + c.fp, 0);
+    const pctPubF = safeDiv(pubF, pubTot) * 100;
+    const propSaldoPP = pctPubF - pctCandF;
+    const propRatio = safeDiv(pctPubF, pctCandF);
+
+    const sortedF = [...f].sort((a, b) => (b.fefc + b.fp) - (a.fefc + a.fp));
+    const top10Count = f.length > 0 ? Math.max(1, Math.round(f.length * 0.1)) : 0;
+    const top10Pub = sortedF.slice(0, top10Count).reduce((s, c) => s + c.fefc + c.fp, 0);
+    const concTop10Pct = safeDiv(top10Pub, pubF) * 100;
+    const base90Pct = Math.max(0, 100 - concTop10Pct);
+
+    const elF = f.filter((c) => c.el).length;
+    const elTot = apto.filter((c) => c.el).length;
+    const pctEleitasF = safeDiv(elF, elTot) * 100;
+
+    return {
+      key,
+      label: def.label,
+      units: def.units,
+      nApto: apto.length,
+      nF: f.length,
+      nM: m.length,
+      medF,
+      medM,
+      medAll,
+      pctCandF,
+      pctPubF,
+      propSaldoPP,
+      propRatio,
+      concTop10Pct,
+      base90Pct,
+      elF,
+      elTot,
+      pctEleitasF,
+    };
+  }
+
+  const floor = summarizeBand('30-33', bands['30-33']);
+  const above = summarizeBand('gt33', bands.gt33);
+  const inconclusive = floor.units < 2 || above.units < 2 || floor.nF < 15 || above.nF < 15;
+
+  const verdict = inconclusive
+    ? {
+        status: 'inconclusivo',
+        label: 'Inconclusivo',
+        reason: `Amostra insuficiente entre faixas 30%–33% (${floor.units}) e >33% (${above.units}) no modo ${unit === 'party' ? 'Por Partido' : 'Por Chapa'}.`,
+      }
+    : {
+        status: above.pctEleitasF > floor.pctEleitasF ? 'vaza' : 'funcionou',
+        label: above.pctEleitasF > floor.pctEleitasF ? 'Teto 30%–33% Limita Retorno' : 'Faixas Equivalentes',
+        reason: `No recorte ${unit === 'party' ? 'por partido' : 'por chapa'}, eleitas passam de ${floor.pctEleitasF.toFixed(1)}% (30%–33%) para ${above.pctEleitasF.toFixed(1)}% (>33%), com mediana feminina de R$ ${(floor.medF / 1e3).toFixed(1)}k vs. R$ ${(above.medF / 1e3).toFixed(1)}k.`,
+      };
+
+  return {
+    unit,
+    excludedBelow30,
+    floor,
+    above,
+    inconclusive,
+    verdict,
+  };
+}
+
+/**
+ * Ato 5 — Onde a Cota Vira Voto (27 UFs · 4 Pilares Estruturais + Consequência na Urna)
+ */
+export function computeAto5Geography(allCandidates, { year = 2022, cargo = 'all', party = '', parties = null, ufList = [] } = {}) {
+  const subset = allCandidates.filter((c) => {
+    if (c.y !== year) return false;
+    if (cargo && cargo !== 'all' && c.cargo !== cargo) return false;
+    if (party && c.p !== party) return false;
+    if (parties && parties.size > 0 && !parties.has(c.p)) return false;
+    return true;
+  });
+
+  const byUf = groupBy(subset, (c) => c.uf);
+  const allUfs = ufList.length > 0 ? ufList : [...byUf.keys()].sort();
+
+  const rows = allUfs.map((uf) => {
+    const urows = byUf.get(uf) || [];
+    const validG = urows.filter((c) => c.g === 'F' || c.g === 'M');
+    const apto = validG.filter((c) => c.apto);
+    const f = apto.filter((c) => c.g === 'F');
+    const m = apto.filter((c) => c.g === 'M');
+    const validSample = apto.length >= 10 && f.length >= 3 && m.length >= 3;
+
+    const fRec = f.filter((c) => c.hasRec).map((c) => c.r);
+    const mRec = m.filter((c) => c.hasRec).map((c) => c.r);
+    const medF = median(fRec);
+    const medM = median(mRec);
+    const medDiffK = (medF - medM) / 1000;
+
+    const pctCandF = safeDiv(f.length, apto.length) * 100;
+    const fefcF = f.reduce((s, c) => s + c.fefc, 0);
+    const fefcTot = apto.reduce((s, c) => s + c.fefc, 0);
+    const pubF = fefcTot > 0 ? fefcF : f.reduce((s, c) => s + c.fefc + c.fp, 0);
+    const pubTot = fefcTot > 0 ? fefcTot : apto.reduce((s, c) => s + c.fefc + c.fp, 0);
+    const fefcSaldo = pubTot > 0 ? (safeDiv(pubF, pubTot) * 100) - pctCandF : 0;
+
+    const sortedF = [...f].sort((a, b) => (fefcTot > 0 ? b.fefc - a.fefc : (b.fefc + b.fp) - (a.fefc + a.fp)));
+    const top10N = f.length > 0 ? Math.max(1, Math.round(f.length * 0.1)) : 0;
+    const top10Val = sortedF.slice(0, top10N).reduce((s, c) => s + (fefcTot > 0 ? c.fefc : c.fefc + c.fp), 0);
+    const concTop10 = pubF > 0 ? safeDiv(top10Val, pubF) * 100 : 0;
+
+    const slatesMap = new Map();
+    for (const c of validG) {
+      const sk = c.slateKey || `${c.y}|${c.uf}|${c.cargo}|${c.chapa}`;
+      if (!slatesMap.has(sk)) {
+        slatesMap.set(sk, {
+          nReg: Number.isFinite(c.slateNReg) && c.slateNReg > 0 ? c.slateNReg : 0,
+          pctReg: (c.slatePctReg || 0) * 100,
+        });
+      }
+    }
+    const validSlates = [...slatesMap.values()].filter((s) => s.nReg >= 4);
+    const trappedSlates = validSlates.filter((s) => s.pctReg >= 30 && s.pctReg <= 33.34).length;
+    const tetoTrapped = validSlates.length > 0 ? safeDiv(trappedSlates, validSlates.length) * 100 : 100;
+
+    const elF = f.filter((c) => c.el).length;
+    const elTot = apto.filter((c) => c.el).length;
+    const eleitasPct = elTot > 0 ? safeDiv(elF, elTot) * 100 : 0;
+
+    return {
+      uf,
+      validSample,
+      nApto: apto.length,
+      nF: f.length,
+      slatesCount: validSlates.length,
+      elF,
+      elTot,
+      medF,
+      medM,
+      medDiffK: Number(medDiffK.toFixed(1)),
+      fefcSaldo: Number(fefcSaldo.toFixed(1)),
+      concTop10: Number(concTop10.toFixed(1)),
+      tetoTrapped: Number(tetoTrapped.toFixed(1)),
+      eleitasPct: Number(eleitasPct.toFixed(1)),
+      pillars: [false, false, false, false],
+      pillarRanks: [null, null, null, null],
+      eleitasRank: null,
+    };
+  });
+
+  const eligible = rows.filter((r) => r.validSample);
+  const pillarSpecs = [
+    { idx: 0, key: 'medDiffK', higherIsBetter: true },
+    { idx: 1, key: 'fefcSaldo', higherIsBetter: true },
+    { idx: 2, key: 'concTop10', higherIsBetter: true },
+    { idx: 3, key: 'tetoTrapped', higherIsBetter: false },
+  ];
+
+  for (const spec of pillarSpecs) {
+    const sorted = [...eligible]
+      .filter((r) => (spec.idx === 3 ? r.slatesCount >= 2 : true))
+      .sort((a, b) => (spec.higherIsBetter ? b[spec.key] - a[spec.key] : a[spec.key] - b[spec.key]) || a.uf.localeCompare(b.uf));
+    sorted.slice(0, 5).forEach((w, rankIdx) => {
+      w.pillars[spec.idx] = true;
+      w.pillarRanks[spec.idx] = rankIdx + 1;
+    });
+  }
+
+  const sortedEleitas = [...eligible]
+    .filter((r) => r.elTot > 0)
+    .sort((a, b) => b.eleitasPct - a.eleitasPct || a.uf.localeCompare(b.uf));
+  sortedEleitas.slice(0, 5).forEach((w, rankIdx) => {
+    w.eleitasRank = rankIdx + 1;
+  });
+
+  const top5Eleitas = sortedEleitas.slice(0, 5);
+  const twoPlusCount = top5Eleitas.filter((d) => d.pillars.filter(Boolean).length >= 2).length;
+  const anyPillarCount = top5Eleitas.filter((d) => d.pillars.filter(Boolean).length >= 1).length;
+
+  const verdict = eligible.length < 5
+    ? { status: 'inconclusivo', label: 'Inconclusivo', reason: `Poucas UFs com amostra suficiente neste recorte (${eligible.length}).` }
+    : {
+        status: 'vaza',
+        label: 'Desigualdade Estrutural por UF',
+        reason: `${twoPlusCount} de 5 UFs líderes em eleitas (${year}) acumularam ≥ 2 pilares estruturais (★2/4–4/4), e ${anyPillarCount} de 5 lideraram ao menos um pilar.`,
+      };
+
+  return {
+    year,
+    cargo,
+    rows,
+    eligibleCount: eligible.length,
+    top5Eleitas,
+    twoPlusCount,
+    anyPillarCount,
     verdict,
   };
 }

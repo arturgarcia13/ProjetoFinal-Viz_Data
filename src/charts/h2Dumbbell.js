@@ -43,9 +43,9 @@ export function renderH2Dumbbell(
   const margin = { top: 34, right: isCompact ? 38 : 54, bottom: 26, left: isCompact ? 86 : 114 };
   const rowH = isCompact ? 22 : 24;
   const dbH = Math.max(210, rows.length * rowH);
-  const srcTop = margin.top + dbH + 62;
+  const srcTop = margin.top + dbH + 74;
   const svgW = width;
-  const svgH = srcTop + 82;
+  const svgH = srcTop + 88;
   const W = svgW - margin.left - margin.right;
 
   const maxRatio = Math.max(1.45, d3.max(rows, (r) => Math.max(r.r22, r.r26)) * 1.12);
@@ -195,10 +195,12 @@ export function renderH2Dumbbell(
 
     if (show26) {
       const goLeft = d.r26 < d.r22;
-      const lblX = goLeft ? Math.max(4, x(d.r26) - 44) : x(d.r26) + 10;
+      const canPlaceLeft = goLeft && x(d.r26) >= 42;
+      const lblX = canPlaceLeft ? x(d.r26) - 10 : (goLeft ? Math.max(x(d.r22), x(d.r26)) + 10 : x(d.r26) + 10);
       const valTxt = row.append('text')
-        .attr('x', lblX)
+        .attr('x', Math.min(W + 34, lblX))
         .attr('y', cy + 4)
+        .attr('text-anchor', canPlaceLeft ? 'end' : 'start')
         .style('font-size', '10.5px')
         .style('font-weight', '700')
         .style('opacity', animate && !prevShow26 ? 0 : 1)
@@ -244,22 +246,24 @@ export function renderH2Dumbbell(
     const annG = g.append('g');
     const worst = rows[0];
     const best = rows[rows.length - 1];
-    addDirectAnnotation(annG, {
-      x1: Math.min(W - 190, Math.max(x(worst.r22), x(worst.r26)) + 26),
-      y1: y(worst.party) + 8,
-      noLine: true,
-      x2: x(worst.r26) + 8,
-      y2: y(worst.party),
-      title: `${worst.party}: menor razão (${fmtRatio(worst.r26)})`,
-      color: '#D93814',
-      animate: !prevShow26,
-    });
+    const worstAnchorX = Math.max(parityX + 14, Math.max(x(worst.r22), x(worst.r26)) + 52);
+    if (worstAnchorX + 150 <= W + 24) {
+      addDirectAnnotation(annG, {
+        x1: worstAnchorX,
+        y1: y(worst.party) + 4,
+        x2: Math.max(x(worst.r22), x(worst.r26)) + 10,
+        y2: y(worst.party) + 2,
+        title: `${worst.party}: menor razão (${fmtRatio(worst.r26)})`,
+        color: '#D93814',
+        animate: !prevShow26,
+      });
+    }
     if (best.r26 >= 1.0) {
       addDirectAnnotation(annG, {
-        x1: Math.max(10, x(best.r26) - 165),
-        y1: y(best.party) - 16,
-        x2: x(best.r26) - 6,
-        y2: y(best.party) - 4,
+        x1: Math.max(10, x(best.r26) - 185),
+        y1: y(best.party) + 20,
+        x2: x(best.r26) - 4,
+        y2: y(best.party) + 6,
         title: `${best.party} supera paridade (${fmtRatio(best.r26)})`,
         color: SEMANTIC_PALETTE.emerald,
         animate: !prevShow26,
@@ -288,11 +292,21 @@ export function renderH2Dumbbell(
 
   sourceG.append('text')
     .attr('x', 0)
-    .attr('y', -8)
+    .attr('y', -22)
     .attr('fill', SEMANTIC_PALETTE.ink)
-    .style('font-size', isCompact ? '10px' : '11px')
+    .style('font-size', isCompact ? '9.8px' : '11px')
     .style('font-weight', '700')
-    .text(`Composição da Receita (${activeYear}): Fundo Público (FEFC/FP) vs. Recursos Privados`);
+    .text(isCompact
+      ? `Composição (${activeYear} · Todos os partidos)`
+      : `Composição da Receita — Todos os Partidos (${activeYear}): Fundo Público vs. Recursos Privados`);
+
+  // Mini-legenda explícita diferenciando Fundo Público vs. Recursos Privados
+  const srcLeg = sourceG.append('g').attr('transform', 'translate(0, -14)');
+  srcLeg.append('rect').attr('x', 0).attr('y', 0).attr('width', 9).attr('height', 9).attr('rx', 2).attr('fill', SEMANTIC_PALETTE.emerald);
+  srcLeg.append('text').attr('x', 13).attr('y', 8).attr('fill', SEMANTIC_PALETTE.ink).style('font-size', '9.8px').style('font-weight', '600').text('Fundo Público (FEFC/FP)');
+  const privLegX = isCompact ? 132 : 162;
+  srcLeg.append('rect').attr('x', privLegX).attr('y', 0).attr('width', 9).attr('height', 9).attr('rx', 2).attr('fill', SEMANTIC_PALETTE.highlight).attr('stroke', SEMANTIC_PALETTE.highlightInk).attr('stroke-width', 0.8);
+  srcLeg.append('text').attr('x', privLegX + 13).attr('y', 8).attr('fill', SEMANTIC_PALETTE.ink).style('font-size', '9.8px').style('font-weight', '600').text('Recursos Privados / Próprios');
 
   const xSrc = d3.scaleLinear().domain([0, 100]).range([0, W]);
   sources.forEach((row, idx) => {
@@ -315,20 +329,20 @@ export function renderH2Dumbbell(
       .attr('width', animate && showSrc && !prevShowSrc ? 0 : targetW)
       .attr('height', 19)
       .attr('rx', 3)
-      .attr('fill', idx === 0 ? SEMANTIC_PALETTE.female : SEMANTIC_PALETTE.male);
+      .attr('fill', SEMANTIC_PALETTE.emerald);
 
     if (animate && showSrc && !prevShowSrc) {
       pubBar.transition().duration(dur).delay(idx * 90).ease(MOTION.easeOut).attr('width', targetW);
     }
 
-    if (row.publico > 24) {
+    if (targetW > 46) {
       barRow.append('text')
         .attr('x', 8)
         .attr('y', yPos + 13)
         .attr('fill', '#FFFFFF')
-        .style('font-size', '10px')
+        .style('font-size', isCompact ? '9.2px' : '10px')
         .style('font-weight', '700')
-        .text(`Fundo Público: ${fmtPct(row.publico)}`);
+        .text(targetW > 130 ? `Fundo Público: ${fmtPct(row.publico)}` : fmtPct(row.publico));
     }
 
     const privW = Math.max(0, xSrc(row.privado) - 2);
@@ -338,25 +352,27 @@ export function renderH2Dumbbell(
       .attr('width', animate && showSrc && !prevShowSrc ? 0 : privW)
       .attr('height', 19)
       .attr('rx', 3)
-      .attr('fill', SEMANTIC_PALETTE.highlight);
+      .attr('fill', SEMANTIC_PALETTE.highlight)
+      .attr('stroke', SEMANTIC_PALETTE.highlightInk)
+      .attr('stroke-width', 0.8);
 
     if (animate && showSrc && !prevShowSrc) {
       privBar.transition().duration(400).delay(180 + idx * 90).ease(MOTION.easeOut).attr('width', privW);
     }
 
-    if (row.privado > 18) {
+    if (privW > 34) {
       barRow.append('text')
-        .attr('x', xSrc(row.publico) + 8)
+        .attr('x', xSrc(row.publico) + 6)
         .attr('y', yPos + 13)
         .attr('fill', '#142620')
-        .style('font-size', '10px')
+        .style('font-size', isCompact ? '9.2px' : '10px')
         .style('font-weight', '700')
-        .text(`Privado: ${fmtPct(row.privado)}`);
+        .text(privW > 105 ? `Privado: ${fmtPct(row.privado)}` : fmtPct(row.privado));
     }
 
     bindTooltipEvents(barRow.node(), tipCtrl, () => buildTooltipCard({
       title: `${row.label} (${activeYear})`,
-      badge: 'Origem dos recursos',
+      badge: 'Todos os partidos',
       badgeTone: idx === 0 ? 'below' : 'neutral',
       rows: [
         { label: 'Fundo Público (FEFC + FP)', value: fmtPct(row.publico), focus: true },

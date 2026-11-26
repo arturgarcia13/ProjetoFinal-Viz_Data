@@ -111,7 +111,8 @@ export function renderH1Histogram(
     step = 2,
     prevStep = 2,
     width = 720,
-    mode = 'apto',
+    mode = 'reg',
+    prevMode = mode,
     selectedBinId = null,
     onSelectBin = null,
   } = {},
@@ -119,6 +120,7 @@ export function renderH1Histogram(
   container.innerHTML = '';
   const bins = h1EightData?.bins || [];
   const isApto = mode === 'apto';
+  const wasApto = prevMode === 'apto';
   const tot22 = isApto ? (h1EightData?.totals?.apto22 || 0) : (h1EightData?.totals?.reg22 || 0);
   const tot26 = isApto ? (h1EightData?.totals?.apto26 || 0) : (h1EightData?.totals?.reg26 || 0);
 
@@ -128,7 +130,7 @@ export function renderH1Histogram(
   }
 
   const isCompact = width < 460;
-  const margin = { top: 42, right: isCompact ? 14 : 24, bottom: 58, left: 46 };
+  const margin = { top: 44, right: isCompact ? 14 : 24, bottom: 58, left: 46 };
   const svgW = width;
   const svgH = isCompact ? 310 : 380;
   const W = svgW - margin.left - margin.right;
@@ -136,10 +138,13 @@ export function renderH1Histogram(
 
   const val22 = (b) => (isApto ? b.a22.pct : b.r22.pct);
   const val26 = (b) => (isApto ? b.a26.pct : b.r26.pct);
+  const prevVal22 = (b) => (wasApto ? b.a22.pct : b.r22.pct);
+  const prevVal26 = (b) => (wasApto ? b.a26.pct : b.r26.pct);
   const cnt22 = (b) => (isApto ? b.a22.n : b.r22.n);
   const cnt26 = (b) => (isApto ? b.a26.n : b.r26.n);
 
-  const maxVal = Math.max(12, d3.max(bins, (b) => Math.max(val22(b), val26(b))) * 1.24);
+  const maxDataPct = d3.max(bins, (b) => Math.max(b.r22.pct, b.r26.pct, b.a22.pct, b.a26.pct)) || 55;
+  const maxVal = Math.max(60, maxDataPct * 1.15);
   const x = d3.scaleBand().domain(bins.map((b) => b.range)).range([0, W]).padding(0.2);
   const y = d3.scaleLinear().domain([0, maxVal]).range([H, 0]);
 
@@ -220,6 +225,7 @@ export function renderH1Histogram(
   const show26 = step >= 2;
   const prevShow22 = prevStep >= 1;
   const prevShow26 = prevStep >= 2;
+  const modeChanged = mode !== prevMode;
   const dur = animDur(560);
   const animate = shouldAnimate();
   const barsG = g.append('g');
@@ -227,6 +233,8 @@ export function renderH1Histogram(
   bins.forEach((b, idx) => {
     const v22 = val22(b);
     const v26 = val26(b);
+    const pv22 = prevVal22(b);
+    const pv26 = prevVal26(b);
     const col = barsG.append('g')
       .attr('class', 'h1-col')
       .attr('data-bin', b.id)
@@ -248,14 +256,16 @@ export function renderH1Histogram(
     const prevW22 = prevShow26 ? x.bandwidth() * 0.46 : x.bandwidth();
     const delay = animDelay(idx * 28);
 
+    const startY22 = prevShow22 ? y(modeChanged ? pv22 : v22) : H;
+    const startH22 = prevShow22 ? H - y(modeChanged ? pv22 : v22) : 0;
     const bar22 = col.append('rect')
       .attr('class', 'bar-2022')
       .attr('x', x(b.range))
       .attr('width', animate ? prevW22 : w22)
       .attr('rx', 3)
       .attr('fill', animate ? (prevShow26 ? SEMANTIC_PALETTE.male : SEMANTIC_PALETTE.female) : (show26 ? SEMANTIC_PALETTE.male : SEMANTIC_PALETTE.female))
-      .attr('y', animate ? (prevShow22 ? y(v22) : H) : (show22 ? y(v22) : H))
-      .attr('height', animate ? (prevShow22 ? H - y(v22) : 0) : (show22 ? H - y(v22) : 0));
+      .attr('y', animate ? startY22 : (show22 ? y(v22) : H))
+      .attr('height', animate ? startH22 : (show22 ? H - y(v22) : 0));
 
     if (animate) {
       bar22.transition().duration(dur).delay(delay).ease(MOTION.easeOut)
@@ -265,14 +275,16 @@ export function renderH1Histogram(
         .attr('height', show22 ? H - y(v22) : 0);
     }
 
+    const startY26 = prevShow26 ? y(modeChanged ? pv26 : v26) : H;
+    const startH26 = prevShow26 ? H - y(modeChanged ? pv26 : v26) : 0;
     const bar26 = col.append('rect')
       .attr('class', 'bar-2026')
       .attr('x', x(b.range) + x.bandwidth() * 0.52)
       .attr('width', x.bandwidth() * 0.46)
       .attr('rx', 3)
       .attr('fill', SEMANTIC_PALETTE.female)
-      .attr('y', animate ? (prevShow26 ? y(v26) : H) : (show26 ? y(v26) : H))
-      .attr('height', animate ? (prevShow26 ? H - y(v26) : 0) : (show26 ? H - y(v26) : 0));
+      .attr('y', animate ? startY26 : (show26 ? y(v26) : H))
+      .attr('height', animate ? startH26 : (show26 ? H - y(v26) : 0));
 
     if (animate) {
       bar26.transition().duration(dur).delay(delay).ease(MOTION.easeOut)
@@ -343,6 +355,9 @@ export function renderH1Histogram(
 
   if (step >= 1 && !isCompact) {
     const below = bins.find((b) => b.id === '27-30');
+    const belowAll = bins.filter((b) => b.zone === 'below');
+    const lt30_22 = d3.sum(belowAll, val22);
+    const lt30_26 = d3.sum(belowAll, val26);
     const peakVal = show26 ? val26(qBin) : val22(qBin);
     const belowVal = show26 ? val26(below) : val22(below);
     const targetX = qX + x.bandwidth() * (show26 ? 0.72 : 0.5);
@@ -355,6 +370,20 @@ export function renderH1Histogram(
       title: `${fmtPct(peakVal)} no limite mínimo`,
       subtitle: `${fmtPct(belowVal)} logo abaixo do piso (27–30%)`,
       color: '#D93814',
+      animate: prevStep < 1,
+    });
+
+    const lt30BoxX = x(below.range) + x.bandwidth() * 0.5;
+    const lt30BoxY = Math.min(H - 58, y(Math.max(lt30_22, lt30_26, 8)) - 44);
+    addDirectAnnotation(g.append('g'), {
+      x1: 8,
+      y1: Math.max(22, lt30BoxY),
+      x2: lt30BoxX,
+      y2: y(show26 ? val26(below) : val22(below)) - 6,
+      anchor: 'start',
+      title: `Chapas < 30%: ${fmtPct(lt30_22)} (2022)`,
+      subtitle: show26 ? `${fmtPct(lt30_26)} em 2026 (${isApto ? 'Aptas' : 'Registradas'})` : `${isApto ? 'Aptas' : 'Registradas'} · n ≥ 4`,
+      color: SEMANTIC_PALETTE.male,
       animate: prevStep < 1,
     });
   }

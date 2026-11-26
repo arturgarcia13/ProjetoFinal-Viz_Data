@@ -108,15 +108,39 @@
     "evidence": "Fluxo editorial vertical fluido (sem #escala), barra superior 58px com filtros estruturais + chips, funil de 3 passos no hero, Takeaway Headlines e visões coordenadas H1->H2-H9; npm run build:vercel -> 234.3kb / site/ 11.27 MB"
   },
   {
-    "id": "F10",
-    "category": "e2e",
-    "description": "Verificação end-to-end em navegador real (Puppeteer) e revisão de linguagem não acusatória e acessibilidade",
+    "id": "F11",
+    "category": "ui-editorial",
+    "description": "Aplicar o sistema visual editorial do protótipo (papel creme, Newsreader + Inter, hero esmeralda com silhuetas e funil, atos com eyebrow/pill, split 35/65, faixas de síntese/métodos/FAQ/rodapé)",
     "steps": [
-      "Executar script E2E com Puppeteer percorrendo os 5 atos e acionando filtros de Ano, UF e Partido",
-      "Confirmar zero erros de console/JS e presença de todos os SVGs renderizados",
-      "Revisar textos para linguagem não acusatória e notas metodológicas completas"
+      "Substituir tokens, fontes e componentes em public/styles.css pelo design system editorial",
+      "Atualizar public/index.html com hero, leads dos atos, faixa de exploração e chrome dos cartões",
+      "Gerar e servir localmente as fontes Newsreader/Inter auto-hospedadas"
     ],
     "passes": true,
-    "evidence": "./init.sh -> 16 passed in 18.04s; E2E_ROOT=site node tests/e2e.mjs -> E2E OK (errors: [], 0 colisões desktop/mobile); Auditoria Sênior R3 (09dc7e8a): APROVADO (9,5 / 9,4 / 9,5 / 9,6 · média 9,49/10)"
+    "evidence": "Arquitetura Martini Glass aplicada em public/index.html, public/styles.css e src/components/scrolly.js (Newsreader + Inter locais, barra superior com scrollspy + progress bar, hero esmeralda + funil SVG + roadmap, 5 atos em split 35/65 com step-dots, síntese #sintese e anexo metodológico); E2E desktop+mobile OK"
+  },
+  {
+    "id": "F12",
+    "category": "charts-light",
+    "description": "Adaptar os 9 gráficos e tooltips para palco claro fiel ao anexo, mantendo semântica e legibilidade",
+    "steps": [
+      "Atualizar SEMANTIC_PALETTE para papel claro, tinta escura, coral/rosa/amarelo/esmeralda",
+      "Corrigir cores hardcoded de texto/bordas pensadas para fundo escuro em H1–H9 e H2B",
+      "Revalidar hover unificado e geometria dos SVGs em desktop e mobile"
+    ],
+    "passes": true,
+    "evidence": "Todos os 9 gráficos (H1–H9 + heroFunnel) atualizados em D3.js e Observable Plot conectados aos microdados reais (analytical_base.json, network_hubs.json, br_uf.json, coverage.json), tooltip unificado em papel claro sem títulos nativos, 0 colisões/clipping em 1280x820 e 390x844"
+  },
+  {
+    "id": "F13",
+    "category": "ux-exploration",
+    "description": "Entregar faixa de exploração livre com leituras ao vivo do recorte e atualizar a suíte E2E para o novo design",
+    "steps": [
+      "Adicionar seção de exploração com readouts de candidaturas, fundo, votos e cadeiras sincronizados aos filtros",
+      "Atualizar asserções de shell, tipografia e paleta em tests/e2e.mjs",
+      "Executar build, init.sh e E2E em site/ com zero erros"
+    ],
+    "passes": true,
+    "evidence": "Boca da Taça (#boca-da-taca) com 4 filtros + 5 readouts ao vivo + chip de recorte; npm run build:vercel (391.6kb / 15 files), .venv/bin/python -m pytest tests -v (16 passed) e E2E_ROOT=site node tests/e2e.mjs (errors: []) verdes"
   }
 ]

@@ -1,548 +1,329 @@
 import * as d3 from 'd3';
 import { SEMANTIC_PALETTE } from './palette.js';
-import { createChartTooltip, fmtInt, fmtPct, fmtSignedPP } from './tooltip.js';
+import { addDirectAnnotation } from './annotate.js';
+import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtInt, fmtPct, fmtSignedPP } from './tooltip.js';
 
-const PALETTE = {
-  y2022: SEMANTIC_PALETTE.y2022,
-  y2026: SEMANTIC_PALETTE.y2026,
-  warn: SEMANTIC_PALETTE.alert,
-  warnText: '#001A12',
-  floorBg: '#005C40',
-  floorPill: SEMANTIC_PALETTE.floor,
-  floorPillText: '#003D2B',
-  ok: SEMANTIC_PALETTE.ok,
-  ink: SEMANTIC_PALETTE.ink,
-  muted: SEMANTIC_PALETTE.muted,
-  zero: 'rgba(20, 38, 32, 0.72)',
-  grid: SEMANTIC_PALETTE.grid,
-  axis: SEMANTIC_PALETTE.subtle,
-};
+const BIN_DEFS = [
+  { id: 'lt24', range: '<24%', short: '<24', min: 0, max: 24, zone: 'below', status: 'Abaixo da cota' },
+  { id: '24-27', range: '24–27%', short: '24–27', min: 24, max: 27, zone: 'below', status: 'Abaixo da cota' },
+  { id: '27-30', range: '27–30%', short: '27–30', min: 27, max: 30, zone: 'below', status: 'Logo abaixo do piso' },
+  { id: '30-33', range: '30–33%', short: '30–33', min: 30, max: 33.4, zone: 'floor', status: 'Limiar legal (teto operacional)', isQuota: true },
+  { id: '33-36', range: '33–36%', short: '33–36', min: 33.4, max: 36, zone: 'above', status: 'Acima do piso' },
+  { id: '36-39', range: '36–39%', short: '36–39', min: 36, max: 39, zone: 'above', status: 'Acima do piso' },
+  { id: '39-42', range: '39–42%', short: '39–42', min: 39, max: 42, zone: 'above', status: 'Acima da cota' },
+  { id: '42+', range: '≥42%', short: '≥42', min: 42, max: 101, zone: 'above', status: 'Ampla participação' },
+];
 
-function niceAxisMax(rawMax) {
-  if (rawMax <= 0) return 20;
-  const step = rawMax <= 25 ? 5 : 10;
-  return Math.min(100, Math.max(10, Math.ceil((rawMax * 1.08) / step) * step));
-}
+export function computeH1EightBins(candidates, { cargo = 'all', uf = '', party = '' } = {}) {
+  const calcYear = (yr) => {
+    const slates = new Map();
+    const slateParties = new Map();
+    for (const c of candidates) {
+      if (c.y !== yr) continue;
+      if (cargo && cargo !== 'all' && c.cargo !== cargo) continue;
+      if (uf && c.uf !== uf) continue;
+      if (party && c.p !== party) continue;
+      if (c.g !== 'F' && c.g !== 'M') continue;
 
-function buildTooltipHtml(bin, mode, focusYear = null) {
-  const isApto = mode === 'apto';
-  const a = bin.y2022;
-  const b = bin.y2026;
+      const sk = c.slateKey || `${c.y}|${c.uf}|${c.cargo}|${c.chapa}`;
+      if (!slates.has(sk)) {
+        slates.set(sk, {
+          key: sk,
+          nReg: c.slateNReg ?? 0,
+          pctReg: (c.slatePctReg ?? 0) * 100,
+          nApto: c.slateNApto ?? 0,
+          pctApto: (c.slatePctApto ?? 0) * 100,
+        });
+      }
+      let pSet = slateParties.get(sk);
+      if (!pSet) {
+        pSet = new Set();
+        slateParties.set(sk, pSet);
+      }
+      pSet.add(c.p);
+    }
 
-  const p22 = isApto ? a.aptoPct : a.regPct;
-  const p26 = isApto ? b.aptoPct : b.regPct;
-  const dPP = isApto ? bin.deltaAptoPP : bin.deltaRegPP;
+    const regValid = [...slates.values()].filter((s) => s.nReg >= 4);
+    const aptoValid = [...slates.values()].filter((s) => s.nApto >= 4);
+    return { regValid, aptoValid, slateParties };
+  };
 
-  const cls22 = focusYear === 2022 ? ' is-focus' : '';
-  const cls26 = focusYear === 2026 ? ' is-focus' : '';
-  const modeLabel = isApto ? 'Aptas (n ≥ 4)' : 'Registradas (n ≥ 4)';
+  const y22 = calcYear(2022);
+  const y26 = calcYear(2026);
 
-  return `
-    <div class="h1-tip-head">
-      <strong>Faixa ${bin.label}</strong>
-      <span class="h1-tip-status h1-tip-zone-${bin.zone}">${bin.status}</span>
-    </div>
-    <table class="h1-tip-table">
-      <thead>
-        <tr>
-          <th>${modeLabel}</th>
-          <th class="col-2022${cls22}">2022</th>
-          <th class="col-2026${cls26}">2026</th>
-          <th>Δ 22→26</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Proporção</td>
-          <td class="col-2022${cls22}"><strong>${fmtPct(p22)}</strong></td>
-          <td class="col-2026${cls26}"><strong>${fmtPct(p26)}</strong></td>
-          <td><strong>${fmtSignedPP(dPP)}</strong></td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="chart-tip-hint">Clique na faixa para filtrar os partidos nos gráficos seguintes</p>
-  `;
+  const bins = BIN_DEFS.map((def) => {
+    const pick = (yrObj, isApto) => {
+      const list = isApto ? yrObj.aptoValid : yrObj.regValid;
+      const matched = list.filter((s) => {
+        const val = isApto ? s.pctApto : s.pctReg;
+        return val >= def.min && val < def.max;
+      });
+      const parties = new Set();
+      for (const s of matched) {
+        const pSet = yrObj.slateParties.get(s.key);
+        if (pSet) pSet.forEach((p) => parties.add(p));
+      }
+      return {
+        n: matched.length,
+        total: list.length,
+        pct: list.length > 0 ? (matched.length / list.length) * 100 : 0,
+        parties: [...parties],
+      };
+    };
+
+    const r22 = pick(y22, false);
+    const a22 = pick(y22, true);
+    const r26 = pick(y26, false);
+    const a26 = pick(y26, true);
+    const unionReg = new Set([...r22.parties, ...r26.parties]);
+    const unionApto = new Set([...a22.parties, ...a26.parties]);
+
+    return {
+      ...def,
+      r22,
+      a22,
+      r26,
+      a26,
+      partiesReg: [...unionReg].sort(),
+      partiesApto: [...unionApto].sort(),
+    };
+  });
+
+  return {
+    bins,
+    totals: {
+      reg22: y22.regValid.length,
+      apto22: y22.aptoValid.length,
+      reg26: y26.regValid.length,
+      apto26: y26.aptoValid.length,
+    },
+  };
 }
 
 /**
- * H1 — Histograma Espelhado (Butterfly Chart) 2022 vs. 2026:
- * - Cores temporais dedicadas (Branco 2022 vs. Ciano 2026; Laranja para Piso 30%)
- * - Visão coordenada: clique em uma faixa filtra os gráficos seguintes (clique de novo ou no fundo limpa)
- * - Gaveta analítica "Quem está abaixo de 30%?" com reincidência e Registradas → Aptas
+ * H1 — Histograma Vertical (8 faixas) do Teto Burocrático (2022 vs. 2026).
  */
 export function renderH1Histogram(
   container,
-  h1Comparison,
+  h1EightData,
   {
-    width = 700,
-    mode = 'reg',
+    step = 2,
+    width = 720,
+    mode = 'apto',
     selectedBinId = null,
     onSelectBin = null,
-    onSelectParty = null,
   } = {},
 ) {
   container.innerHTML = '';
-
+  const bins = h1EightData?.bins || [];
   const isApto = mode === 'apto';
-  const total22 = isApto
-    ? (h1Comparison?.byYear?.[2022]?.aptoSlatesCount || 0)
-    : (h1Comparison?.byYear?.[2022]?.totalSlates || 0);
-  const total26 = isApto
-    ? (h1Comparison?.byYear?.[2026]?.aptoSlatesCount || 0)
-    : (h1Comparison?.byYear?.[2026]?.totalSlates || 0);
+  const tot22 = isApto ? (h1EightData?.totals?.apto22 || 0) : (h1EightData?.totals?.reg22 || 0);
+  const tot26 = isApto ? (h1EightData?.totals?.apto26 || 0) : (h1EightData?.totals?.reg26 || 0);
 
-  if (total22 === 0 && total26 === 0) {
+  if (tot22 === 0 && tot26 === 0) {
     container.innerHTML = '<p class="chart-empty">Sem chapas com pelo menos 4 candidaturas neste recorte (2022 e 2026).</p>';
     return;
   }
 
-  const bins = h1Comparison.bins;
-  const isCompact = width < 440;
+  const isCompact = width < 460;
+  const margin = { top: 42, right: isCompact ? 14 : 24, bottom: 58, left: 46 };
+  const svgW = width;
+  const svgH = isCompact ? 310 : 380;
+  const W = svgW - margin.left - margin.right;
+  const H = svgH - margin.top - margin.bottom;
 
-  const rawMax = d3.max(bins, (b) => Math.max(
-    b.y2022.regPct,
-    b.y2022.aptoPct,
-    b.y2026.regPct,
-    b.y2026.aptoPct,
-  )) || 0;
-  const axisMax = niceAxisMax(rawMax);
+  const val22 = (b) => (isApto ? b.a22.pct : b.r22.pct);
+  const val26 = (b) => (isApto ? b.a26.pct : b.r26.pct);
+  const cnt22 = (b) => (isApto ? b.a22.n : b.r22.n);
+  const cnt26 = (b) => (isApto ? b.a26.n : b.r26.n);
 
-  const tipCtrl = createChartTooltip(container, {
-    wrapClass: 'h1-butterfly-wrap',
-    tooltipClass: 'h1-tooltip',
-  });
-  const { wrap } = tipCtrl;
+  const maxVal = Math.max(12, d3.max(bins, (b) => Math.max(val22(b), val26(b))) * 1.24);
+  const x = d3.scaleBand().domain(bins.map((b) => b.range)).range([0, W]).padding(0.2);
+  const y = d3.scaleLinear().domain([0, maxVal]).range([H, 0]);
 
-  const centerW = isCompact ? 80 : 96;
-  const sideLabelPad = isCompact ? 38 : 50;
-  const marginTop = 34;
-  const marginBottom = 42;
-  const rowStep = 42;
-  const quotaGap = 24;
-  const barH = 24;
-
-  const halfPlotW = Math.max(70, (width - centerW - sideLabelPad * 2) / 2);
-  const leftOriginX = sideLabelPad + halfPlotW;
-  const rightOriginX = leftOriginX + centerW;
-  const centerX = leftOriginX + centerW / 2;
-
-  const quotaIdx = bins.findIndex((b) => b.zone === 'below');
-  const rowY = (i) => marginTop + i * rowStep + (i >= quotaIdx ? quotaGap : 0);
-  const quotaLineY = marginTop + quotaIdx * rowStep + quotaGap / 2 - (rowStep - barH) / 2;
-  const plotBottom = rowY(bins.length - 1) + barH + 10;
-  const height = plotBottom + marginBottom;
-
-  const xLeft = d3.scaleLinear().domain([0, axisMax]).range([leftOriginX, sideLabelPad]);
-  const xRight = d3.scaleLinear().domain([0, axisMax]).range([rightOriginX, rightOriginX + halfPlotW]);
-
-  const ticks = isCompact
-    ? [0, Math.round(axisMax / 2), axisMax]
-    : (() => {
-        const arr = xRight.ticks(4).filter((t) => t <= axisMax);
-        if (!arr.includes(0)) arr.unshift(0);
-        if (arr[arr.length - 1] !== axisMax && axisMax - arr[arr.length - 1] >= axisMax * 0.15) {
-          arr.push(axisMax);
-        }
-        return arr;
-      })();
-
-  const svg = d3.select(wrap).append('svg')
-    .attr('class', 'h1-butterfly-svg')
-    .attr('viewBox', `0 0 ${width} ${height}`)
-    .attr('width', width)
-    .attr('height', height)
+  const tipCtrl = createChartTooltip(container, { wrapClass: 'h1-wrap', tooltipClass: 'h1-tooltip' });
+  const svg = d3.select(tipCtrl.wrap).append('svg')
+    .attr('class', 'h1-vertical-svg')
+    .attr('viewBox', `0 0 ${svgW} ${svgH}`)
+    .attr('width', svgW)
+    .attr('height', svgH)
     .attr('role', 'img')
-    .style('font-family', 'Inter, system-ui, sans-serif')
-    .attr(
-      'aria-label',
-      `Histograma espelhado comparando % de mulheres por chapa em 2022 e 2026 (${isApto ? 'Aptas' : 'Registradas'})`,
-    );
+    .attr('aria-label', `Histograma de chapas por percentual de mulheres (${isApto ? 'Aptas' : 'Registradas'}), 2022 vs. 2026`)
+    .style('font-family', 'Inter, system-ui, sans-serif');
 
   if (onSelectBin) {
     svg.on('click', (evt) => {
-      if (selectedBinId && !evt.target.closest('.h1-row')) {
-        onSelectBin(null);
-      }
+      if (selectedBinId && !evt.target.closest('.h1-col')) onSelectBin(null);
     });
   }
 
-  // Cabeçalhos das 3 colunas
-  const hdrG = svg.append('g').attr('class', 'h1-col-headers');
-  hdrG.append('text')
-    .attr('x', leftOriginX)
-    .attr('y', 16)
-    .attr('text-anchor', 'end')
-    .attr('font-size', isCompact ? 11 : 12.5)
-    .attr('font-weight', 700)
-    .attr('fill', PALETTE.y2022)
-    .text(isCompact ? `← 2022 (${fmtInt(total22)})` : `← 2022 (${fmtInt(total22)} chapas)`);
+  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-  hdrG.append('text')
-    .attr('x', centerX)
-    .attr('y', 16)
-    .attr('text-anchor', 'middle')
-    .attr('font-size', 10.5)
-    .attr('font-weight', 600)
-    .attr('fill', PALETTE.muted)
-    .text('% Mulheres');
+  const qBin = bins.find((b) => b.isQuota);
+  const qX = x(qBin.range);
+  g.append('rect')
+    .attr('class', 'h1-floor-zone')
+    .attr('x', qX - 5)
+    .attr('y', 0)
+    .attr('width', x.bandwidth() + 10)
+    .attr('height', H)
+    .attr('rx', 4)
+    .attr('fill', 'rgba(248, 223, 79, 0.34)');
 
-  hdrG.append('text')
-    .attr('x', rightOriginX)
-    .attr('y', 16)
-    .attr('text-anchor', 'start')
-    .attr('font-size', isCompact ? 11 : 12.5)
-    .attr('font-weight', 700)
-    .attr('fill', PALETTE.y2026)
-    .text(isCompact ? `2026 (${fmtInt(total26)}) →` : `2026 (${fmtInt(total26)} chapas) →`);
+  g.append('line')
+    .attr('x1', qX - 5)
+    .attr('x2', qX - 5)
+    .attr('y1', -14)
+    .attr('y2', H)
+    .attr('stroke', SEMANTIC_PALETTE.highlightInk)
+    .attr('stroke-width', 2.2)
+    .attr('stroke-dasharray', '4,3');
 
-  // Grade vertical simétrica
-  const gridG = svg.append('g').attr('class', 'h1-grid');
-  for (const t of ticks) {
-    const xl = xLeft(t);
-    const xr = xRight(t);
-    gridG.append('line')
-      .attr('x1', xl).attr('x2', xl)
-      .attr('y1', marginTop - 6).attr('y2', plotBottom)
-      .attr('stroke', t === 0 ? PALETTE.axis : PALETTE.grid)
-      .attr('stroke-width', t === 0 ? 1.2 : 1);
-    gridG.append('line')
-      .attr('x1', xr).attr('x2', xr)
-      .attr('y1', marginTop - 6).attr('y2', plotBottom)
-      .attr('stroke', t === 0 ? PALETTE.axis : PALETTE.grid)
-      .attr('stroke-width', t === 0 ? 1.2 : 1);
-  }
+  g.append('text')
+    .attr('x', qX)
+    .attr('y', -18)
+    .attr('fill', '#7A5200')
+    .style('font-size', isCompact ? '10px' : '11.5px')
+    .style('font-weight', '700')
+    .text(isCompact ? 'Piso 30% (30%–33%)' : 'Piso legal: 30% (Janela crítica 30%–33%)');
 
-  // Destaque suave na faixa crítica (30%–33,3%) e anotações diretas (FT style)
-  const floorIdx = bins.findIndex((b) => b.zone === 'floor');
-  if (floorIdx >= 0) {
-    svg.append('rect')
-      .attr('x', 4)
-      .attr('y', rowY(floorIdx) - 5)
-      .attr('width', width - 8)
-      .attr('height', barH + 10)
-      .attr('rx', 6)
-      .attr('fill', PALETTE.floorBg)
-      .attr('fill-opacity', 0.85);
-  }
+  g.append('g')
+    .call(d3.axisLeft(y).ticks(5).tickSize(-W).tickFormat((d) => `${Math.round(d)}%`))
+    .call((a) => a.select('.domain').remove())
+    .call((a) => a.selectAll('.tick line').attr('stroke', SEMANTIC_PALETTE.grid))
+    .call((a) => a.selectAll('.tick text').attr('fill', SEMANTIC_PALETTE.muted).style('font-size', '11px'));
 
-  if (!isCompact) {
-    const ge40_22 = (isApto ? h1Comparison?.byYear?.[2022]?.pctGe40Apto : h1Comparison?.byYear?.[2022]?.pctGe40) || 0;
-    const ge40_26 = (isApto ? h1Comparison?.byYear?.[2026]?.pctGe40Apto : h1Comparison?.byYear?.[2026]?.pctGe40) || 0;
-    const ge40LeftBound = Math.max(
-      xRight(isApto ? (bins[0]?.y2026?.aptoPct || 0) : (bins[0]?.y2026?.regPct || 0)),
-      xRight(isApto ? (bins[1]?.y2026?.aptoPct || 0) : (bins[1]?.y2026?.regPct || 0)),
-    ) + 54;
-    if (width - ge40LeftBound >= 145) {
-      svg.append('text')
-        .attr('class', 'h1-annot-ge40')
-        .attr('x', width - 10)
-        .attr('y', rowY(0) + barH - 2)
-        .attr('text-anchor', 'end')
-        .attr('font-size', 10)
+  g.append('g')
+    .attr('transform', `translate(0,${H})`)
+    .call(d3.axisBottom(x).tickFormat((r) => {
+      const b = bins.find((item) => item.range === r);
+      return isCompact && b ? b.short : r;
+    }))
+    .call((a) => a.select('.domain').attr('stroke', '#CBD5E1'))
+    .call((a) => a.selectAll('.tick text')
+      .attr('fill', SEMANTIC_PALETTE.ink)
+      .style('font-size', isCompact ? '10px' : '11.5px')
+      .style('font-weight', '600'));
+
+  g.append('text')
+    .attr('x', 0)
+    .attr('y', H + 44)
+    .attr('fill', SEMANTIC_PALETTE.muted)
+    .style('font-size', isCompact ? '9.8px' : '11px')
+    .text(isCompact
+      ? `Chapas n ≥ 4 · ${isApto ? 'Aptas' : 'Registradas'} (2022: ${fmtInt(tot22)} · 2026: ${fmtInt(tot26)})`
+      : `Nota: Chapas com n ≥ 4 candidaturas (${isApto ? 'Aptas' : 'Registradas'} · 2022: ${fmtInt(tot22)} chapas, 2026: ${fmtInt(tot26)} chapas).`);
+
+  const show22 = step >= 1;
+  const show26 = step >= 2;
+  const barsG = g.append('g');
+
+  bins.forEach((b) => {
+    const v22 = val22(b);
+    const v26 = val26(b);
+    const col = barsG.append('g')
+      .attr('class', 'h1-col')
+      .attr('data-bin', b.id)
+      .style('cursor', onSelectBin ? 'pointer' : 'default');
+
+    const selected = selectedBinId === b.id;
+    col.append('rect')
+      .attr('class', 'h1-col-hit')
+      .attr('x', x(b.range) - 4)
+      .attr('y', 0)
+      .attr('width', x.bandwidth() + 8)
+      .attr('height', H)
+      .attr('rx', 4)
+      .attr('fill', 'transparent')
+      .attr('stroke', selected ? SEMANTIC_PALETTE.ink : 'none')
+      .attr('stroke-width', 2);
+
+    const w22 = show26 ? x.bandwidth() * 0.46 : x.bandwidth();
+    col.append('rect')
+      .attr('class', 'bar-2022')
+      .attr('x', x(b.range))
+      .attr('width', w22)
+      .attr('rx', 3)
+      .attr('fill', show26 ? SEMANTIC_PALETTE.male : SEMANTIC_PALETTE.female)
+      .attr('y', show22 ? y(v22) : H)
+      .attr('height', show22 ? H - y(v22) : 0);
+
+    col.append('rect')
+      .attr('class', 'bar-2026')
+      .attr('x', x(b.range) + x.bandwidth() * 0.52)
+      .attr('width', x.bandwidth() * 0.46)
+      .attr('rx', 3)
+      .attr('fill', SEMANTIC_PALETTE.female)
+      .attr('y', show26 ? y(v26) : H)
+      .attr('height', show26 ? H - y(v26) : 0);
+
+    if (show22 && v22 >= 1) {
+      col.append('text')
+        .attr('class', 'bar-label')
+        .attr('x', x(b.range) + w22 / 2)
+        .attr('y', y(v22) - 4)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', isCompact ? 8.5 : 10)
         .attr('font-weight', 700)
-        .attr('fill', PALETTE.ok)
-        .text(`Faixas ≥ 40%: ${fmtPct(ge40_22 * 100)} → ${fmtPct(ge40_26 * 100)}`);
+        .attr('fill', show26 ? SEMANTIC_PALETTE.male : '#D93814')
+        .text(fmtPct(v22, 0));
+    }
+    if (show26 && v26 >= 1) {
+      col.append('text')
+        .attr('class', 'bar-label')
+        .attr('x', x(b.range) + x.bandwidth() * 0.75)
+        .attr('y', y(v26) - 4)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', isCompact ? 8.5 : 10)
+        .attr('font-weight', 700)
+        .attr('fill', '#D93814')
+        .text(fmtPct(v26, 0));
     }
 
-    if (floorIdx >= 0) {
-      const floorBin = bins[floorIdx];
-      const f26 = isApto ? floorBin.y2026.aptoPct : floorBin.y2026.regPct;
-      const fDelta = isApto ? floorBin.deltaAptoPP : floorBin.deltaRegPP;
-      if (width - (xRight(f26) + 52) >= 92) {
-        svg.append('text')
-          .attr('class', 'h1-annot-floor')
-          .attr('x', width - 10)
-          .attr('y', rowY(floorIdx) + barH / 2 + 3.5)
-          .attr('text-anchor', 'end')
-          .attr('font-size', 9.5)
-          .attr('font-weight', 700)
-          .attr('fill', PALETTE.floorPill)
-          .text(`Teto · ${fmtSignedPP(fDelta)}`);
-      }
-    }
-  }
+    const node = col.node();
+    node.setAttribute('tabindex', '0');
+    node.setAttribute('role', 'button');
+    node.setAttribute('aria-label', `Faixa ${b.range}: 2022 ${fmtPct(v22)}, 2026 ${fmtPct(v26)}`);
+    bindTooltipEvents(node, tipCtrl, () => buildTooltipCard({
+      title: `Faixa ${b.range} (${isApto ? 'Aptas' : 'Registradas'})`,
+      badge: b.status,
+      badgeTone: b.zone,
+      columns: ['Ano', '% Chapas', 'Chapas (n ≥ 4)', 'Δ 22→26'],
+      rows: [
+        { cells: ['2022', { text: fmtPct(v22), cls: 'is-focus' }, fmtInt(cnt22(b)), '—'] },
+        { cells: ['2026', { text: fmtPct(v26), cls: 'is-focus' }, fmtInt(cnt26(b)), fmtSignedPP(v26 - v22)] },
+      ],
+      hint: onSelectBin ? 'Clique na faixa para filtrar os partidos nos demais gráficos' : '',
+    }), { focusable: true });
 
-  function showTooltip(bin, rowEl, focusYear, clientX = null) {
-    const evt = clientX != null ? { clientX } : null;
-    tipCtrl.show(rowEl, buildTooltipHtml(bin, mode, focusYear), evt);
-  }
-
-  function hideTooltip() {
-    tipCtrl.hide();
-  }
-
-  const rowsG = svg.append('g').attr('class', 'h1-rows');
-
-  bins.forEach((bin, i) => {
-    const y = rowY(i);
-    const n22 = isApto ? bin.y2022.aptoN : bin.y2022.regN;
-    const p22 = isApto ? bin.y2022.aptoPct : bin.y2022.regPct;
-    const n26 = isApto ? bin.y2026.aptoN : bin.y2026.regN;
-    const p26 = isApto ? bin.y2026.aptoPct : bin.y2026.regPct;
-
-    const w22 = Math.max(0, leftOriginX - xLeft(p22));
-    const w26 = Math.max(0, xRight(p26) - rightOriginX);
-    const isSelected = selectedBinId === bin.id;
-    const isDimmed = Boolean(selectedBinId && !isSelected);
-
-    const rowG = rowsG.append('g')
-      .attr('class', `h1-row${isSelected ? ' is-bin-selected' : ''}`)
-      .attr('data-bin', bin.id)
-      .attr('tabindex', 0)
-      .attr('role', onSelectBin ? 'button' : 'group')
-      .attr('aria-pressed', isSelected ? 'true' : 'false')
-      .attr(
-        'aria-label',
-        `Faixa ${bin.label}: 2022 ${n22} chapas (${fmtPct(p22)}); 2026 ${n26} chapas (${fmtPct(p26)})`,
-      )
-      .style('opacity', isDimmed ? 0.34 : 1);
-
-    rowG.append('rect')
-      .attr('class', 'h1-row-hit')
-      .attr('x', 4)
-      .attr('y', y - 5)
-      .attr('width', width - 8)
-      .attr('height', barH + 10)
-      .attr('rx', 6)
-      .attr('fill', isSelected ? 'rgba(14, 140, 147, 0.14)' : 'transparent')
-      .attr('stroke', isSelected ? PALETTE.y2026 : 'none')
-      .attr('stroke-width', isSelected ? 1.5 : 0);
-
-    // Barra esquerda (2022 — Branco / vazado sutil)
-    if (w22 > 0) {
-      rowG.append('rect')
-        .attr('class', 'h1-bar-2022')
-        .attr('x', xLeft(p22))
-        .attr('y', y)
-        .attr('width', Math.max(2, w22))
-        .attr('height', barH)
-        .attr('rx', 3)
-        .attr('fill', PALETTE.y2022)
-        .attr('fill-opacity', bin.zone === 'below' ? 0.85 : 0.94);
-    }
-
-    rowG.append('text')
-      .attr('class', 'h1-tip-label')
-      .attr('x', xLeft(p22) - 6)
-      .attr('y', y + barH / 2 + 4)
-      .attr('text-anchor', 'end')
-      .attr('font-size', isCompact ? 10.5 : 11.5)
-      .attr('font-weight', 600)
-      .attr('fill', n22 > 0 ? PALETTE.y2022 : PALETTE.zero)
-      .text(n22 > 0 ? fmtPct(p22) : '0');
-
-    // Coluna central (faixa)
-    if (bin.zone === 'floor') {
-      rowG.append('rect')
-        .attr('x', leftOriginX + 5)
-        .attr('y', y + 1)
-        .attr('width', centerW - 10)
-        .attr('height', barH - 2)
-        .attr('rx', 11)
-        .attr('ry', 11)
-        .attr('fill', PALETTE.floorPill);
-    } else if (bin.zone === 'below') {
-      rowG.append('rect')
-        .attr('x', leftOriginX + 8)
-        .attr('y', y + 1)
-        .attr('width', centerW - 16)
-        .attr('height', barH - 2)
-        .attr('rx', 11)
-        .attr('ry', 11)
-        .attr('fill', PALETTE.warn);
-    }
-
-    rowG.append('text')
-      .attr('class', 'h1-center-label')
-      .attr('x', centerX)
-      .attr('y', y + barH / 2 + 4)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', isCompact ? 10.5 : 11.5)
-      .attr('font-weight', (bin.zone === 'floor' || bin.zone === 'below') ? 700 : 600)
-      .attr('fill', bin.zone === 'floor'
-        ? PALETTE.floorPillText
-        : (bin.zone === 'below' ? PALETTE.warnText : PALETTE.ink))
-      .text(bin.label);
-
-    // Barra direita (2026 — Ciano)
-    if (w26 > 0) {
-      rowG.append('rect')
-        .attr('class', 'h1-bar-2026')
-        .attr('x', rightOriginX)
-        .attr('y', y)
-        .attr('width', Math.max(2, w26))
-        .attr('height', barH)
-        .attr('rx', 3)
-        .attr('fill', PALETTE.y2026);
-    }
-
-    rowG.append('text')
-      .attr('class', 'h1-tip-label')
-      .attr('x', xRight(p26) + 6)
-      .attr('y', y + barH / 2 + 4)
-      .attr('text-anchor', 'start')
-      .attr('font-size', isCompact ? 10.5 : 11.5)
-      .attr('font-weight', 600)
-      .attr('fill', n26 > 0 ? PALETTE.y2026 : PALETTE.zero)
-      .text(n26 > 0 ? fmtPct(p26) : '0');
-
-    const node = rowG.node();
-    const resolveFocusYear = (evt) => {
-      const svgRect = svg.node().getBoundingClientRect();
-      const relX = evt.clientX - svgRect.left;
-      if (relX < leftOriginX) return 2022;
-      if (relX > rightOriginX) return 2026;
-      return null;
-    };
-
-    rowG
-      .on('mouseenter', (evt) => showTooltip(bin, node, resolveFocusYear(evt), evt.clientX))
-      .on('mousemove', (evt) => showTooltip(bin, node, resolveFocusYear(evt), evt.clientX))
-      .on('mouseleave', () => hideTooltip())
-      .on('focus', () => showTooltip(bin, node, null, null))
-      .on('blur', () => hideTooltip())
-      .on('click', (evt) => {
+    if (onSelectBin) {
+      col.on('click', (evt) => {
         evt.stopPropagation();
-        if (onSelectBin) onSelectBin(bin.id);
-      })
-      .on('keydown', (evt) => {
-        if (evt.key === 'Escape') hideTooltip();
-        if ((evt.key === 'Enter' || evt.key === ' ') && onSelectBin) {
+        onSelectBin(b);
+      });
+      col.on('keydown', (evt) => {
+        if (evt.key === 'Enter' || evt.key === ' ') {
           evt.preventDefault();
-          onSelectBin(bin.id);
+          onSelectBin(b);
         }
       });
+    }
   });
 
-  // Linha horizontal divisória do piso legal (30%)
-  const quotaG = svg.append('g').attr('class', 'h1-quota-rule');
-  quotaG.append('line')
-    .attr('x1', 4)
-    .attr('x2', width - 4)
-    .attr('y1', quotaLineY)
-    .attr('y2', quotaLineY)
-    .attr('stroke', PALETTE.warn)
-    .attr('stroke-width', 1.75)
-    .attr('stroke-dasharray', '6,4');
-
-  const pillW = isCompact ? 112 : 134;
-  quotaG.append('rect')
-    .attr('x', centerX - pillW / 2)
-    .attr('y', quotaLineY - 9.5)
-    .attr('width', pillW)
-    .attr('height', 19)
-    .attr('rx', 9.5)
-    .attr('ry', 9.5)
-    .attr('fill', PALETTE.warn);
-
-  quotaG.append('text')
-    .attr('x', centerX)
-    .attr('y', quotaLineY + 3.5)
-    .attr('text-anchor', 'middle')
-    .attr('font-size', isCompact ? 9.5 : 10.5)
-    .attr('font-weight', 700)
-    .attr('fill', PALETTE.warnText)
-    .text('Piso legal: 30%');
-
-  // Eixos inferiores espelhados simétricos
-  const fmtTick = (t) => `${t}%`;
-  const leftAxisG = svg.append('g').attr('class', 'h1-axis h1-axis-left');
-  leftAxisG.append('line')
-    .attr('x1', sideLabelPad).attr('x2', leftOriginX)
-    .attr('y1', plotBottom).attr('y2', plotBottom)
-    .attr('stroke', PALETTE.axis);
-
-  const rightAxisG = svg.append('g').attr('class', 'h1-axis h1-axis-right');
-  rightAxisG.append('line')
-    .attr('x1', rightOriginX).attr('x2', rightOriginX + halfPlotW)
-    .attr('y1', plotBottom).attr('y2', plotBottom)
-    .attr('stroke', PALETTE.axis);
-
-  for (const t of ticks) {
-    const xl = xLeft(t);
-    leftAxisG.append('line')
-      .attr('x1', xl).attr('x2', xl)
-      .attr('y1', plotBottom).attr('y2', plotBottom + 5)
-      .attr('stroke', PALETTE.axis);
-    leftAxisG.append('text')
-      .attr('class', 'h1-axis-tick')
-      .attr('x', xl)
-      .attr('y', plotBottom + 17)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', 10)
-      .attr('fill', PALETTE.muted)
-      .text(fmtTick(t));
-
-    const xr = xRight(t);
-    rightAxisG.append('line')
-      .attr('x1', xr).attr('x2', xr)
-      .attr('y1', plotBottom).attr('y2', plotBottom + 5)
-      .attr('stroke', PALETTE.axis);
-    rightAxisG.append('text')
-      .attr('class', 'h1-axis-tick')
-      .attr('x', xr)
-      .attr('y', plotBottom + 17)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', 10)
-      .attr('fill', PALETTE.muted)
-      .text(fmtTick(t));
-  }
-
-  svg.append('text')
-    .attr('x', centerX)
-    .attr('y', height - 6)
-    .attr('text-anchor', 'middle')
-    .attr('font-size', isCompact ? 9.5 : 10.5)
-    .attr('fill', PALETTE.muted)
-    .text(
-      isCompact
-        ? '% das chapas do ano (escalas simétricas)'
-        : `% das chapas ${isApto ? 'aptas' : 'registradas'} de cada ano (escalas espelhadas idênticas)`,
-    );
-
-  // Gaveta explicativa: Quem está abaixo de 30%?
-  const lt30 = h1Comparison.lt30Details;
-  if (lt30) {
-    const d22 = lt30.byYear[2022];
-    const d26 = lt30.byYear[2026];
-    const drawer = document.createElement('details');
-    drawer.className = 'h1-lt30-drawer';
-
-    const summary = document.createElement('summary');
-    summary.textContent = `Quem está abaixo de 30%? · 2022: ${fmtPct(d22.regPct)} → ${fmtPct(d22.aptoPct)} (${d22.aptoCount} aptas) | 2026: ${fmtPct(d26.regPct)} → ${fmtPct(d26.aptoPct)} (${d26.aptoCount} aptas)`;
-    drawer.appendChild(summary);
-
-    const body = document.createElement('div');
-    body.className = 'h1-lt30-body';
-
-    const top22Str = d22.topPartiesReg.slice(0, 5).map((x) => `${x.party} (${x.count})`).join(', ') || '—';
-    const top26Str = d26.topPartiesReg.slice(0, 5).map((x) => `${x.party} (${x.count})`).join(', ') || '—';
-    const delta22 = `${d22.deltaRegToAptoPP >= 0 ? '+' : ''}${d22.deltaRegToAptoPP.toFixed(1).replace('.', ',')} p.p.`;
-    const delta26 = `${d26.deltaRegToAptoPP >= 0 ? '+' : ''}${d26.deltaRegToAptoPP.toFixed(1).replace('.', ',')} p.p.`;
-
-    body.innerHTML = `
-      <p><strong>Por quê caem abaixo de 30%?</strong> Quase todas as chapas registradas abaixo da cota ficam entre <strong>25% e 29,9%</strong> (${d22.nearFloorRegCount}/${d22.regCount} em 2022; ${d26.nearFloorRegCount}/${d26.regCount} em 2026), por falta de 1–2 nomes ou arredondamento no limite. Ao filtrar para <strong>Aptas</strong>, inaptidões derrubaram <strong>${fmtPct(d22.pctDroppedOfReg)} (${d22.droppedByInapto} chapas)</strong> em 2022 (${delta22} na faixa &lt;30%) e <strong>${fmtPct(d26.pctDroppedOfReg)} (${d26.droppedByInapto} chapas)</strong> em 2026 (${delta26}).</p>
-      <p><strong>Quem são e reincidência:</strong> No registro, <strong>${lt30.sameSlateRepeats} chapas idênticas (UF × Cargo × Partido)</strong> repetiram &lt;30% nos dois anos. Porém, <strong>${lt30.repeatPartiesReg.length} partidos</strong> repetiram nacionalmente em UFs diferentes — 2022: ${top22Str} · 2026: ${top26Str}.</p>
-    `;
-
-    if (lt30.repeatPartiesReg.length > 0 && onSelectParty) {
-      const btnRow = document.createElement('div');
-      btnRow.className = 'h1-repeat-parties';
-      const lbl = document.createElement('span');
-      lbl.textContent = 'Partidos reincidentes (<30% no registro em 2022 e 2026):';
-      btnRow.appendChild(lbl);
-      for (const rp of lt30.repeatPartiesReg) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'h1-repeat-btn';
-        b.textContent = `${rp.party} (${rp.count2022}→${rp.count2026})`;
-        b.addEventListener('click', () => onSelectParty(rp.party));
-        btnRow.appendChild(b);
-      }
-      body.appendChild(btnRow);
-    }
-
-    drawer.appendChild(body);
-    container.appendChild(drawer);
+  if (step >= 1 && !isCompact) {
+    const below = bins.find((b) => b.id === '27-30');
+    const peakVal = show26 ? val26(qBin) : val22(qBin);
+    const belowVal = show26 ? val26(below) : val22(below);
+    const targetX = qX + x.bandwidth() * (show26 ? 0.72 : 0.5);
+    const targetY = y(peakVal);
+    addDirectAnnotation(g.append('g'), {
+      x1: Math.min(W - 185, qX + x.bandwidth() + 18),
+      y1: 22,
+      x2: targetX + 4,
+      y2: targetY + 4,
+      title: `${fmtPct(peakVal)} no limite mínimo`,
+      subtitle: `${fmtPct(belowVal)} logo abaixo do piso (27–30%)`,
+      color: '#D93814',
+    });
   }
 }

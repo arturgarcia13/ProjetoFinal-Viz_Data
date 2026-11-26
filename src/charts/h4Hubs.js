@@ -1,104 +1,144 @@
 import * as d3 from 'd3';
 import { SEMANTIC_PALETTE } from './palette.js';
-import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtCompactBrl, fmtInt } from './tooltip.js';
+import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtCompactBrl, fmtInt, fmtPct } from './tooltip.js';
 
 /**
- * H4 (passo 3) — Rede bipartida de fornecedores-hub, com dados reais de data/network_hubs.json.
- * Candidatas de baixa votação (esquerda) → fornecedores compartilhados (centro) → candidatos (direita).
- * Candidaturas são anônimas (cid); só aparecem gênero, votos e despesa.
+ * H4 (Passo 2) — Rede Bipartida Real de Fornecedores-Hub (data/network_hubs.json).
+ * Mostra os principais fornecedores compartilhados e a divisão entre candidaturas de baixa votação e demais.
+ * Layout dimensionado para 0 cortes/clipping em desktop e mobile (390px).
  */
-export function renderH4Hubs(container, yearData, { width = 700, year = 2022 } = {}) {
-  container.querySelector('.h4-hub-panel')?.remove();
-  const hubsAll = yearData?.hubs || [];
-  if (hubsAll.length === 0) return;
+export function renderH4Hubs(container, yearData, { width = 740, year = 2022, uf = '', party = '' } = {}) {
+  container.innerHTML = '';
+  let hubsAll = yearData?.hubs || [];
+  if (uf) hubsAll = hubsAll.filter((h) => h.uf === uf);
+  if (party) hubsAll = hubsAll.filter((h) => h.p === party);
 
-  const candById = new Map((yearData.candidates || []).map((c) => [c.cid, c]));
-  const hubs = [...hubsAll].sort((a, b) => b.totalVal - a.totalVal).slice(0, 3);
-  const links = [];
-  const leftIds = new Set();
-  const rightIds = new Set();
+  if (hubsAll.length === 0) {
+    container.innerHTML = `<p class="chart-empty">Sem fornecedores-hub registrados para este recorte em ${year}.</p>`;
+    return;
+  }
 
-  hubs.forEach((h) => {
-    const mine = (yearData.links || []).filter((l) => l.hid === h.hid)
-      .map((l) => ({ ...l, c: candById.get(l.cid) })).filter((l) => l.c);
-    const women = mine.filter((l) => l.c.g === 'F').sort((a, b) => a.c.v - b.c.v).slice(0, 3);
-    const men = mine.filter((l) => l.c.g === 'M').sort((a, b) => b.val - a.val).slice(0, 2);
-    women.forEach((l) => { leftIds.add(l.cid); links.push({ hub: h, ...l }); });
-    men.forEach((l) => { rightIds.add(l.cid); links.push({ hub: h, ...l }); });
-  });
+  const topHubs = [...hubsAll].sort((a, b) => (b.totalVal || 0) - (a.totalVal || 0)).slice(0, 4);
+  const isCompact = width < 480;
+  const svgW = width;
+  const svgH = isCompact ? 310 : 350;
 
-  const left = [...leftIds].map((id) => candById.get(id));
-  const right = [...rightIds].map((id) => candById.get(id));
-  const isCompact = width < 460;
-  const rowH = 30;
-  const H = Math.max(left.length, right.length, hubs.length * 2) * rowH + 56;
-  const lx = isCompact ? 12 : 16;
-  const rx = width - (isCompact ? 12 : 16);
-  const cx = width / 2;
-
-  const panel = document.createElement('div');
-  panel.className = 'h4-hub-panel';
-  container.appendChild(panel);
-  const tipCtrl = createChartTooltip(panel);
+  const tipCtrl = createChartTooltip(container, { wrapClass: 'h4-hubs-wrap' });
   const svg = d3.select(tipCtrl.wrap).append('svg')
     .attr('class', 'h4-hubs-svg')
-    .attr('viewBox', `0 0 ${width} ${H}`).attr('width', width).attr('height', H)
+    .attr('viewBox', `0 0 ${svgW} ${svgH}`)
+    .attr('width', svgW)
+    .attr('height', svgH)
     .attr('role', 'img')
-    .attr('aria-label', `Rede de fornecedores-hub que atendem várias candidaturas em ${year}`)
+    .attr('aria-label', `Principais fornecedores-hub em ${year}: candidaturas atendidas e baixa votação`)
     .style('font-family', 'Inter, system-ui, sans-serif');
 
-  svg.append('text').attr('x', cx).attr('y', 16).attr('text-anchor', 'middle').attr('font-size', 12)
-    .attr('font-weight', 700).attr('fill', SEMANTIC_PALETTE.ink)
-    .text(isCompact ? 'Fornecedores-hub em comum' : 'Fornecedores-hub conectam candidatas de baixa votação a candidatos');
+  const cx = svgW / 2;
+  const xL = isCompact ? 82 : 148;
+  const xR = svgW - (isCompact ? 82 : 148);
 
-  const yL = (i) => 40 + i * ((H - 60) / Math.max(1, left.length - 1 || 1));
-  const yR = (i) => 40 + i * ((H - 60) / Math.max(1, right.length - 1 || 1));
-  const yH = (i) => 40 + (i + 0.5) * ((H - 60) / hubs.length);
-  const posL = new Map(left.map((c, i) => [c.cid, { x: lx + (isCompact ? 8 : 110), y: left.length === 1 ? H / 2 : yL(i) }]));
-  const posR = new Map(right.map((c, i) => [c.cid, { x: rx - (isCompact ? 8 : 110), y: right.length === 1 ? H / 2 : yR(i) }]));
-  const posH = new Map(hubs.map((h, i) => [h.hid, { x: cx, y: yH(i) }]));
-  const rHub = d3.scaleSqrt().domain([0, d3.max(hubs, (h) => h.totalVal) || 1]).range([9, 20]);
+  svg.append('text')
+    .attr('x', cx)
+    .attr('y', 18)
+    .attr('text-anchor', 'middle')
+    .attr('fill', SEMANTIC_PALETTE.ink)
+    .style('font-size', isCompact ? '10.2px' : '12px')
+    .style('font-weight', '700')
+    .text(isCompact
+      ? `Top ${topHubs.length} fornecedores-hub (${year})`
+      : `Top ${topHubs.length} fornecedores-hub (${year}): candidaturas atendidas e baixa votação`);
 
-  links.forEach((l) => {
-    const isF = l.c.g === 'F';
-    const a = isF ? posL.get(l.cid) : posH.get(l.hub.hid);
-    const b = isF ? posH.get(l.hub.hid) : posR.get(l.cid);
-    const mx = (a.x + b.x) / 2;
-    svg.append('path').attr('class', 'h4-hub-link')
-      .attr('d', `M${a.x},${a.y} C${mx},${a.y} ${mx},${b.y} ${b.x},${b.y}`)
-      .attr('fill', 'none').attr('stroke', isF ? SEMANTIC_PALETTE.alert : SEMANTIC_PALETTE.men)
-      .attr('stroke-opacity', isF ? 0.5 : 0.6).attr('stroke-width', isF ? 1.8 : 2.4);
-  });
+  svg.append('text').attr('x', xL).attr('y', 40).attr('text-anchor', 'middle').attr('fill', '#D93814')
+    .style('font-size', isCompact ? '9.2px' : '10.5px').style('font-weight', '700').text('Baixa votação');
+  svg.append('text').attr('x', cx).attr('y', 40).attr('text-anchor', 'middle').attr('fill', '#7A5200')
+    .style('font-size', isCompact ? '9.2px' : '10.5px').style('font-weight', '700').text('Fornecedor-hub');
+  svg.append('text').attr('x', xR).attr('y', 40).attr('text-anchor', 'middle').attr('fill', SEMANTIC_PALETTE.male)
+    .style('font-size', isCompact ? '9.2px' : '10.5px').style('font-weight', '700').text('Demais cand.');
 
-  const nodeLabel = (c, side) => `Cand. ${side} · ${fmtInt(c.v)} voto${c.v === 1 ? '' : 's'}`;
-  left.forEach((c) => {
-    const p = posL.get(c.cid);
-    svg.append('circle').attr('cx', p.x).attr('cy', p.y).attr('r', 5.5).attr('fill', SEMANTIC_PALETTE.alert);
-    svg.append('text').attr('x', p.x - 10).attr('y', p.y + 3.5).attr('text-anchor', 'end').attr('font-size', 9.5)
-      .attr('fill', SEMANTIC_PALETTE.muted).text(isCompact ? `F · ${fmtInt(c.v)}` : nodeLabel(c, 'F'));
-  });
-  right.forEach((c) => {
-    const p = posR.get(c.cid);
-    svg.append('circle').attr('cx', p.x).attr('cy', p.y).attr('r', 6.5).attr('fill', SEMANTIC_PALETTE.men);
-    svg.append('text').attr('x', p.x + 10).attr('y', p.y + 3.5).attr('font-size', 9.5).attr('font-weight', 600)
-      .attr('fill', SEMANTIC_PALETTE.ink).text(isCompact ? `M · ${fmtInt(c.v)}` : nodeLabel(c, 'M'));
-  });
-  hubs.forEach((h) => {
-    const p = posH.get(h.hid);
-    const node = svg.append('circle').attr('class', 'h4-hub').attr('cx', p.x).attr('cy', p.y).attr('r', rHub(h.totalVal))
-      .attr('fill', '#F8DF4F').attr('stroke', SEMANTIC_PALETTE.ok).attr('stroke-width', 2.2).attr('tabindex', 0);
-    const short = h.label.length > 26 ? `${h.label.slice(0, 25)}…` : h.label;
-    svg.append('text').attr('x', p.x).attr('y', p.y - rHub(h.totalVal) - 6).attr('text-anchor', 'middle')
-      .attr('font-size', 10).attr('font-weight', 700).attr('fill', '#7A5200').text(isCompact ? short.slice(0, 14) : short);
+  const maxN = d3.max(topHubs, (h) => h.candsN || 1) || 1;
+  const wScale = d3.scaleLinear().domain([0, maxN]).range([3, isCompact ? 18 : 24]);
+  const rScale = d3.scaleSqrt().domain([0, maxN]).range([10, isCompact ? 16 : 20]);
+  const rowSpan = (svgH - 76) / Math.max(1, topHubs.length);
+
+  const halo = (sel) => sel.attr('paint-order', 'stroke').attr('stroke', '#FFFFFF').attr('stroke-width', 3);
+
+  topHubs.forEach((h, i) => {
+    const cy = 74 + i * rowSpan + rowSpan * 0.25;
+    const r = rScale(h.candsN || 10);
+    const low = h.lowVoteN || 0;
+    const rest = Math.max(0, (h.candsN || 0) - low);
+    const rawName = h.label || h.hid || `Hub ${i + 1}`;
+    const shortName = rawName.length > (isCompact ? 22 : 32) ? `${rawName.slice(0, isCompact ? 21 : 31)}…` : rawName;
+
+    svg.append('line')
+      .attr('x1', xL)
+      .attr('x2', cx - r)
+      .attr('y1', cy)
+      .attr('y2', cy)
+      .attr('stroke', SEMANTIC_PALETTE.female)
+      .attr('stroke-opacity', 0.56)
+      .attr('stroke-width', wScale(low));
+
+    svg.append('line')
+      .attr('x1', cx + r)
+      .attr('x2', xR)
+      .attr('y1', cy)
+      .attr('y2', cy)
+      .attr('stroke', SEMANTIC_PALETTE.male)
+      .attr('stroke-opacity', 0.5)
+      .attr('stroke-width', wScale(rest));
+
+    svg.append('text')
+      .attr('x', xL - 8)
+      .attr('y', cy + 4)
+      .attr('text-anchor', 'end')
+      .attr('fill', '#D93814')
+      .style('font-size', isCompact ? '9.5px' : '11px')
+      .style('font-weight', '700')
+      .text(isCompact ? `${low} cand.` : `${low} candidaturas`);
+
+    svg.append('text')
+      .attr('x', xR + 8)
+      .attr('y', cy + 4)
+      .attr('text-anchor', 'start')
+      .attr('fill', SEMANTIC_PALETTE.ink)
+      .style('font-size', isCompact ? '9.5px' : '11px')
+      .style('font-weight', '700')
+      .text(isCompact ? `${rest} cand.` : `${rest} candidaturas`);
+
+    const node = svg.append('circle')
+      .attr('class', 'h4-hub')
+      .attr('cx', cx)
+      .attr('cy', cy)
+      .attr('r', r)
+      .attr('fill', SEMANTIC_PALETTE.highlight)
+      .attr('stroke', SEMANTIC_PALETTE.emerald)
+      .attr('stroke-width', 2.2)
+      .attr('tabindex', 0)
+      .style('cursor', 'pointer');
+
+    halo(
+      svg.append('text')
+        .attr('x', cx)
+        .attr('y', cy - r - 6)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#7A5200')
+        .style('font-size', isCompact ? '8.8px' : '10px')
+        .style('font-weight', '700')
+        .text(shortName),
+    );
+
+    const pctLow = h.candsN ? (low / h.candsN) * 100 : 0;
     bindTooltipEvents(node.node(), tipCtrl, () => buildTooltipCard({
-      title: h.label,
+      title: rawName,
+      badge: `${h.p} · ${h.uf}`,
+      badgeTone: pctLow >= 50 ? 'below' : 'floor',
       rows: [
         { label: 'Candidaturas atendidas', value: fmtInt(h.candsN) },
-        { label: 'Com baixa votação', value: fmtInt(h.lowVoteN) },
-        { label: 'Total pago', value: fmtCompactBrl(h.totalVal) },
-        { label: 'Partido / UF', value: `${h.p} · ${h.uf}` },
+        { label: 'Com baixa votação', value: `${fmtInt(low)} (${fmtPct(pctLow)})`, focus: true },
+        { label: 'Total pago ao hub', value: fmtCompactBrl(h.totalVal) },
       ],
-      hint: 'Mesmo CNPJ ou CPF contratado por várias candidaturas da chapa',
+      hint: 'Dados reais anonimizados de network_hubs.json (TSE)',
     }), { focusable: true });
   });
 }

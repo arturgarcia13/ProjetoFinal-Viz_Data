@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>A Cota de Gênero Leva Mulheres ao Poder ou Apenas ao Papel? (2018–2026)</title>
-  <meta name="description" content="Investigação visual interativa sobre a cota de gênero de 30% nas eleições proporcionais brasileiras (2018–2026): registro de chapas, financiamento, urnas, sinais de integridade e geografia.">
-  <meta property="og:title" content="A Cota de Gênero Leva Mulheres ao Poder ou Apenas ao Papel? (2018–2026)">
-  <meta property="og:description" content="Investigação interativa em cinco atos com microdados oficiais do TSE comparando registro de chapas, financiamento, urnas, sinais de integridade (2018–2026) e geografia.">
-  <meta property="og:type" content="article">
-  <meta property="og:locale" content="pt_BR">
-  <meta property="og:image" content="assets/og-preview.svg">
-  <meta property="og:image:alt" content="Capa editorial da investigação sobre a cota de gênero nas eleições brasileiras">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="assets/og-preview.svg">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2300805A'/%3E%3Cpath d='M12 50V18h11v32z' fill='%23FCE34D'/%3E%3Cpath d='M27 50V28h11v22z' fill='%23FF7AE5'/%3E%3Cpath d='M42 50V14h11v36z' fill='%23FF5E2B'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Da Cota à Cadeira — A Sub-representação Feminina na Política Brasileira (2018–2026)</title>
+  <meta name="description" content="Investigação visual interativa em arquitetura martini glass sobre a cota de gênero de 30% nas eleições proporcionais brasileiras (2018–2026): registro de chapas, financiamento, urnas, sinais de integridade e geografia." />
+  <meta property="og:title" content="Da Cota à Cadeira — A Sub-representação Feminina na Política Brasileira (2018–2026)" />
+  <meta property="og:description" content="A partir dos microdados oficiais do TSE (2018–2026), rastreamos as cinco etapas da disputa para mostrar onde a cota funciona, onde o dinheiro vaza e onde a fraude se reinventa." />
+  <meta property="og:type" content="article" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:image" content="assets/og-preview.svg" />
+  <meta property="og:image:alt" content="Capa editorial da investigação Da Cota à Cadeira" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="assets/og-preview.svg" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23007D5B'/%3E%3Cpath d='M12 50V18h11v32z' fill='%23F8DF4F'/%3E%3Cpath d='M27 50V28h11v22z' fill='%23FC7CE5'/%3E%3Cpath d='M42 50V14h11v36z' fill='%23FA532E'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -46,22 +46,6 @@
       },
       {
         "@type": "Question",
-        "name": "Por que a mediana feminina supera a masculina em alguns partidos no financiamento?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Para cumprir o piso de 30% do Fundo Público sem risco, legendas como o UNIÃO em 2026 distribuíram verba pública a quase todas as mulheres enquanto deixaram parte dos homens com R$ 0 público e concentraram valores altos no topo e no recurso privado."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Os dados de 2026 já são comparáveis aos de 2022?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Sim. Ambos os pleitos superam 97% de prestações finais entregues entre candidaturas aptas, com ressalva explícita de que as contas de 2026 ainda aguardam julgamento judicial e 1,3% das aptas assumem zero votos pela extração de outubro."
-        }
-      },
-      {
-        "@type": "Question",
         "name": "A aplicação expõe nomes, CPFs ou dados pessoais de candidaturas?",
         "acceptedAnswer": {
           "@type": "Answer",
@@ -73,680 +57,772 @@
   </script>
 </head>
 <body>
-  <!-- Acessibilidade Inicial: link de salto imediato antes da navegação -->
   <a class="skip-link" href="#main-content">Pular para o conteúdo principal</a>
 
-  <!-- ETAPA 1: HERO EDITORIAL & ABERTURA CONCRETA -->
-  <header class="masthead" id="intro">
-    <div class="container hero-split">
-      <div class="hero-art" aria-hidden="true">
-        <svg class="hero-silhouettes" viewBox="0 0 460 390" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMax meet">
-          <path fill="#FF7AE5" d="M-12 390V214c12-16 26-28 48-34 8-34-10-58-2-90 7-28 32-48 64-50 38-2 66 20 74 52 7 28-6 52 14 70 6 5 11 12 8 19-4 8-14 8-16 14-2 6 8 11 7 19-1 9-12 10-12 18 0 11 10 20 8 34-2 16-14 27-26 36l48 88H-12Z"/>
-          <path fill="#FF5E2B" d="M36 390c4-46 22-86 58-102 6-14 4-28-4-42-16-26-14-64 8-88 18-20 48-28 76-22 30 6 50 28 54 58 2 14-2 26 2 35 6 12 18 19 20 28 2 8-8 14-12 19-2 3 4 9 2 15-2 7-11 9-11 15 0 8 9 12 7 23-3 15-20 22-37 22-14 0-24-4-32-10-4 16 12 32 32 49H36Z"/>
-          <path fill="#FCE34D" d="M126 390c6-38 22-68 56-84 10-5 16-14 14-25-24-12-38-38-36-68 2-34 24-60 58-66 10-18 32-24 50-16 18 8 28 26 24 45 14 12 22 30 22 50 0 14-3 24 4 33 7 9 20 17 21 25 1 7-9 12-13 17-2 3 4 9 2 14-3 6-11 8-11 14 0 8 7 13 4 23-4 13-22 18-40 16-12-1-22-5-30-10-2 12 10 22 24 32H126Z"/>
-        </svg>
+  <!-- Barra de Navegação Editorial Discreta -->
+  <header class="top-editorial-bar">
+    <div class="brand-tag"><span class="brand-dot" aria-hidden="true"></span><span>Da Cota à Cadeira</span></div>
+    <span class="act-now" id="act-now" aria-live="polite">Introdução</span>
+    <nav class="act-pills" aria-label="Navegação por atos">
+      <a href="#ato-01" class="act-pill" data-act="ato-01">1 · No papel</a>
+      <a href="#ato-02" class="act-pill" data-act="ato-02">2 · No dinheiro</a>
+      <a href="#ato-03" class="act-pill" data-act="ato-03">3 · Na urna</a>
+      <a href="#ato-04" class="act-pill" data-act="ato-04">4 · Sinais de alerta</a>
+      <a href="#ato-05" class="act-pill" data-act="ato-05">5 · No território</a>
+    </nav>
+    <div class="top-actions">
+      <button type="button" class="recorte-chip" id="btn-recorte-chip" hidden title="Os títulos e passos da história descrevem o recorte nacional de 2022. Clique para voltar."></button>
+      <div class="data-status-pill" id="data-status-pill" title="Base oficial auditada do Portal de Dados Abertos do TSE (2018, 2022 e 2026)">
+        <span class="status-dot" id="data-status-dot" aria-hidden="true"></span>
+        <span id="data-status-label">Carregando dados…</span>
       </div>
-
-      <div class="hero-copy">
-        <span class="brand-star" aria-hidden="true">
-          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/>
-          </svg>
-        </span>
-        <p class="eyebrow">Pesquisa · UFC · Visualização de Dados · Microdados Oficiais do TSE</p>
-        <h1>A Cota de Gênero Leva Mulheres ao Poder<br><span class="hero-contrast">ou Apenas ao Papel?</span></h1>
-        <p class="deck">Uma investigação interativa em cinco atos comparando o registro de chapas, o financiamento, as urnas, os sinais de integridade (2018–2026) e a geografia da exclusão política no Brasil.</p>
-        <div class="masthead-meta">
-          <span>73.045 candidaturas auditadas (2018, 2022 e 2026)</span>
-          <span>27 UFs · Federal e Estadual</span>
-          <span>100% dados oficiais do TSE · 0 PII (LGPD)</span>
-        </div>
-        <div class="hero-actions">
-          <a href="#ato-1" class="btn-primary">Explorar a investigação interativa</a>
-        </div>
-      </div>
+      <a href="#sintese" class="btn-jump-filters">Pular para explorar</a>
     </div>
-
-    <div class="anecdote-strip">
-      <div class="container anecdote-inner">
-        <span class="anecdote-label">Abertura concreta</span>
-        <p>A lei exige <strong>30% de mulheres</strong> nas chapas e no Fundo Público — mas quase metade dos partidos estaciona no mínimo legal e menos de <strong>1 em cada 5 cadeiras</strong> chega às mulheres.</p>
-      </div>
-    </div>
+    <div class="story-progress" aria-hidden="true"><i id="story-progress-bar"></i></div>
   </header>
 
-  <!-- FAIXA DE BIG NUMBERS COMO FUNIL DE 3 ETAPAS -->
-  <section class="stats-band" aria-label="Panorama quantitativo do recorte atual">
-    <div class="container">
-      <div class="stats-kicker-row">
-        <p class="stats-kicker" id="hero-stats-kicker">Panorama do recorte · 2022 · Federal + Estadual</p>
-        <div class="filter-group filter-group-sm" role="group" aria-label="Ano do panorama">
-          <button class="seg active" data-stats-year="2022" type="button" aria-pressed="true">2022</button>
-          <button class="seg" data-stats-year="2026" type="button" aria-pressed="false">2026</button>
+  <div class="error-banner" id="error-banner" role="alert" hidden>
+    Não foi possível carregar os arquivos de dados do TSE. Verifique o servidor local e recarregue a página.
+  </div>
+
+  <!-- =======================================================================
+       MOMENTO 1: CLÍMAX VISUAL DE ABERTURA (HERO — BOCA SUPERIOR DA TAÇA)
+       ======================================================================= -->
+  <section class="hero-section" id="topo" tabindex="-1">
+    <svg class="hero-silhouettes-bg" viewBox="0 0 520 720" preserveAspectRatio="xMinYMid slice" aria-hidden="true">
+      <path d="M0,0 L395,0 C406,18 400,32 390,42 C425,74 445,126 440,185 C436,225 432,252 448,282 C464,312 496,348 498,368 C500,384 475,392 470,404 C466,414 490,428 488,444 C486,458 474,468 476,480 C482,504 478,522 462,534 C456,568 456,608 424,625 C392,642 332,616 306,616 C288,616 276,668 265,720 L0,720 Z" fill="#FC7CE5" />
+      <path d="M0,0 L315,0 C338,65 344,145 338,218 L286,214 C280,235 282,258 296,282 C314,312 346,344 348,364 C350,380 324,390 318,402 C314,412 336,428 334,444 C332,458 320,468 322,480 C328,504 322,522 308,534 C302,568 302,605 274,620 C246,635 186,618 162,622 C144,625 134,672 124,720 L0,720 Z" fill="#FA532E" />
+      <path d="M0,0 L125,0 C176,42 204,104 206,184 C208,225 204,250 220,278 C238,308 268,342 270,362 C272,378 246,388 240,400 C236,410 258,426 256,442 C254,456 242,466 244,478 C250,502 244,520 230,532 C224,566 224,606 194,622 C164,638 104,616 78,618 C62,620 52,668 42,720 L0,720 Z" fill="#F8DF4F" />
+    </svg>
+
+    <div class="hero-inner">
+      <svg class="hero-sparkle" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <path d="M20 2 C21.5 12 21.5 28 20 38 C18.5 28 18.5 12 20 2 Z" fill="#FFFFFF" />
+        <path d="M4 20 C12 18.5 28 18.5 36 20 C28 21.5 12 21.5 4 20 Z" fill="#FFFFFF" />
+        <path d="M9 9 L15 15 M31 9 L25 15 M9 31 L15 25 M31 31 L25 25" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" />
+      </svg>
+
+      <div class="hero-kicker">Eleições 2018–2026 · microdados do TSE</div>
+      <h1 class="hero-title" id="hero-main-title">Da Cota à Cadeira: Por que a cota de 30% leva mulheres ao papel, mas não ao poder?</h1>
+      <p class="hero-lead">
+        A lei brasileira exige que pelo menos 30% das candidaturas de cada chapa sejam femininas.
+        A partir dos microdados oficiais do TSE (2018–2026), rastreamos as cinco etapas da disputa para mostrar
+        onde a cota funciona, onde o dinheiro vaza e onde a fraude se reinventa.
+      </p>
+
+      <div class="hero-funnel-card">
+        <div class="hero-funnel-header">
+          <span><strong>O Afunilamento da Representação</strong> · Síntese dinâmica da base TSE</span>
+          <span class="hero-badge-recorte" id="hero-recorte-pill">2022 · Federal + Estadual · Brasil (27 UFs)</span>
         </div>
+
+        <div class="hero-metrics-grid tabular">
+          <div class="hero-metric">
+            <div class="hero-metric-label">1. Candidaturas Aptas</div>
+            <div class="hero-metric-num" id="hero-val-cand">—</div>
+            <div class="hero-metric-desc" id="hero-desc-cand">Cumprimento protocolar logo acima do piso legal de 30%</div>
+          </div>
+          <div class="hero-metric is-verba">
+            <div class="hero-metric-label">2. Fundo Público Recebido</div>
+            <div class="hero-metric-num" id="hero-val-verba">—</div>
+            <div class="hero-metric-desc" id="hero-desc-verba">Proporção do FEFC + FP destinada às mulheres</div>
+          </div>
+          <div class="hero-metric is-eleitas">
+            <div class="hero-metric-label">3. Cadeiras Eleitas</div>
+            <div class="hero-metric-num" id="hero-val-eleitas">—</div>
+            <div class="hero-metric-desc" id="hero-desc-eleitas">Queda de quase metade entre o registro e a posse</div>
+          </div>
+        </div>
+
+        <div id="hero-funnel-holder" class="hero-funnel-holder"></div>
       </div>
-      <div class="stat-grid">
-        <div class="stat-item">
-          <span class="stat-stage">1. No Papel · Candidaturas</span>
-          <div class="stat-value" id="big-stat-cand">—</div>
-          <p class="stat-label" id="big-stat-cand-label">das candidaturas aptas são de mulheres no recorte.</p>
-          <span class="stat-delta-pill" id="big-stat-cand-delta">—</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-stage">2. No Dinheiro · Fundo Público</span>
-          <div class="stat-value" id="big-stat-pub">—</div>
-          <p class="stat-label" id="big-stat-pub-label">do Fundo Público (FEFC + FP) foi destinado às candidatas.</p>
-          <span class="stat-delta-pill" id="big-stat-pub-delta">—</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-stage">3. Na Urna · Cadeiras Eleitas</span>
-          <div class="stat-value" id="big-stat-seats">—</div>
-          <p class="stat-label" id="big-stat-seats-label">das cadeiras eleitas foram ocupadas por mulheres na urna.</p>
-          <span class="stat-delta-pill is-alert" id="big-stat-seats-delta">—</span>
-        </div>
-      </div>
+
+      <ol class="roadmap" aria-label="Roteiro em cinco atos">
+        <li><a href="#ato-01"><b>1 · No papel</b>Quantas mulheres entram nas chapas?</a></li>
+        <li><a href="#ato-02"><b>2 · No dinheiro</b>Quanto do fundo público chega a elas?</a></li>
+        <li><a href="#ato-03"><b>3 · Na urna</b>Quantos votos recebem?</a></li>
+        <li><a href="#ato-04"><b>4 · Sinais de alerta</b>Quantas candidaturas são só formais?</a></li>
+        <li><a href="#ato-05"><b>5 · No território</b>Onde a perda é maior?</a></li>
+      </ol>
+      <p class="roadmap-hint">Leitura guiada em cinco atos: role a página, uma etapa por vez. No fim, você explora o seu estado ou partido.</p>
     </div>
   </section>
 
-  <!-- BARRA SUPERIOR FIXA ENXUTA (1 LINHA + CHIPS ATIVOS DE VISÕES COORDENADAS) -->
-  <div class="filter-bar" id="filter-bar">
-    <div class="container filter-row">
-      <nav class="act-nav" id="act-nav" aria-label="Navegação por capítulos">
-        <a href="#ato-1" data-act="1">01 Papel</a>
-        <a href="#ato-2" data-act="2">02 Dinheiro</a>
-        <a href="#ato-3" data-act="3">03 Urna</a>
-        <a href="#ato-4" data-act="4">04 Fraude</a>
-        <a href="#ato-5" data-act="5">05 Geografia</a>
-        <a href="#sintese" data-act="synthesis">Síntese</a>
-        <a href="#metodologia" data-act="methods">Métodos</a>
-      </nav>
+  <!-- =======================================================================
+       MOMENTO 2: A HASTE DA TAÇA (SCROLLYTELLING — 5 ATOS, GRÁFICOS 1 A 9)
+       ======================================================================= -->
+  <main class="essay-wrapper" id="main-content" tabindex="-1">
 
-      <a href="#boca-da-taca" class="btn-jump-filters">Explorar filtros ↓</a>
-    </div>
+    <!-- ===================================================================
+         ATO 01 · H1 — REGISTRO E TETO BUROCRÁTICO
+         =================================================================== -->
+    <section class="act-section" id="ato-01" tabindex="-1">
+      <div class="act-divider">
+        <span class="act-eyebrow">Ato 1 de 5 · No papel</span>
+        <h2 class="act-heading">Quando a cota mínima opera como teto burocrático</h2>
+        <p class="act-transition-lead">
+          Cumprir o piso de <span class="hl-gold">30% no papel</span> não significa abrir espaço real para a eleição.
+          Quando olhamos para a distribuição das chapas, a concentração logo acima da linha da lei mostra o piso operando como teto.
+        </p>
+      </div>
 
-    <div class="container filter-meta-row">
-      <div class="chips-row" id="active-chips"></div>
-    </div>
-  </div>
+      <section class="scrolly-block" id="sec-h1" data-chart="h1">
+        <div class="scrolly-steps">
+          <article class="step-card is-active" data-step="0">
+            <span class="step-tag">Passo 1 de 3 · Regra do Jogo</span>
+            <h3>O piso mínimo de 30%</h3>
+            <p>
+              Cada chapa precisa registrar ao menos <span class="hl-gold">30% de mulheres</span>.
+              Analisamos listas com <strong>n ≥ 4 nomes</strong> para evitar distorções discretas de micro-chapas.
+            </p>
+          </article>
 
-  <!-- FLUXO EDITORIAL VERTICAL FLUIDO -->
-  <main id="main-content" tabindex="-1" class="container editorial-flow">
+          <article class="step-card" data-step="1">
+            <span class="step-tag">Passo 2 de 3 · Teto Burocrático</span>
+            <h3>Acúmulo entre 30% e 33%</h3>
+            <p>
+              <span id="h1-dyn-text">Veja quantas chapas ficam coladas ao piso legal.</span>
+            </p>
+            <div class="diag-slot" id="verdict-h1"><span class="diag-pill diag-vaza">Diagnóstico: Vaza nesta etapa</span></div>
+          </article>
 
-    <!-- ==================== ATO 1: NO PAPEL ==================== -->
-    <section id="ato-1" class="act-section" tabindex="-1">
-      <header class="act-header">
-        <div class="act-kicker-row">
-          <svg class="act-star" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/></svg>
-          <p class="act-kicker">Ato 01 · No Papel (P1)</p>
+          <article class="step-card" data-step="2">
+            <span class="step-tag">Passo 3 de 3 · 2022 vs. 2026</span>
+            <h3>Padrão persiste em 2026</h3>
+            <p>
+              Entre <span class="hl-male">2022</span> e <span class="hl-female">2026</span>, o gargalo continua — alterne entre <strong>Aptas</strong> e <strong>Registradas</strong> ou clique em uma faixa para filtrar os próximos gráficos.
+            </p>
+          </article>
         </div>
-        <h2>As chapas cumprem a cota — ou transformam o piso de 30% em teto?</h2>
-      </header>
 
-      <article id="sec-h1" class="viz-section" data-step="h1">
-        <div class="viz-narrative">
-          <div class="step-head">
-            <span class="step-tag">H1 · Registro e Teto Burocrático (2022 vs. 2026)</span>
-            <div class="verdict-slot" id="verdict-h1"></div>
+        <div class="scrolly-stage">
+          <div class="chart-meta-row">
+            <span class="chart-code-pill">Gráfico 1 de 9</span>
+            <span class="chart-recorte-label active-recorte-text">2022 · Federal + Estadual · Brasil</span>
           </div>
-          <p>Entre 2022 e 2026 há melhora tanto entre chapas <strong>registradas</strong> quanto <strong>aptas</strong>: a faixa <code>≥ 40%</code> sobe, mas o maior bloco segue comprimido entre <strong>30% e 33,3%</strong>.</p>
-          <p class="live-stat" id="stat-h1">—</p>
-          <div id="ev-h1" class="inline-evidence-slot"></div>
-          <p class="step-note"><strong>Visão coordenada:</strong> clique em qualquer faixa (ex.: <code>&lt; 30%</code>) para filtrar os partidos abaixo; clique de novo para limpar. <a class="method-escape" href="#metodo-h1">Ver corte n≥4 ↓</a></p>
-        </div>
-
-        <div class="viz-card">
-          <div class="viz-head">
-            <div>
-              <p class="fig-kicker">Gráfico 1 · No Registro</p>
-              <h3 id="title-h1">Avanço acima de 33% nos dois modos, mas 42% das chapas seguem presas no piso</h3>
-              <p class="viz-subtitle" id="sub-h1">% de mulheres por chapa em 2022 vs. 2026 (n ≥ 4) · Clique em qualquer faixa para filtrar os próximos gráficos.</p>
+          <h3 class="chart-conclusive-title" id="title-h1">
+            A maioria das chapas partidárias estaciona exatamente no limite mínimo entre 30% e 33% de mulheres
+          </h3>
+          <div class="chart-controls-bar">
+            <div class="inline-legend">
+              <span class="legend-item"><i class="legend-swatch" style="background:#F8DF4F;border:1px solid #C98A00"></i> Zona crítica (30%–33%)</span>
+              <span class="legend-item"><i class="legend-swatch" style="background:#4B636E"></i> 2022</span>
+              <span class="legend-item"><i class="legend-swatch" style="background:#FA532E"></i> 2026 (ou destaque)</span>
             </div>
-            <div id="controls-h1" class="viz-controls"></div>
+            <div class="segmented-group is-hidden" id="controls-h1">
+              <button type="button" class="segmented-btn active" data-h1-mode="apto">Aptas</button>
+              <button type="button" class="segmented-btn" data-h1-mode="reg">Todas Registradas</button>
+            </div>
           </div>
-          <div id="canvas-h1" class="viz-canvas"></div>
-          <p id="caption-h1" class="viz-caption"></p>
+          <div class="svg-holder" id="canvas-h1"></div>
         </div>
-      </article>
+      </section>
     </section>
 
-    <!-- ==================== ATO 2: NO DINHEIRO ==================== -->
-    <section id="ato-2" class="act-section" tabindex="-1">
-      <header class="act-header">
-        <div class="act-kicker-row">
-          <svg class="act-star" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/></svg>
-          <p class="act-kicker">Ato 02 · No Dinheiro (P2)</p>
-        </div>
-        <h2>O financiamento gera campanhas competitivas ou apenas cumpre a lei?</h2>
-      </header>
+    <!-- ===================================================================
+         ATO 02 · H2, H3, H4 — DINHEIRO, PROPORCIONALIDADE E FLUXO
+         =================================================================== -->
+    <section class="act-section" id="ato-02" tabindex="-1">
+      <div class="act-divider">
+        <span class="act-eyebrow">Ato 2 de 5 · No dinheiro</span>
+        <h2 class="act-heading">Dinheiro no papel, assimetria na rua</h2>
+        <p class="act-transition-lead">
+          Cruzar a barreira do registro é só o começo; sustentar uma campanha na rua exige dinheiro.
+          A evolução dos orçamentos entre <span class="hl-male">2022</span> e <span class="hl-female">2026</span> revela onde o fundo público
+          deu estrutura real às mulheres — e onde o abismo financeiro cresceu.
+        </p>
+      </div>
 
-      <!-- H2: Evolução do Gap 2022 -> 2026 -->
-      <article id="sec-h2" class="viz-section" data-step="h2">
-        <div class="viz-narrative">
-          <div class="step-head">
-            <span class="step-tag">H2 · Diferença de Medianas (2022 → 2026)</span>
-            <div class="verdict-slot" id="verdict-h2"></div>
+      <!-- GRÁFICO 2 (H2 — Dumbbell de Trajetória 2022 -> 2026 + Origem) -->
+      <section class="scrolly-block" id="sec-h2" data-chart="h2">
+        <div class="scrolly-steps">
+          <article class="step-card is-active" data-step="0">
+            <span class="step-tag">Passo 1 de 3 · Baseline 2022</span>
+            <h3>Largada abaixo da paridade</h3>
+            <p>
+              A <strong>Razão da Mediana</strong> compara a receita típica de mulheres e homens. Em <span class="hl-male">2022</span>, quase todas as grandes legendas ficaram abaixo de <span class="hl-gold">1,0×</span>.
+            </p>
+          </article>
+
+          <article class="step-card" data-step="1">
+            <span class="step-tag">Passo 2 de 3 · Trajetória até 2026</span>
+            <h3>Partidos seguem rumos opostos</h3>
+            <p>
+              Poucas siglas superam a paridade (<span class="hl-emerald">≥ 1,0×</span>). Na maioria, o abismo permanece ou <span class="hl-female">se aprofunda</span> em 2026. Clique em um partido para destacá-lo.
+            </p>
+            <div class="diag-slot" id="verdict-h2"><span class="diag-pill diag-vaza">Diagnóstico: Vaza nesta etapa</span></div>
+          </article>
+
+          <article class="step-card" data-step="2">
+            <span class="step-tag">Passo 3 de 3 · Origem do Recurso</span>
+            <h3>Fundo público sustenta mulheres</h3>
+            <p>
+              O <strong>FEFC/FP</strong> responde pela maior fatia da receita feminina (<span id="h2-dyn-pub">—</span>), enquanto doações privadas concentram-se nos <span class="hl-male">homens</span>.
+            </p>
+          </article>
+        </div>
+
+        <div class="scrolly-stage">
+          <div class="chart-meta-row">
+            <span class="chart-code-pill">Gráfico 2 de 9</span>
+            <span class="chart-recorte-label active-recorte-text">2022 → 2026 · Razão da Mediana (Mulheres ÷ Homens)</span>
           </div>
-          <p>A distância em Reais entre as medianas (<code>Δ = Mediana F − Mediana M</code>) revela trajetórias opostas: a desvantagem feminina cresce no topo do gráfico (PL, PSD), enquanto PT e UNIÃO invertem a mediana.</p>
-          <p class="live-stat" id="stat-h2">—</p>
-          <div id="ev-h2" class="inline-evidence-slot"></div>
-        </div>
-
-        <div class="viz-card">
-          <div class="viz-head">
-            <div>
-              <p class="fig-kicker">Gráfico 2A · Evolução do Gap por Partido</p>
-              <h3 id="title-h2">Vantagem masculina cresce no PL e PSD em 2026; PT e UNIÃO lideram mediana feminina</h3>
-              <p class="viz-subtitle" id="sub-h2">Evolução da diferença mediana (Δ = Mulheres − Homens, em R$ mil) de 2022 (anel) para 2026 (ponto), ordenada por 2026.</p>
+          <h3 class="chart-conclusive-title" id="title-h2">
+            Na maioria dos partidos, a receita mediana das mulheres permanece inferior à dos homens — mesmo sob a regra do FEFC
+          </h3>
+          <div class="chart-controls-bar">
+            <div class="inline-legend">
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#4B636E"></i> 2022 (início)</span>
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#FA532E"></i> 2026 · Recuou</span>
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#4B636E;border:2px solid #142620"></i> 2026 · Avançou (&lt;1,0×)</span>
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#007D5B"></i> 2026 · Paridade (≥1,0×)</span>
             </div>
-            <div id="controls-h2" class="viz-controls"></div>
           </div>
-          <div id="canvas-h2" class="viz-canvas"></div>
-          <p id="caption-h2" class="viz-caption"></p>
+          <div class="svg-holder" id="canvas-h2"></div>
         </div>
-      </article>
+      </section>
 
-      <!-- H2B: Público vs Privado + Fontes 100% -->
-      <article id="sec-h2b" class="viz-section" data-step="h2-div">
-        <div class="viz-narrative">
-          <div class="step-head">
-            <span class="step-tag">H2B · Público vs. Privado e Dependência</span>
-            <div class="verdict-slot" id="verdict-h2b"></div>
+      <!-- GRÁFICO 3 (H3 — % Candidatas × % Fundo Público) -->
+      <section class="scrolly-block" id="sec-h3" data-chart="h3">
+        <div class="scrolly-steps">
+          <article class="step-card is-active" data-step="0">
+            <span class="step-tag">Passo 1 de 3 · Regra do STF</span>
+            <h3>Proporcionalidade no caixa</h3>
+            <p>
+              Pela <strong>ADI 5617</strong>, a fatia do Fundo Público deve acompanhar o <span class="hl-gold">% de candidatas</span>. Acima da diagonal há proporcionalidade; abaixo, subfinanciamento.
+            </p>
+          </article>
+
+          <article class="step-card" data-step="1">
+            <span class="step-tag">Passo 2 de 3 · Trava nos 30%</span>
+            <h3>Repasse abaixo do peso na chapa</h3>
+            <p>
+              Mesmo lançando mais de 30% de mulheres, grandes legendas ficam <span class="hl-female">abaixo da linha Y = X</span> (<span id="h3-dyn-deficit">—</span> de déficit acumulado). Passe o cursor nas bolhas ou clique para filtrar.
+            </p>
+            <div class="diag-slot" id="verdict-h3"><span class="diag-pill diag-vaza">Diagnóstico: Travado no piso de 30%</span></div>
+          </article>
+
+          <article class="step-card" data-step="2">
+            <span class="step-tag">Passo 3 de 3 · Federal vs. Estadual</span>
+            <h3>Gargalo maior na Câmara Federal</h3>
+            <p>
+              Em <span class="hl-female">Deputado Federal</span>, onde campanhas custam mais, o subfinanciamento se acentua frente às disputas estaduais.
+            </p>
+          </article>
+        </div>
+
+        <div class="scrolly-stage">
+          <div class="chart-meta-row">
+            <span class="chart-code-pill">Gráfico 3 de 9</span>
+            <span class="chart-recorte-label" id="recorte-h3-label">2022 · Geral (Federal + Estadual)</span>
           </div>
-          <p>Sem cota legal fora do Fundo Público, o dinheiro privado favorece os homens em bloco — e as campanhas femininas dependem quase só da verba pública obrigatória.</p>
-          <p class="live-stat" id="stat-h2b">—</p>
-        </div>
-
-        <div class="viz-card">
-          <div class="viz-head">
-            <div>
-              <p class="fig-kicker">Gráfico 2B · Nas Fontes</p>
-              <h3 id="title-h2b">Mulheres dependem ~91% do Fundo Público; sem cota, o financiamento privado favorece homens</h3>
-              <p class="viz-subtitle" id="sub-h2b">Diferença mediana (F − M) por fonte nos 12 maiores partidos e composição 100% das receitas por gênero.</p>
+          <h3 class="chart-conclusive-title" id="title-h3">
+            Mesmo quando superam 30% de candidatas, legendas de grande orçamento repassam fatia inferior ao peso feminino
+          </h3>
+          <div class="chart-controls-bar">
+            <div class="inline-legend">
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#FA532E"></i> Subfinanciamento (&lt; Y=X)</span>
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#007D5B"></i> Proporcional (≥ Y=X)</span>
+              <span class="legend-item"><i class="legend-swatch is-solid-line" style="color:#C98A00"></i> Diagonal Y = X</span>
+              <span class="legend-item" style="color:var(--text-muted)">Tamanho = Volume FEFC/FP</span>
             </div>
-            <div id="controls-h2b" class="viz-controls"></div>
-          </div>
-          <div id="canvas-h2b" class="viz-canvas"></div>
-          <p id="caption-h2b" class="viz-caption"></p>
-        </div>
-      </article>
-
-      <!-- H3: Dispersão em Modo Foco Linear Fixo -->
-      <article id="sec-h3" class="viz-section" data-step="h3">
-        <div class="viz-narrative">
-          <div class="step-head">
-            <span class="step-tag">H3 · % Candidatas × % Fundo Público</span>
-            <div class="verdict-slot" id="verdict-h3"></div>
-          </div>
-          <p>Partidos abaixo da diagonal (<code>% verba = % mulheres</code>) entram na zona de <strong>subfinanciamento</strong> e acumulam déficits milionários mesmo quando o agregado nacional encosta em 1,0×.</p>
-          <p class="live-stat" id="stat-h3">—</p>
-          <p class="step-note">Dica: filtre para <strong>Deputado Federal</strong> no topo para ver quase todo o Fundo Público migrar para a zona de subfinanciamento.</p>
-        </div>
-
-        <div class="viz-card">
-          <div class="viz-head">
-            <div>
-              <p class="fig-kicker">Gráfico 3 · Proporcionalidade ADI 5617</p>
-              <h3 id="title-h3">Média global cumpre os 30%, mas grandes legendas somam déficit milionário abaixo da reta</h3>
-              <p class="viz-subtitle" id="sub-h3">% de candidatas aptas × % do Fundo Público por partido (escala linear) · Tamanho da bolha = Fundo total.</p>
+            <div class="controls-cluster">
+              <div class="segmented-group" id="zoom-h3-group">
+                <button type="button" class="segmented-btn active" data-h3-zoom="majority">Zoom (até 48%)</button>
+                <button type="button" class="segmented-btn" data-h3-zoom="all">Ver Todos</button>
+              </div>
+              <div class="segmented-group is-hidden" id="cargo-h3-group">
+                <button type="button" class="segmented-btn active" data-h3-cargo="all">Geral</button>
+                <button type="button" class="segmented-btn" data-h3-cargo="6">Federal</button>
+                <button type="button" class="segmented-btn" data-h3-cargo="7">Estadual</button>
+              </div>
             </div>
-            <div id="controls-h3" class="viz-controls"></div>
           </div>
-          <div id="canvas-h3" class="viz-canvas"></div>
-          <p id="caption-h3" class="viz-caption"></p>
+          <div class="svg-holder" id="canvas-h3"></div>
         </div>
-      </article>
+      </section>
 
-      <!-- H4: Sankey 100% entre Mulheres (Competitivas Top 10% vs Base 90%) -->
-      <article id="sec-h4" class="viz-section" data-step="h4">
-        <div class="viz-narrative">
-          <div class="step-head">
-            <span class="step-tag">H4 · Distribuição Interna entre Mulheres</span>
-            <div class="verdict-slot" id="verdict-h4"></div>
+      <!-- GRÁFICO 4 (H4 — Sankey de Fluxo + Rede Bipartida de Hubs) -->
+      <section class="scrolly-block" id="sec-h4" data-chart="h4">
+        <div class="scrolly-steps">
+          <article class="step-card is-active" data-step="0">
+            <span class="step-tag">Passo 1 de 3 · Entrada do Recurso</span>
+            <h3>Receber não garante autonomia</h3>
+            <p>
+              O dinheiro sai do partido para <span class="hl-female">mulheres</span> e <span class="hl-male">homens</span>, mas o registro da receita não revela quem concentra o gasto real.
+            </p>
+          </article>
+
+          <article class="step-card" data-step="1">
+            <span class="step-tag">Passo 2 de 3 · Destino das Despesas</span>
+            <h3>Fluxo para CNPJs compartilhados</h3>
+            <p>
+              Parcela relevante converge para <span class="hl-pink">Fornecedores Compartilhados</span> pela mesma chapa, além de retornos à direção partidária e terceiros.
+            </p>
+            <div class="diag-slot" id="verdict-h4"><span class="diag-pill diag-vaza">Diagnóstico: Concentração e hubs</span></div>
+          </article>
+
+          <article class="step-card" data-step="2">
+            <span class="step-tag">Passo 3 de 3 · Rede de Hubs (TSE)</span>
+            <h3>Fornecedores-hub em comum</h3>
+            <p>
+              Na rede real, <span class="hl-gold">fornecedores centrais</span> atendem dezenas de candidaturas ao mesmo tempo. A espessura das faixas mostra quantas delas têm <span class="hl-female">baixa votação</span>.
+            </p>
+          </article>
+        </div>
+
+        <div class="scrolly-stage">
+          <div class="chart-meta-row">
+            <span class="chart-code-pill">Gráfico 4 de 9</span>
+            <span class="chart-recorte-label active-recorte-text">Rastreamento de Despesas · Prestação de Contas TSE</span>
           </div>
-          <p>Dentro do próprio orçamento feminino, poucas candidatas competitivas concentram a maioria da verba e das cadeiras, deixando a base pulverizada.</p>
-          <p class="live-stat" id="stat-h4">—</p>
-          <p class="step-note">Fluxos 100% proporcionais ao grupo exibido para comparar anos sem distorção nominal. <a class="method-escape" href="#metodo-h4">Ver definição ↓</a></p>
-        </div>
-
-        <div class="viz-card">
-          <div class="viz-head">
-            <div>
-              <p class="fig-kicker">Gráfico 4 · Alocação entre Mulheres</p>
-              <h3 id="title-h4">Top 10% mais financiadas concentram ~60% da receita feminina e mais de 73% das eleitas</h3>
-              <p class="viz-subtitle" id="sub-h4">Fluxo 100% proporcional entre mulheres APTO: Origem da verba → Competitivas (Top 10%) vs. Base (90%) → Desfecho.</p>
+          <h3 class="chart-conclusive-title" id="title-h4">
+            Fatia expressiva dos recursos flui para fornecedores compartilhados e estruturas partidárias
+          </h3>
+          <div class="chart-controls-bar">
+            <div class="segmented-group" id="cohort-h4-group">
+              <button type="button" class="segmented-btn active" data-h4-cohort="all">Todas as Candidaturas</button>
+              <button type="button" class="segmented-btn" data-h4-cohort="noTop10">Sem Top 10% (Base)</button>
             </div>
-            <div id="controls-h4" class="viz-controls"></div>
+            <div class="inline-legend" id="legend-h4">
+              <span class="legend-item"><i class="legend-swatch" style="background:#007D5B"></i> Fundo Público</span>
+              <span class="legend-item"><i class="legend-swatch" style="background:#FA532E"></i> Mulheres (F)</span>
+              <span class="legend-item"><i class="legend-swatch" style="background:#4B636E"></i> Homens (M)</span>
+              <span class="legend-item"><i class="legend-swatch" style="background:#D946BE"></i> Fornec. Compartilhado</span>
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#F8DF4F;border:1.5px solid #007D5B"></i> Hub (passo 3)</span>
+            </div>
           </div>
-          <div id="canvas-h4" class="viz-canvas"></div>
-          <p id="caption-h4" class="viz-caption"></p>
+          <div class="svg-holder" id="canvas-h4"></div>
         </div>
-      </article>
+      </section>
     </section>
 
-    <!-- ==================== ATO 3: NA URNA ==================== -->
-    <section id="ato-3" class="act-section" tabindex="-1">
-      <header class="act-header">
-        <div class="act-kicker-row">
-          <svg class="act-star" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/></svg>
-          <p class="act-kicker">Ato 03 · Na Urna (P3)</p>
-        </div>
-        <h2>A candidatura vira voto nominal e cadeira parlamentar?</h2>
-      </header>
+    <!-- ===================================================================
+         ATO 03 · H5 — FUNIL DE CONVERSÃO EM 3 ETAPAS (URNAS E CADEIRAS)
+         =================================================================== -->
+    <section class="act-section" id="ato-03" tabindex="-1">
+      <div class="act-divider">
+        <span class="act-eyebrow">Ato 3 de 5 · Na urna</span>
+        <h2 class="act-heading">O colapso antes mesmo do quociente eleitoral</h2>
+        <p class="act-transition-lead">
+          Quando o recurso público não se converte em estrutura própria de campanha, o impacto aparece na votação.
+          Ao abrir as urnas, vemos que o afunilamento acontece antes mesmo da divisão das sobras:
+          as mulheres estão nas chapas, mas <span class="hl-gold">os votos se concentram nos homens</span>.
+        </p>
+      </div>
 
-      <article id="sec-h5" class="viz-section" data-step="h5">
-        <div class="viz-narrative">
-          <div class="step-head">
-            <span class="step-tag">H5 · Funil de Conversão em 3 Etapas</span>
-            <div class="verdict-slot" id="verdict-h5"></div>
+      <section class="scrolly-block" id="sec-h5" data-chart="h5">
+        <div class="scrolly-steps">
+          <article class="step-card is-active" data-step="0">
+            <span class="step-tag">Passo 1 de 3 · Candidatas na Chapa</span>
+            <h3>Todas cumprem o piso no papel</h3>
+            <p>
+              Nos 10 maiores partidos, as <span class="hl-male">candidaturas femininas</span> superam a linha de <span class="hl-gold">30%</span> na largada.
+            </p>
+          </article>
+
+          <article class="step-card" data-step="1">
+            <span class="step-tag">Passo 2 de 3 · Votos Nominais</span>
+            <h3>Queda abrupta já na urna</h3>
+            <p>
+              Na contagem dos <span class="hl-gold">votos nominais</span>, a fatia feminina despenca (<span id="h5-dyn-drop">—</span>) — provando que o gargalo precede o cálculo das sobras.
+            </p>
+            <div class="diag-slot" id="verdict-h5"><span class="diag-pill diag-vaza">Diagnóstico: Gargalo crítico na urna</span></div>
+          </article>
+
+          <article class="step-card" data-step="2">
+            <span class="step-tag">Passo 3 de 3 · Cadeiras Eleitas</span>
+            <h3>Poucas chegam à posse</h3>
+            <p>
+              Na etapa final das <span class="hl-female">eleitas</span>, raras legendas sustentam 30%. Use o modo <strong>Slopegraph</strong> para comparar a inclinação da perda ou clique em um partido.
+            </p>
+          </article>
+        </div>
+
+        <div class="scrolly-stage">
+          <div class="chart-meta-row">
+            <span class="chart-code-pill">Gráfico 5 de 9</span>
+            <span class="chart-recorte-label active-recorte-text">Top 10 Partidos · Ordenados por % de Eleitas</span>
           </div>
-          <p>O maior degrau do funil acontece na conquista de <strong>votos nominais</strong> na urna, antes da distribuição matemática das sobras partidárias.</p>
-          <p class="live-stat" id="stat-h5">—</p>
-          <div id="ev-h5" class="inline-evidence-slot"></div>
-        </div>
-
-        <div class="viz-card">
-          <div class="viz-head">
-            <div>
-              <p class="fig-kicker">Gráfico 5 · Nas Urnas</p>
-              <h3 id="title-h5">O maior tombo feminino ocorre na votação nominal, antes da distribuição das cadeiras</h3>
-              <p class="viz-subtitle" id="sub-h5">Funil por partido: 1. % Candidatas → 2. % Votos Nominais → 3. % Eleitas (ordenado por % de Eleitas).</p>
+          <h3 class="chart-conclusive-title" id="title-h5">
+            Na maioria dos grandes partidos, a participação feminina cai abruptamente já nos votos nominais — antes das sobras
+          </h3>
+          <div class="chart-controls-bar">
+            <div class="segmented-group" id="view-h5-group">
+              <button type="button" class="segmented-btn active" data-h5-view="bars">Barras Agrupadas</button>
+              <button type="button" class="segmented-btn" data-h5-view="slope">Slopegraph</button>
             </div>
-            <div id="controls-h5" class="viz-controls"></div>
+            <div class="inline-legend">
+              <span class="legend-item"><i class="legend-swatch" style="background:#4B636E"></i> 1. Candidatas</span>
+              <span class="legend-item"><i class="legend-swatch" style="background:#E5A910"></i> 2. Votos nominais</span>
+              <span class="legend-item"><i class="legend-swatch" style="background:#FA532E"></i> 3. Eleitas</span>
+              <span class="legend-item"><i class="legend-swatch is-line" style="color:#007D5B"></i> Meta 30%</span>
+            </div>
           </div>
-          <div id="canvas-h5" class="viz-canvas"></div>
-          <p id="caption-h5" class="viz-caption"></p>
+          <div class="svg-holder" id="canvas-h5"></div>
         </div>
-      </article>
+      </section>
     </section>
 
-    <!-- ==================== ATO 4: A FRAUDE OCULTA (2018-2026) ==================== -->
-    <section id="ato-4" class="act-section" tabindex="-1">
-      <header class="act-header act-header-with-control">
+    <!-- ===================================================================
+         ATO 04 · H6, H7, H8 — SINAIS DE ALERTA (INTEGRIDADE 2018–2026)
+         =================================================================== -->
+    <section class="act-section" id="ato-04" tabindex="-1">
+      <div class="act-divider act-divider-flex">
         <div>
-          <div class="act-kicker-row">
-            <svg class="act-star" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/></svg>
-            <p class="act-kicker">Ato 04 · A Fraude Oculta (P4 · Série 2018 → 2022 → 2026)</p>
-          </div>
-          <h2>Sinais estatísticos compatíveis com candidaturas fictícias</h2>
+          <span class="act-eyebrow">Ato 4 de 5 · Sinais de alerta</span>
+          <h2 class="act-heading">Candidaturas fictícias e adaptação tática das cúpulas</h2>
+          <p class="act-transition-lead">
+            A cota de gênero impulsiona campanhas femininas reais ou induz o lançamento de candidaturas apenas formais?
+            Aplicando os critérios objetivos observáveis da <span class="hl-gold">Súmula nº 73 do TSE</span> sob o mesmo limiar para ambos os gêneros,
+            rastreamos onde os sinais de alerta se acumulam — e como mudaram entre 2018 e 2026.
+          </p>
         </div>
 
         <label class="inline-threshold-box" title="Limiar máximo de votos válidos para o Sinal A em H6, H7, H8 e H9">
           <span>Limiar Sinal A ≤ <strong id="threshold-out">10</strong> votos</span>
-          <input id="filter-threshold" type="range" min="0" max="50" step="5" value="10" aria-label="Limiar de votos do Sinal A">
+          <input id="filter-threshold" type="range" min="0" max="50" step="5" value="10" aria-label="Limiar de votos do Sinal A" />
         </label>
-      </header>
+      </div>
 
-      <!-- H6: Série 2018 -> 2022 -> 2026 Mulheres vs Homens -->
-      <article id="sec-h6" class="viz-section" data-step="h6">
-        <div class="viz-narrative">
-          <div class="step-head">
-            <span class="step-tag">H6 · Evolução da Disparidade (2018 → 2022 → 2026)</span>
-            <div class="verdict-slot" id="verdict-h6"></div>
-          </div>
-          <p>Com <strong>2018</strong> na série, o impacto institucional fica evidente: mulheres acumulavam <code>9,1×</code> mais sinais que homens antes da Súmula 73, caindo quase à paridade em 2026.</p>
-          <p class="live-stat" id="stat-h6">—</p>
-          <figure class="tse-artifact" aria-label="Critérios objetivos observados nos microdados">
-            <figcaption>Sinais observáveis (máx. = 2 simultâneos)</figcaption>
-            <div class="artifact-row">
-              <span class="artifact-badge">Sinal A</span>
-              <span>Votos ≤ limiar</span>
-              <span aria-hidden="true">+</span>
-              <span class="artifact-badge">Sinal B</span>
-              <span>Conta R$ 0</span>
-              <span aria-hidden="true">ou</span>
-              <span class="artifact-badge artifact-badge-warn">Sinal C</span>
-              <span>Lote ≥3 cand.</span>
-            </div>
-            <p class="artifact-note">Súmula 73 exige também ausência de atos de campanha — não observável nos CSVs numéricos. <a class="method-escape" href="#metodo-h6">Ver salvaguarda ↓</a></p>
-          </figure>
+      <!-- GRÁFICO 6 (H6 — Evolução da Disparidade F/M 2018 -> 2022 -> 2026) -->
+      <section class="scrolly-block" id="sec-h6" data-chart="h6">
+        <div class="scrolly-steps">
+          <article class="step-card is-active" data-step="0">
+            <span class="step-tag">Passo 1 de 3 · Critérios Objetivos</span>
+            <h3>Sinais sob a mesma régua</h3>
+            <p>
+              Medimos <strong>Sinal A</strong> (votação ≤ limiar), <strong>Sinal B</strong> (receita zerada R$ 0) e <strong>Sinal C</strong> (lote contábil padronizado ≥3 candidaturas).
+              Como B e C são excludentes na contabilidade, o máximo observável nos microdados é <strong>≥ 2 sinais</strong>.
+            </p>
+          </article>
+
+          <article class="step-card" data-step="1">
+            <span class="step-tag">Passo 2 de 3 · Queda pós-Súmula 73</span>
+            <h3>Disparidade cai de 2018 a 2026</h3>
+            <p>
+              Em <span class="hl-female">2018</span>, <span class="hl-female">mulheres</span> acumulavam <span id="h6-dyn-ratio18">9,1×</span> mais alertas que <span class="hl-male">homens</span>. Após a ADI 5617 e a Súmula 73, a razão cai quase à paridade em 2026.
+            </p>
+            <div class="diag-slot" id="verdict-h6"><span class="diag-pill diag-funciona">Diagnóstico: Disparidade reduzida</span></div>
+          </article>
+
+          <article class="step-card" data-step="2">
+            <span class="step-tag">Passo 3 de 3 · Leitura Prudente</span>
+            <h3>Sinal estatístico não é prova</h3>
+            <p>
+              Os microdados numéricos não registram atos efetivos de campanha. Os indicadores fazem triagem agregada e nunca constituem acusação jurídica individual.
+            </p>
+          </article>
         </div>
 
-        <div class="viz-card">
-          <div class="viz-head">
-            <div>
-              <p class="fig-kicker">Gráfico 6 · Série Histórica 2018–2026</p>
-              <h3 id="title-h6">Disparidade F/M em ≥ 2 sinais despenca de 9,1× (2018) para 1,1× (2026) pós-Súmula 73</h3>
-              <p class="viz-subtitle" id="sub-h6">% das candidaturas APTO com votação residual (≤ limiar) combinada a conta zerada ou lote padronizado.</p>
-            </div>
+        <div class="scrolly-stage">
+          <div class="chart-meta-row">
+            <span class="chart-code-pill">Gráfico 6 de 9</span>
+            <span class="chart-recorte-label active-recorte-text">Série 2018–2026 · ≥2 Sinais (Súmula 73/TSE) · Mulheres vs. Homens</span>
           </div>
-          <div id="canvas-h6" class="viz-canvas"></div>
-          <p id="caption-h6" class="viz-caption"></p>
-        </div>
-      </article>
-
-      <!-- H7: Lollipop Comparativo por Faixa da Chapa -->
-      <article id="sec-h7" class="viz-section" data-step="h7">
-        <div class="viz-narrative">
-          <div class="step-head">
-            <span class="step-tag">H7 · Concentração por Faixa de Chapa</span>
-            <div class="verdict-slot" id="verdict-h7"></div>
-          </div>
-          <p>Substituindo o boxplot achatado no zero, a taxa agregada mostra o risco recuando do piso (<code>30%–33,3%</code>) em 2022 e se concentrando em chapas irregulares (<code>&lt; 30%</code>) em 2026.</p>
-          <p class="live-stat" id="stat-h7">—</p>
-        </div>
-
-        <div class="viz-card">
-          <div class="viz-head">
-            <div>
-              <p class="fig-kicker">Gráfico 7 · Risco por Faixa da Chapa</p>
-              <h3 id="title-h7">Alertas concentrados no piso (30%–33,3%) em 2022 recuam em 2026 e migram para chapas &lt; 30%</h3>
-              <p class="viz-subtitle" id="sub-h7">Taxa agregada de candidatas APTO com ≥ 2 sinais por faixa de presença feminina na chapa (n ≥ 4).</p>
-            </div>
-            <div id="controls-h7" class="viz-controls"></div>
-          </div>
-          <div id="canvas-h7" class="viz-canvas"></div>
-          <p id="caption-h7" class="viz-caption"></p>
-        </div>
-      </article>
-
-      <!-- H8: Adaptação Tática 2018 -> 2022 -> 2026 -->
-      <article id="sec-h8" class="viz-section" data-step="h8">
-        <div class="viz-narrative">
-          <div class="step-head">
-            <span class="step-tag">H8 · Adaptação Tática (2018 → 2022 → 2026)</span>
-            <div class="verdict-slot" id="verdict-h8"></div>
-          </div>
-          <p>Contas de R$ 0 (<strong>Sinal B</strong>) caem desde 2018 enquanto pacotes contábeis padronizados (<strong>Sinal C</strong>) avançam — sinalizando adaptação tática, mas com queda nos combinados a baixa votação em 2026.</p>
-          <p class="live-stat" id="stat-h8">—</p>
-          <div id="ev-h8" class="inline-evidence-slot"></div>
-        </div>
-
-        <div class="viz-card">
-          <div class="viz-head">
-            <div>
-              <p class="fig-kicker">Gráfico 8 · Evolução dos Sinais Contábeis</p>
-              <h3 id="title-h8">Contas zeradas caem continuamente desde 2018, enquanto pacotes padronizados chegam a 39%</h3>
-              <p class="viz-subtitle" id="sub-h8">Série 2018 → 2022 → 2026 entre candidatas APTO em dois painéis com escalas verticais independentes.</p>
+          <h3 class="chart-conclusive-title" id="title-h6">
+            Disparidade F/M em ≥ 2 sinais despenca de 9,1× (2018) para ~1,1× (2026) após a ADI 5617 e a Súmula 73
+          </h3>
+          <div class="chart-controls-bar">
+            <div class="inline-legend">
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#FA532E"></i> Mulheres (F)</span>
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#4B636E"></i> Homens (M)</span>
+              <span class="legend-item"><i class="legend-swatch is-line" style="color:#007D5B"></i> Marco ADI 5617 / Súmula 73</span>
             </div>
           </div>
-          <div id="canvas-h8" class="viz-canvas"></div>
-          <p id="caption-h8" class="viz-caption"></p>
+          <div class="svg-holder" id="canvas-h6"></div>
         </div>
-      </article>
+      </section>
+
+      <!-- GRÁFICO 7 (H7 — Risco por Faixa de Cota na Chapa) -->
+      <section class="scrolly-block" id="sec-h7" data-chart="h7">
+        <div class="scrolly-steps">
+          <article class="step-card is-active" data-step="0">
+            <span class="step-tag">Passo 1 de 3 · Vínculo Estrutural</span>
+            <h3>Chapas "na risca" têm mais alertas?</h3>
+            <p>
+              Dividimos chapas válidas (n ≥ 4) por faixa de cota feminina e medimos a taxa agregada de mulheres com <strong>≥2 sinais</strong> em cada grupo.
+            </p>
+          </article>
+
+          <article class="step-card" data-step="1">
+            <span class="step-tag">Passo 2 de 3 · Janela 30%–33%</span>
+            <h3>Pico no piso em 2022, migração em 2026</h3>
+            <p>
+              Em 2022, a faixa <span class="hl-gold">30%–33,3%</span> concentrava taxa maior de alertas que chapas &gt;40%. Em 2026, o risco no piso recua e se concentra nas chapas <span class="hl-female">&lt;30%</span>.
+            </p>
+            <div class="diag-slot" id="verdict-h7"><span class="diag-pill diag-vaza">Diagnóstico: Concentração por faixa</span></div>
+          </article>
+
+          <article class="step-card" data-step="2">
+            <span class="step-tag">Passo 3 de 3 · Mudança de Regime</span>
+            <h3>Compare com 2018</h3>
+            <p>
+              Ative <strong>Mostrar 2018</strong> no gráfico para comparar o regime anterior das coligações proporcionais com as federações de 2022 e 2026.
+            </p>
+          </article>
+        </div>
+
+        <div class="scrolly-stage">
+          <div class="chart-meta-row">
+            <span class="chart-code-pill">Gráfico 7 de 9</span>
+            <span class="chart-recorte-label active-recorte-text">Taxa Agregada de ≥2 Sinais por Faixa de Cota (n ≥ 4)</span>
+          </div>
+          <h3 class="chart-conclusive-title" id="title-h7">
+            Alertas concentrados no piso (30%–33,3%) em 2022 recuam em 2026 e migram para chapas abaixo de 30%
+          </h3>
+          <div class="chart-controls-bar">
+            <div class="inline-legend">
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#FFFFFF;border:2px solid #142620"></i> 2022</span>
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#FA532E"></i> 2026</span>
+              <span class="legend-item"><i class="legend-swatch" style="background:rgba(248,223,79,0.5);border:1px solid #C98A00"></i> Piso 30%–33%</span>
+            </div>
+            <div class="segmented-group" id="controls-h7">
+              <button type="button" class="segmented-btn" id="btn-h7-2018">Mostrar 2018</button>
+            </div>
+          </div>
+          <div class="svg-holder" id="canvas-h7"></div>
+        </div>
+      </section>
+
+      <!-- GRÁFICO 8 (H8 — Evolução Temporal 2018 -> 2022 -> 2026) -->
+      <section class="scrolly-block" id="sec-h8" data-chart="h8">
+        <div class="scrolly-steps">
+          <article class="step-card is-active" data-step="0">
+            <span class="step-tag">Passo 1 de 3 · 2018 e 2022</span>
+            <h3>O modelo clássico: conta zerada</h3>
+            <p>
+              Em <span class="hl-male">2018 e 2022</span>, a <strong>receita zerada (R$ 0)</strong> era o principal rastro de candidaturas sem estrutura — alvo direto de cassações pela Súmula 73.
+            </p>
+          </article>
+
+          <article class="step-card" data-step="1">
+            <span class="step-tag">Passo 2 de 3 · Virada em 2026</span>
+            <h3>Caem zeros, sobem lotes mínimos</h3>
+            <p>
+              Em <span class="hl-female">2026</span>, contas zeradas recuam (<span id="h8-dyn-zero">—</span>), mas crescem os <span class="hl-pink">pacotes padronizados em lote</span> (<span id="h8-dyn-std">—</span>) que evitam o zero bruto.
+            </p>
+            <div class="diag-slot" id="verdict-h8"><span class="diag-pill diag-inconclusivo">Diagnóstico: Adaptação tática em curso</span></div>
+          </article>
+
+          <article class="step-card" data-step="2">
+            <span class="step-tag">Passo 3 de 3 · Soma Combinada</span>
+            <h3>Volume vulnerável segue alto</h3>
+            <p>
+              Somando os dois regimes contábeis, a parcela vulnerável permanece elevada — exigindo auditoria sobre repasses padronizados e fornecedores-hub.
+            </p>
+          </article>
+        </div>
+
+        <div class="scrolly-stage">
+          <div class="chart-meta-row">
+            <span class="chart-code-pill">Gráfico 8 de 9</span>
+            <span class="chart-recorte-label active-recorte-text">Série Histórica Comparativa · 2018 → 2022 → 2026</span>
+          </div>
+          <h3 class="chart-conclusive-title" id="title-h8">
+            Em 2026, caem as contas zeradas brutas entre mulheres, mas crescem as movimentações mínimas e padronizadas em lote
+          </h3>
+          <div class="chart-controls-bar">
+            <div class="inline-legend">
+              <span class="legend-item"><i class="legend-swatch" style="background:#FA532E"></i> Receita zerada (Sinal B)</span>
+              <span class="legend-item"><i class="legend-swatch" style="background:#D946BE"></i> Lote padronizado (Sinal C)</span>
+              <span class="legend-item"><i class="legend-swatch is-line" style="color:#4B636E"></i> Soma combinada (B + C)</span>
+            </div>
+          </div>
+          <div class="svg-holder" id="canvas-h8"></div>
+        </div>
+      </section>
     </section>
 
-    <!-- ==================== ATO 5: GEOGRAFIA DA EXCLUSÃO ==================== -->
-    <section id="ato-5" class="act-section" tabindex="-1">
-      <header class="act-header">
-        <div class="act-kicker-row">
-          <svg class="act-star" viewBox="0 0 36 36" fill="none" aria-hidden="true"><path fill="currentColor" d="M17.2 1.5l2.8 11.4 9.5-7.4-5.9 10.1 11.1 2.2-11.2 2.9 6.6 9.6-9.9-6.6-2.2 11.2-2.9-11.3-9.8 6.4 6.1-9.8L1.3 18l11.2-2.8-6.4-9.7 9.7 6.5 1.4-10.5Z"/></svg>
-          <p class="act-kicker">Ato 05 · Geografia da Exclusão (P5)</p>
-        </div>
-        <h2>Onde o sistema falha mais em cada UF e partido?</h2>
-      </header>
+    <!-- ===================================================================
+         ATO 05 · H9 — GEOGRAFIA DA EXCLUSÃO (MAPA POR UF + MATRIZ)
+         =================================================================== -->
+    <section class="act-section" id="ato-05" tabindex="-1">
+      <div class="act-divider">
+        <span class="act-eyebrow">Ato 5 de 5 · No território</span>
+        <h2 class="act-heading">Onde o sistema falha em cada estado do Brasil</h2>
+        <p class="act-transition-lead">
+          O vazamento de representatividade não é homogêneo pelo território nacional. Ao mapear as 27 Unidades da Federação
+          e os principais partidos ao longo das <span class="hl-female">etapas do funil</span>, revelamos que o Brasil
+          se divide em regimes distintos de exclusão política.
+        </p>
+      </div>
 
-      <article id="sec-h9" class="viz-section viz-section-wide" data-step="h9">
-        <div class="viz-narrative-wide">
-          <div class="step-head">
-            <span class="step-tag">H9 · Mapa Quantitativo por UF &amp; Matriz Heatmap Ordenável</span>
-            <div class="verdict-slot" id="verdict-h9"></div>
+      <section class="scrolly-block" id="sec-h9" data-chart="h9">
+        <div class="scrolly-steps">
+          <article class="step-card is-active" data-step="0">
+            <span class="step-tag">Passo 1 de 3 · Mapa por UF</span>
+            <h3>Geografia da sub-representação</h3>
+            <p>
+              Cada UF é colorida pela etapa selecionada (<span class="hl-female">Eleitas</span>, <span class="hl-gold">Papel</span>, <span class="hl-pink">Fundo Público</span>, <strong>Privado</strong>, <strong>Votos</strong> ou <strong>Alertas</strong>).
+            </p>
+          </article>
+
+          <article class="step-card" data-step="1">
+            <span class="step-tag">Passo 2 de 3 · Desigualdade Regional</span>
+            <h3>Onde o país perde primeiro</h3>
+            <p>
+              <span id="h9-step1-text">Compare os extremos regionais e alterne as métricas no topo do cartão.</span>
+            </p>
+            <div class="diag-slot" id="verdict-h9"><span class="diag-pill diag-vaza">Diagnóstico: Fenômeno heterogêneo</span></div>
+          </article>
+
+          <article class="step-card" data-step="2">
+            <span class="step-tag">Passo 3 de 3 · Matriz e Exploração</span>
+            <h3>Clique no mapa ou ordene a matriz</h3>
+            <p>
+              Clique em qualquer estado no mapa (ou linha na matriz ordenável por <strong>27 UFs</strong> ou <strong>Top 15 Partidos</strong>) para recalcular todos os gráficos com aquele recorte.
+            </p>
+          </article>
+        </div>
+
+        <div class="scrolly-stage">
+          <div class="chart-meta-row">
+            <span class="chart-code-pill">Gráfico 9 de 9</span>
+            <span class="chart-recorte-label active-recorte-text">Mapa das 27 UFs (br_uf.json) &amp; Matriz Ordenável</span>
           </div>
-          <p>Inspecione qualquer etapa do funil no mapa nacional e compare lado a lado as 6 métricas nas <strong>27 UFs</strong> ou nos <strong>Top 15 Partidos</strong> clicando nos cabeçalhos.</p>
-          <p class="live-stat" id="stat-h9">—</p>
-        </div>
-
-        <div class="viz-card viz-card-wide">
-          <div class="viz-head">
-            <div>
-              <p class="fig-kicker">Gráfico 9 · Território e Partidos ao Longo do Funil</p>
-              <h3 id="title-h9">Nenhuma UF atinge 30% de eleitas em 2022; gargalo alterna entre privado, votos e alertas</h3>
-              <p class="viz-subtitle" id="sub-h9">Mapa coroplético por etapa do funil e Matriz Heatmap ordenável por coluna (27 UFs ou Top 15 Partidos).</p>
-            </div>
-            <div id="controls-h9" class="viz-controls"></div>
+          <h3 class="chart-conclusive-title" id="title-h9">
+            O vazamento de representatividade assume formas distintas pelo Brasil: nenhum estado alcança paridade plena nas cadeiras
+          </h3>
+          <div class="chart-controls-bar">
+            <div id="controls-h9" class="controls-cluster"></div>
+            <button type="button" class="segmented-btn" id="btn-map-reset-uf" hidden style="background:#007D5B;color:#fff;">Ver Brasil inteiro</button>
           </div>
           <div class="h9-dual-grid">
-            <div id="canvas-h9-map" class="viz-canvas"></div>
-            <div id="canvas-h9-matrix" class="viz-canvas"></div>
+            <div id="canvas-h9-map" class="svg-holder"></div>
+            <div id="canvas-h9-matrix" class="h9-matrix-holder"></div>
           </div>
-          <p id="caption-h9" class="viz-caption"></p>
         </div>
-      </article>
+      </section>
     </section>
 
   </main>
 
-  <!-- MOMENTO 3: BOCA DA TAÇA — filtros livres que recalculam todos os gráficos -->
-  <section class="boca-da-taca-section" id="boca-da-taca" aria-label="Exploração livre: filtros globais">
-    <div class="container boca-inner">
-      <span class="boca-badge">A Boca da Taça · Exploração Livre</span>
+  <!-- =======================================================================
+       MOMENTO 3: A BOCA DA TAÇA (SÍNTESE + EXPLORAÇÃO LIVRE)
+       ======================================================================= -->
+  <section class="recap" id="sintese" tabindex="-1" aria-labelledby="sintese-t">
+    <h2 id="sintese-t">O que os cinco atos mostram</h2>
+    <p class="recap-lead">A cota garante o registro. O que falta vem depois: dinheiro, voto e cadeira.</p>
+    <a href="#ato-01"><b>1 · No papel</b><span id="recap-1">A maioria das chapas para entre 30% e 33%: o piso virou teto.</span></a>
+    <a href="#ato-02"><b>2 · No dinheiro</b><span id="recap-2">O fundo público existe, mas o repasse e o recurso privado favorecem os homens na maioria das siglas.</span></a>
+    <a href="#ato-03"><b>3 · Na urna</b><span id="recap-3">A queda aparece já nos votos nominais, antes da distribuição das sobras.</span></a>
+    <a href="#ato-04"><b>4 · Sinais de alerta</b><span id="recap-4">A disparidade bruta caiu desde 2018, mas contas zeradas migram para pacotes padronizados em 2026.</span></a>
+    <a href="#ato-05"><b>5 · No território</b><span id="recap-5">O ponto em que a representação se perde muda de estado para estado e de partido para partido.</span></a>
+  </section>
+
+  <section class="boca-da-taca-section" id="boca-da-taca" tabindex="-1">
+    <div class="boca-inner">
+      <span class="boca-badge">Fim do roteiro guiado · Agora é com você</span>
       <h2 class="boca-title">Agora investigue seu Estado ou Partido</h2>
-      <p class="boca-subtitle">Você percorreu o diagnóstico nacional. Use os filtros para recalcular todos os gráficos por cargo, unidade da federação ou legenda.</p>
-      <div class="global-filters boca-filters">
-        <div class="filter-group" role="group" aria-label="Cargo">
-          <button class="seg active" data-cargo="all" type="button" aria-pressed="true">Todos</button>
-          <button class="seg" data-cargo="6" type="button" aria-pressed="false">Federal</button>
-          <button class="seg" data-cargo="7" type="button" aria-pressed="false">Estadual</button>
+      <p class="boca-subtitle">Escolha ano, cargo, estado ou partido. Os números abaixo e todos os gráficos da história são recalculados com os microdados reais do TSE para a sua escolha.</p>
+
+      <div class="filters-grid">
+        <div class="filter-field">
+          <label for="filter-year">Ano Eleitoral</label>
+          <select id="filter-year">
+            <option value="2018">2018 (Auxiliar · Coligações)</option>
+            <option value="2022" selected>2022 Baseline (Consolidado)</option>
+            <option value="2026">2026 (Comparação)</option>
+          </select>
         </div>
-        <label class="select-wrap">
-          <span>UF</span>
-          <select id="filter-uf"><option value="">Brasil (27)</option></select>
-        </label>
-        <label class="select-wrap">
-          <span>Partido</span>
-          <select id="filter-party"><option value="">Todos</option></select>
-        </label>
-        <button id="reset-filters" class="btn-reset" type="button">Limpar</button>
-      </div>
-      <p id="scope-summary" class="scope-summary">Carregando base validada...</p>
-      <div class="explorer-actions"><a href="#ato-1" class="btn-primary">↑ Reexaminar os gráficos com este filtro</a></div>
-    </div>
-  </section>
 
+        <div class="filter-field">
+          <label for="filter-cargo">Cargo em Disputa</label>
+          <select id="filter-cargo">
+            <option value="all" selected>Federal + Estadual (6 + 7)</option>
+            <option value="6">Deputado(a) Federal (6)</option>
+            <option value="7">Deputado(a) Estadual (7)</option>
+          </select>
+        </div>
 
-  <!-- TAGLINE REVEAL SECTION (B11) -->
-  <section id="tagline-reveal" class="tagline-band" aria-label="Tese central da investigação">
-    <div class="container">
-      <p class="eyebrow">Tese da Investigação</p>
-      <p class="tagline-text" data-tagline-text>A cota de 30% abriu a porta do registro e do fundo público,<br>mas ainda precisa atravessar o abismo privado e a disputa nas urnas<br>para levar mulheres das chapas às cadeiras do parlamento.</p>
-    </div>
-  </section>
+        <div class="filter-field">
+          <label for="filter-uf">Unidade da Federação (UF)</label>
+          <select id="filter-uf">
+            <option value="">Brasil (27 UFs)</option>
+          </select>
+        </div>
 
-  <!-- ETAPA 4: SÍNTESE & LEITURAS COMPLEMENTARES -->
-  <section id="sintese" class="synthesis-band" aria-label="Síntese dos achados e leituras complementares">
-    <div class="container">
-      <div class="section-intro">
-        <p class="eyebrow">Síntese da Investigação · Por que isso importa</p>
-        <h2>O que os dados confirmam e onde a cota ainda precisa avançar</h2>
-        <p class="section-lead">Quando olhamos o sistema inteiro do registro à cadeira eleita, a lei de 30% alterou a entrada formal e o Fundo Público, mas ainda esbarra na concentração de receita, no dinheiro privado e na conversão de votos em cadeiras.</p>
-      </div>
-
-      <div class="synthesis-grid" id="synthesis-cards"></div>
-
-      <div class="scorecard-wrap">
-        <h3 class="subsection-title">Placar ao vivo das 9 hipóteses (clique para saltar à seção)</h3>
-        <div class="scorecard-grid" id="synthesis-scorecard"></div>
-      </div>
-
-      <div id="como-funciona" class="how-wrap">
-        <h3 class="subsection-title">Como auditar esta investigação em 3 passos</h3>
-        <div class="how-grid">
-          <article class="how-step" data-reveal>
-            <span class="how-num">01</span>
-            <h4>Ajuste o recorte na barra ou no gráfico</h4>
-            <p>Use Cargo, UF e Partido no topo ou clique diretamente nas faixas de H1 e nos partidos/UFs dos gráficos para criar visões coordenadas.</p>
-          </article>
-          <article class="how-step" data-reveal>
-            <span class="how-num">02</span>
-            <h4>Compare 2018, 2022 e 2026 em contexto</h4>
-            <p>Alterne o ano dentro de cada gráfico pertinente e acompanhe a série completa 2018–2026 nos sinais de integridade do Ato 4.</p>
-          </article>
-          <article class="how-step" data-reveal>
-            <span class="how-num">03</span>
-            <h4>Audite cada número na origem</h4>
-            <p>Abra os cartões de evidência e consulte diretamente os portais oficiais do TSE e do STF sem barreiras ou cadastro.</p>
-          </article>
+        <div class="filter-field">
+          <label for="filter-party">Partido / Federação</label>
+          <select id="filter-party">
+            <option value="">Todos os Partidos</option>
+          </select>
         </div>
       </div>
 
-      <div id="leituras" class="readings-wrap">
-        <h3 class="subsection-title">Para ir além · Fontes primárias e marcos legais</h3>
-        <div class="reading-grid">
-          <article class="reading-card" data-reveal>
-            <span class="reading-kicker">Base Oficial</span>
-            <h4>Portal de Dados Abertos do TSE</h4>
-            <p>Repositório público com os arquivos de candidaturas, votação por zona e prestações de contas usados neste ensaio.</p>
-            <a href="https://dadosabertos.tse.jus.br/" target="_blank" rel="noopener noreferrer">Acessar dados abertos ↗︎</a>
-          </article>
-          <article class="reading-card" data-reveal>
-            <span class="reading-kicker">Jurisprudência</span>
-            <h4>STF · ADI 5617 (Piso de 30% no Fundo)</h4>
-            <p>Decisão que vinculou o mínimo de 30% das candidaturas femininas à distribuição proporcional de FEFC e Fundo Partidário.</p>
-            <a href="https://portal.stf.jus.br/processos/detalhe.asp?incidente=5090801" target="_blank" rel="noopener noreferrer">Consultar processo STF ↗︎</a>
-          </article>
-          <article class="reading-card" data-reveal>
-            <span class="reading-kicker">Integridade</span>
-            <h4>TSE · Súmula 73 (Fraude à Cota)</h4>
-            <p>Consolida os critérios objetivos e contextuais para apuração de candidaturas fictícias e nulidade do DRAP.</p>
-            <a href="https://www.tse.jus.br/legislacao/compilada/sumula-tse" target="_blank" rel="noopener noreferrer">Ler súmulas do TSE ↗︎</a>
-          </article>
-          <article class="reading-card" data-reveal>
-            <span class="reading-kicker">Auditoria Pública</span>
-            <h4>DivulgaCandContas (TSE)</h4>
-            <p>Ferramenta oficial para conferência individual de receitas, fornecedores, despesas contratadas e situação eleitoral.</p>
-            <a href="https://divulgacandcontas.tse.jus.br/" target="_blank" rel="noopener noreferrer">Abrir DivulgaCandContas ↗︎</a>
-          </article>
+      <div class="explorer-live-readout tabular">
+        <div class="readout-box">
+          <span>Candidaturas Femininas Aptas</span>
+          <strong id="readout-cand">—</strong>
+        </div>
+        <div class="readout-box">
+          <span>Fatia do Fundo Público (FEFC/FP)</span>
+          <strong id="readout-verba">—</strong>
+        </div>
+        <div class="readout-box">
+          <span>Taxa de Votos Nominais</span>
+          <strong id="readout-votos">—</strong>
+        </div>
+        <div class="readout-box">
+          <span>Cadeiras Conquistadas</span>
+          <strong id="readout-eleitas">—</strong>
+        </div>
+        <div class="readout-box">
+          <span>Mulheres c/ ≥2 Sinais (H6)</span>
+          <strong id="readout-alertas">—</strong>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- ETAPA 5: DADOS & MÉTODOS -->
-  <section id="metodologia" class="methods-band" aria-label="Dados e Metodologia">
-    <div class="container">
-      <div class="section-intro">
-        <p class="eyebrow">Transparência Metodológica · Divulgação Progressiva</p>
-        <h2>Dados &amp; Métodos</h2>
-        <p class="section-lead">Todos os indicadores são calculados deterministicamente no navegador sobre microdados agregados e anonimizados do TSE, com cobertura e totais auditados por pipeline Python/DuckDB.</p>
-      </div>
+      <p class="scope-summary" id="scope-summary">Carregando base validada do TSE...</p>
 
-      <div class="methods-accordion">
-        <details class="method-item" id="metodo-geral">
-          <summary>1. População analisada, unidade legal de chapa e privacidade (LGPD)</summary>
-          <div class="method-body">
-            <p>O escopo compreende exclusivamente <strong>Deputado Federal (CD_CARGO = 6)</strong> e <strong>Deputado Estadual (CD_CARGO = 7)</strong> nas 27 Unidades da Federação (Deputado Distrital é excluído). Em 2022 e 2026 a unidade legal de chapa é a <strong>Federação partidária</strong> ou <strong>Partido Isolado</strong> por <code>(UF, Cargo)</code>; em 2018 vigoravam coligações proporcionais (usadas apenas como referência histórica no Ato 4).</p>
-            <p>Em conformidade com a LGPD e a Res. TSE 23.729/2024, os arquivos JSON publicados não contêm nomes de candidatas/os, CPFs, e-mails ou identificação civil de fornecedores pessoas físicas/MEIs.</p>
-          </div>
-        </details>
-
-        <details class="method-item" id="metodo-h1">
-          <summary>2. Corte n ≥ 4 nas chapas, Registradas vs. APTO e microchapas</summary>
-          <div class="method-body">
-            <p>Chapas com menos de 4 candidaturas (<strong>microchapas</strong>) só podem assumir percentuais discretos extremos (0%, 33%, 50%, 67%, 100%). Para evitar ruído visual em H1 e H7, aplica-se o corte <code>n ≥ 4</code>; porém todas as candidaturas individuais seguem contabilizadas em H2–H6, H8, H9 e nos Big Numbers.</p>
-            <p>Em H1, a faixa superior consolidada mede chapas com <code>≥ 40%</code> (soma exata de <code>40%–49%</code> e <code>50%+</code>), e <strong>Aptas</strong> filtra apenas candidaturas com situação <code>APTO</code>.</p>
-          </div>
-        </details>
-
-        <details class="method-item" id="metodo-h4">
-          <summary>3. Recorte proporcional e perfil de investimento feminino (H4)</summary>
-          <div class="method-body">
-            <p>Em H4, todas as candidatas mulheres <code>APTO</code> são ordenadas por receita total declarada (<code>r = FEFC + FP + Próprios + Privadas</code>). O grupo <strong>Competitivas (Top 10%)</strong> reúne o decil superior de receita, e a <strong>Base (90%)</strong> reúne as demais candidatas. Todos os fluxos do Sankey são normalizados para <code>100%</code> do grupo exibido.</p>
-          </div>
-        </details>
-
-        <details class="method-item" id="metodo-h6">
-          <summary>4. Sinais estatísticos e salvaguarda jurídica da Súmula 73 (H6–H8)</summary>
-          <div class="method-body">
-            <p>O sistema observa três indicadores numéricos objetivos: <strong>Sinal A</strong> (<code>votos_validos ≤ limiar</code>, padrão 10), <strong>Sinal B</strong> (prestação entregue com receita e despesa iguais a R$ 0) e <strong>Sinal C</strong> (lote idêntico de fornecedor/valor/data ou repasse FEFC/FP em <code>≥ 3</code> candidaturas do mesmo partido e UF).</p>
-            <p><strong>Salvaguarda jurídica:</strong> Sinais B e C são mutuamente exclusivos por construção contábil (máximo observável simultâneo = 2 sinais), e a ausência efetiva de atos de campanha exigida pela Súmula 73 do TSE não é observável nos CSVs. Os sinais indicam padrões agregados de atenção, jamais prova ou acusação individual.</p>
-          </div>
-        </details>
-
-        <details class="method-item" id="metodo-h8">
-          <summary>5. Cobertura das fontes (2018, 2022 e 2026) e comparabilidade</summary>
-          <div class="method-body">
-            <p>Em 2022 e 2026 a entrega de prestações <code>FINAL</code> entre candidaturas <code>APTO</code> supera 97% (em 2018 atinge 93,4%). Em 2026, as prestações ainda aguardam julgamento judicial definitivo, e o arquivo de votação de 19/10/2026 deixa 232 candidaturas <code>APTO</code> (1,3%) sem linha assumindo 0 votos.</p>
-            <div class="coverage-table-wrap" id="methods-coverage-table"></div>
-          </div>
-        </details>
+      <div class="explorer-actions">
+        <a href="#ato-01" class="btn-primary-gold">Reler a história com este recorte</a>
+        <button type="button" class="btn-secondary-ghost" id="btn-reset-filters">Restaurar 2022 Baseline Brasil</button>
       </div>
     </div>
   </section>
 
-  <!-- FAQ -->
-  <section id="faq" class="faq-band" aria-label="Perguntas frequentes sobre a pesquisa">
-    <div class="container">
-      <div class="section-intro">
-        <p class="eyebrow">Perguntas Frequentes · Esclarecimentos Rápidos</p>
-        <h2>Dúvidas comuns sobre metodologia e leitura</h2>
-        <p class="section-lead">Respostas diretas sobre recortes, critérios legais, cobertura de 2018–2026 e proteção de dados pessoais.</p>
+  <!-- =======================================================================
+       NOTAS METODOLÓGICAS, LGPD E COBERTURA AUDITÁVEL (coverage.json)
+       ======================================================================= -->
+  <section class="annex-container" id="metodologia" tabindex="-1">
+    <details class="annex-details">
+      <summary>
+        <span>Notas Metodológicas, Privacidade (LGPD), Fontes TSE e Auditoria de Cobertura (coverage.json)</span>
+        <span class="annex-toggle-label">Expandir auditoria de dados +</span>
+      </summary>
+      <div class="coverage-table-wrap">
+        <table class="coverage-table tabular" id="coverage-table">
+          <thead>
+            <tr>
+              <th>Ano</th>
+              <th>Papel no Estudo</th>
+              <th>Total Candidaturas</th>
+              <th>Aptas</th>
+              <th>Femininas (Aptas)</th>
+              <th>Chapas Reg. (Micro &lt;4)</th>
+              <th>Prestações FINAL (Apto)</th>
+              <th>Hubs na Rede</th>
+            </tr>
+          </thead>
+          <tbody id="coverage-tbody"></tbody>
+        </table>
+
+        <div class="method-notes-grid">
+          <p class="method-note">
+            <strong>Escopo e Chapa Legal:</strong> Deputado Federal (<code>CD_CARGO = 6</code>) e Deputado Estadual (<code>CD_CARGO = 7</code>) nas 27 UFs (Deputado Distrital excluído). Em 2022 e 2026 a unidade legal de chapa é a Federação partidária ou Partido Isolado por <code>(UF, Cargo)</code>; em 2018 vigoravam coligações proporcionais (usado como controle histórico no Ato 4). Microchapas (&lt;4 candidaturas) ficam fora dos gráficos percentuais por chapa (H1 e H7), mas integram todos os cálculos individuais (H2–H6, H8, H9 e funil).
+          </p>
+          <p class="method-note">
+            <strong>Salvaguarda Jurídica (Súmula nº 73/TSE) e LGPD:</strong> Os sinais estatísticos analisados em H4, H6, H7 e H8 observam padrões objetivos de votação residual, conta zerada e movimentação padronizada em lote (Sinais B e C são mutuamente exclusivos; ausência de atos de campanha não consta nos CSVs) e não constituem prova ou juízo jurídico individual. Em conformidade com a LGPD e a Res. TSE 23.729/2024, os arquivos JSON ocultam nomes civis, CPFs e e-mails.
+          </p>
+          <p class="method-note">
+            <strong>Fontes:</strong> Portal de Dados Abertos do TSE (<code>consulta_cand</code>, <code>votacao_candidato_munzona</code>, <code>receitas_candidatos</code>, <code>despesas_contratadas_candidatos</code> — 2018, 2022 e 2026), Lei nº 14.211/2021, ADI 5617/STF e Súmula nº 73/TSE. · <strong>Autoria:</strong> Letícia Frota e Artur Garcia · UFC · Visualização de Dados.
+          </p>
+        </div>
       </div>
-
-      <div class="faq-accordion">
-        <details class="faq-item" data-reveal>
-          <summary>Por que a comparação estrutural usa 2022 e 2026 e traz 2018 para os sinais do Ato 4?</summary>
-          <div class="faq-body">
-            <p>Em 2022 e 2026 vigorou o mesmo regime jurídico de federações partidárias, enquanto em 2018 ainda existiam coligações proporcionais. Para os sinais individuais de integridade (H6–H8), incluir 2018 revela a queda histórica da disparidade de gênero após a ADI 5617 e a consolidação da Súmula 73.</p>
-          </div>
-        </details>
-
-        <details class="faq-item" data-reveal>
-          <summary>Por que microchapas com menos de 4 candidaturas saem dos gráficos por chapa?</summary>
-          <div class="faq-body">
-            <p>Chapas de 1 a 3 pessoas geram percentuais discretos extremos como 0%, 33%, 50% ou 100%, distorcendo distribuições percentuais. Elas permanecem integralmente nos cálculos individuais de financiamento, votos e sinais.</p>
-          </div>
-        </details>
-
-        <details class="faq-item" data-reveal>
-          <summary>Os sinais estatísticos da Súmula 73 provam fraude eleitoral individual?</summary>
-          <div class="faq-body">
-            <p>Não. Os microdados numéricos do TSE não registram atos efetivos de campanha. Os indicadores apontam padrões agregados de atenção estatística, nunca acusação ou prova jurídica individual.</p>
-          </div>
-        </details>
-
-        <details class="faq-item" data-reveal>
-          <summary>Por que a mediana feminina supera a masculina em partidos como o UNIÃO em 2026?</summary>
-          <div class="faq-body">
-            <p>Para cumprir o piso de 30% do Fundo Público sem risco, o UNIÃO distribuiu verba pública a 99% das candidatas em 2026 enquanto deixou 6,6% dos homens sem fundo público e concentrou os valores milionários no topo (P90 masculino de R$ 2,70M vs. R$ 1,65M feminino) e no recurso privado.</p>
-          </div>
-        </details>
-
-        <details class="faq-item" data-reveal>
-          <summary>Os dados de 2026 já são comparáveis aos de 2022?</summary>
-          <div class="faq-body">
-            <p>Sim. Ambos os pleitos superam 97% de prestações finais entregues entre candidaturas aptas, com ressalva explícita de que as contas de 2026 ainda aguardam julgamento judicial e 1,3% das aptas assumem zero votos pela extração de outubro.</p>
-          </div>
-        </details>
-
-        <details class="faq-item" data-reveal>
-          <summary>A aplicação expõe nomes, CPFs ou dados pessoais de candidaturas?</summary>
-          <div class="faq-body">
-            <p>Não. Em conformidade com a LGPD e a Resolução TSE 23.729/2024, os cruzamentos usam identificadores anônimos e ocultam nomes civis, CPFs, emails e identificações pessoais.</p>
-          </div>
-        </details>
-      </div>
-    </div>
+    </details>
   </section>
-
-  <!-- CTA FINAL IDÊNTICO AO TOPO -->
-  <section id="cta-final" class="final-cta-band" aria-label="Chamada final para explorar os dados">
-    <div class="container">
-      <div class="final-cta-card" data-reveal>
-        <p class="eyebrow">Acesso Livre · Auditoria Completa</p>
-        <h2>Teste cada hipótese no estado e partido do seu interesse</h2>
-        <p class="final-cta-guarantee">Dados abertos, pipeline reproduzível em Python e DuckDB com diferença zero contra os arquivos oficiais do TSE e navegação imediata sem cadastro.</p>
-        <a href="#ato-1" class="btn-primary">Explorar a investigação interativa</a>
-      </div>
-    </div>
-  </section>
-
-  <footer class="site-footer">
-    <div class="container footer-grid">
-      <div>
-        <h4>Fontes, Privacidade e Limitações</h4>
-        <p>Microdados abertos do Tribunal Superior Eleitoral (TSE): <code>consulta_cand</code>, <code>votacao_candidato_munzona</code>, <code>receitas_candidatos</code> e <code>despesas_contratadas_candidatos</code> (2018, 2022 e 2026). Cruzamentos feitos exclusivamente por <code>SQ_CANDIDATO</code>, sem exposição de nomes, CPFs ou emails (LGPD e Res. TSE 23.729/2024).</p>
-      </div>
-      <div>
-        <h4>Auditoria e Rastreabilidade</h4>
-        <p id="footer-coverage">Cobertura verificada automaticamente pelo pipeline Python e DuckDB.</p>
-        <nav class="footer-links" aria-label="Links institucionais e retorno">
-          <a href="#metodo-geral">Privacidade e LGPD</a>
-          <a href="#metodologia">Metodologia</a>
-          <a href="#faq">Perguntas frequentes</a>
-          <a href="#intro">Voltar ao topo ↑</a>
-        </nav>
-      </div>
-    </div>
-  </footer>
 
   <script src="dist/app.js"></script>
 </body>

@@ -11,7 +11,22 @@
 
 ---
 
-## 1. Task Contract (Revisão Geral UX, Paleta Semântica, Visões Coordenadas e H1–H9 · 2018–2026)
+## 1. Task Contract (Aplicação do UI/UX Editorial — Ensaio de Data Storytelling)
+
+- **Outcome:** Aplicar ao app existente a linguagem visual e de interação do protótipo `da_cota_cadeira_ensaio_de_data_storytelling.html`: papel creme (`#FBF8F1`), tipografia editorial **Newsreader** + **Inter**, hero esmeralda com silhuetas, faixa de funil de 3 métricas, atos com eyebrow/pill + título serifado, split narrativa/cartão (35%/65%), palco de gráfico claro, faixa de exploração livre com leituras ao vivo, acordeões e rodapé escuro. Preservar os 5 atos, H1–H9, filtros globais, visões coordenadas, síntese, métodos, FAQ, LGPD e todos os dados reais.
+- **Scope & Non-goals:**
+  - *In-scope:* `public/index.html`, `public/styles.css`, `public/assets/fonts/` (Newsreader/Inter), `src/charts/palette.js` e cores claras nos módulos de gráfico, `src/charts/tooltip.js` (se necessário), `src/main.js` (apenas leituras da faixa de exploração), `tests/e2e.mjs`, `docs/guia_dos_graficos.md`, `docs/harness/`.
+  - *Non-goals:* alterar ETL, indicadores, dados, semântica dos gráficos, deploy/`git push`, exposição de PII, remoção de H1–H9 ou de seções institucionais.
+- **Acceptance Evidence:**
+  - `npm run build:vercel` gera `dist/app.js` e `site/` sem erros.
+  - `./init.sh` sai com código `0` (suíte Python verde).
+  - `E2E_ROOT=site node tests/e2e.mjs` termina com `errors: []` em desktop (`1280×820`) e mobile (`390×844`).
+  - `grep` confirma ausência de `Anton`/`Barlow` e presença dos arquivos `newsreader-*.woff2` e `inter-*.woff2`.
+  - Avaliação adversarial independente em contexto frio (`research`, somente leitura) aprova sem gaps de corretude.
+- **Actions Needing Human Approval:** `git push`/deploy; alteração de regras metodológicas em `docs/harness/SPEC.md`.
+- **Iteration Ceiling & Retry Budget:** máximo de 3 falhas consecutivas na mesma verificação antes de parar e pedir decisão humana.
+
+### Contrato anterior — Revisão Geral UX, Paleta Semântica, Visões Coordenadas e H1–H9 · 2018–2026 (histórico)
 - **Outcome:** Integrar `2018` no ETL (`analytical_base.json` com 2018, 2022 e 2026 para o Ato 4), remover o Panorama em Escala (`#escala`), adotar fluxo editorial vertical fluido com barra superior fina e controles locais nos gráficos, fixar paleta semântica única (Rosa `#FF7AE5` = Mulheres, Amarelo `#FCE34D` = Homens, Laranja `#FF5E2B` = Alerta/Déficit, Verde `#00D09C` = Cota respeitada, Branco/Ciano/Gelo = Anos), implementar visões coordenadas (`H1` → demais gráficos) e correção do clique em partidos, e atualizar/refazer `H1`–`H9`.
 - **Scope & Non-goals:**
   - *In-scope:* `etl/config.py`, `etl/report_coverage.py`, `data/` (`analytical_base.json`, `coverage.json`, `network_hubs.json`), `public/`, `src/`, `docs/guia_dos_graficos.md`, `docs/relatorio_cobertura_2022.md`, `docs/harness/`, `tests/test_etl.py`, `tests/test_indicators.py`, `tests/e2e.mjs`.
@@ -136,6 +151,11 @@
     3. *Universo do P90 em H2 (`UNIÃO` 2026):* Padronizado sobre candidaturas `APTO` com receita declarada (`c.apto && c.hasRec`, `R$ 2,70M` homens vs. `R$ 1,65M` mulheres), coerente com a mediana exibida em `computeH2`.
     4. *Artefato `data/network_hubs.json`:* Mantido em disco para preservar invariantes LGPD dos testes de CI, embora o frontend não realize mais `fetch` nem exiba rede de hubs em `H4`.
   - **Evidência final:** `npm run build:vercel` (`dist/app.js 234.3kb`, `site/` 13 arquivos / `11.27 MB`) && `./init.sh` (`16 passed in 18.04s`) && `E2E_ROOT=site node tests/e2e.mjs` (`E2E OK`, `errors: []`, `overflowX: false`, `h2bMobBarLabelHits: []`, `textCircleHits: []`).
+
+- **2026-11-26 (Arquitetura Martini Glass V2 + Gráficos H1–H9 conectados aos dados reais do TSE):**
+  - Transferido integralmente o design system editorial (papel creme `#FBF8F1`, esmeralda `#007D5B`, amarelo `#F8DF4F`, coral `#FA532E`, rosa `#FC7CE5`/`#D946BE`, ardósia `#4B636E`, **Newsreader** + **Inter** locais), barra superior com scrollspy + barra de progresso (`.story-progress`) + chip de recorte (`#btn-recorte-chip`), Hero com silhuetas + `#hero-funnel-svg` + roteiro em 5 atos (`.roadmap`), 5 atos em split-screen 35%/65% com `.step-dots`, síntese (`#sintese.recap`), **Boca da Taça** (`#boca-da-taca`) com 4 filtros + 5 leituras ao vivo e anexo metodológico/LGPD alimentado por `data/coverage.json`.
+  - Transferidos e conectados aos dados reais (`data/analytical_base.json`, `data/network_hubs.json`, `data/br_uf.json`, `data/coverage.json`) os 9 gráficos em [src/charts/](../../src/charts/) mantendo a stack HTML + CSS + JS (`esbuild`) + **D3.js** + **Observable Plot** (`@observablehq/plot` em `h6Signals.js` e `h7Boxplot.js`), tooltip unificado em papel claro (`tooltip.js`) e visões coordenadas/brushing & linking (`H1`, `H2`, `H3`, `H5`, `H9`).
+  - **Evidência final:** `npm run build:vercel` (`dist/app.js 391.6kb`, `site/` 15 arquivos / `11.47 MB`), `.venv/bin/python -m pytest tests -v` (`16 passed in 14.26s`) e `E2E_ROOT=site node tests/e2e.mjs` (`errors: []`, `overflowX: false` em `1280×820` e `390×844`).
 
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.

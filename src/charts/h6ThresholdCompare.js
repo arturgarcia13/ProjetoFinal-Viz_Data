@@ -102,22 +102,28 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
   const animate = shouldAnimate();
   const dur = animDur(480);
 
-  panels.forEach((p, idx) => {
+  const visiblePanels = panels.filter((p) => step >= p.minStep);
+  const firstNewIdx = Math.max(0, visiblePanels.findIndex((p) => prevStep < p.minStep));
+  const visibleRows = Math.max(1, Math.ceil(visiblePanels.length / cols));
+  const footerY = visibleRows * (cardH + gap) - gap + 20;
+
+  visiblePanels.forEach((p, idx) => {
     const col = idx % cols;
     const row = Math.floor(idx / cols);
     const gx = col * (cardW + gap);
     const gy = row * (cardH + gap);
-    const isDimmed = step < p.minStep;
-    const wasDimmed = prevStep < p.minStep;
+    const wasLoaded = prevStep >= p.minStep;
+    const enteringNow = animate && !wasLoaded;
 
     const card = svg.append('g')
       .attr('class', 'limiar-panel')
+      .attr('data-panel-id', p.id)
       .attr('transform', `translate(${gx},${gy})`)
-      .style('opacity', animate ? (wasDimmed ? 0.28 : 1) : (isDimmed ? 0.28 : 1))
+      .style('opacity', enteringNow ? 0 : 1)
       .style('cursor', 'pointer');
 
-    if (animate && wasDimmed !== isDimmed) {
-      card.transition().duration(dur).ease(MOTION.easeOut).style('opacity', isDimmed ? 0.28 : 1);
+    if (enteringNow) {
+      card.transition().duration(dur).ease(MOTION.easeOut).style('opacity', 1);
     }
 
     card.append('rect')
@@ -212,8 +218,8 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
       .attr('stroke-width', 2.8)
       .attr('stroke-linecap', 'round');
 
-    if (animate && !isDimmed && wasDimmed) {
-      drawPath(slopeLine, { duration: 480, delay: animDelay(idx * 55) });
+    if (enteringNow) {
+      drawPath(slopeLine, { duration: 480, delay: animDelay(Math.max(0, idx - firstNewIdx) * 75) });
     }
 
     // Ponto e rótulo da esquerda (30%–33%)
@@ -240,13 +246,13 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
       .attr('class', 'limiar-slope-dot')
       .attr('cx', xR)
       .attr('cy', yR)
-      .attr('r', animate && !isDimmed && wasDimmed ? 0 : 5.6)
+      .attr('r', enteringNow ? 0 : 5.6)
       .attr('fill', slopeColor)
       .attr('stroke', '#FFFFFF')
       .attr('stroke-width', 1.6);
 
-    if (animate && !isDimmed && wasDimmed) {
-      dotR.transition().duration(300).delay(animDelay(idx * 55 + 260)).ease(MOTION.easeOut).attr('r', 5.6);
+    if (enteringNow) {
+      dotR.transition().duration(300).delay(animDelay(Math.max(0, idx - firstNewIdx) * 75 + 260)).ease(MOTION.easeOut).attr('r', 5.6);
     }
 
     card.append('text')
@@ -274,7 +280,7 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
 
   svg.append('text')
     .attr('x', 2)
-    .attr('y', svgH - 6)
+    .attr('y', footerY)
     .attr('fill', SEMANTIC_PALETTE.muted)
     .style('font-size', '10px')
     .text(`Recorte ${unitLabel} (${year}): ${fmtInt(floor.units)} em 30%–33% vs. ${fmtInt(above.units)} em >33% (${fmtInt(excludedBelow30)} abaixo de 30% excluídas).`);

@@ -368,11 +368,34 @@ if (h8Step1Op26 !== 0) throw new Error(`H8 Passo 1 deveria ocultar 2026, obteve 
 await h8Dots[2].click(); // Volta ao Passo 3 (2018->2026 + curva combinada)
 await assertUnifiedHover('#canvas-h8 .h8-dot', '#canvas-h8', 0);
 
-const slopeCheck = await page.evaluate(() => ({
+const limiarDots = await page.$$('#sec-limiar .step-dot');
+await limiarDots[0].click(); // Passo 1: apenas Mediana e Proporcionalidade carregadas
+const slopeStep1 = await page.evaluate(() => ({
+  panels: [...document.querySelectorAll('#canvas-limiar .limiar-panel')].map((el) => el.getAttribute('data-panel-id')),
   lines: document.querySelectorAll('#canvas-limiar .limiar-slope-line').length,
   dots: document.querySelectorAll('#canvas-limiar .limiar-slope-dot').length,
 }));
-if (slopeCheck.lines !== 4 || slopeCheck.dots !== 8) {
+if (slopeStep1.panels.join(',') !== 'mediana,proporcionalidade' || slopeStep1.lines !== 2 || slopeStep1.dots !== 4) {
+  throw new Error(`Gráfico 8 Passo 1 deveria carregar apenas os 2 primeiros cards: ${JSON.stringify(slopeStep1)}`);
+}
+
+await limiarDots[1].click(); // Passo 2: carrega Distribuição
+const slopeStep2 = await page.evaluate(() => ({
+  panels: [...document.querySelectorAll('#canvas-limiar .limiar-panel')].map((el) => el.getAttribute('data-panel-id')),
+  lines: document.querySelectorAll('#canvas-limiar .limiar-slope-line').length,
+  dots: document.querySelectorAll('#canvas-limiar .limiar-slope-dot').length,
+}));
+if (slopeStep2.panels.join(',') !== 'mediana,proporcionalidade,distribuicao' || slopeStep2.lines !== 3 || slopeStep2.dots !== 6) {
+  throw new Error(`Gráfico 8 Passo 2 deveria carregar Distribuição apenas aqui: ${JSON.stringify(slopeStep2)}`);
+}
+
+await limiarDots[2].click(); // Passo 3: carrega Eleitas (todos os 4)
+const slopeCheck = await page.evaluate(() => ({
+  panels: [...document.querySelectorAll('#canvas-limiar .limiar-panel')].map((el) => el.getAttribute('data-panel-id')),
+  lines: document.querySelectorAll('#canvas-limiar .limiar-slope-line').length,
+  dots: document.querySelectorAll('#canvas-limiar .limiar-slope-dot').length,
+}));
+if (slopeCheck.panels.length !== 4 || slopeCheck.lines !== 4 || slopeCheck.dots !== 8) {
   throw new Error(`Gráfico 8 (Slopegraph) inválido: ${JSON.stringify(slopeCheck)}`);
 }
 await assertUnifiedHover('#canvas-limiar .limiar-panel', '#canvas-limiar', 0);

@@ -45,7 +45,14 @@ export function initScrolly(onStep, { onExitBlock = null } = {}) {
         b.setAttribute('aria-label', `Ir ao passo ${i + 1} de ${cards.length}`);
         b.setAttribute('aria-current', i === 0 ? 'step' : 'false');
         b.addEventListener('click', () => {
-          c.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+          if (isStaticMode()) {
+            const key = block.dataset.chart;
+            const prevIdx = steps[key] ?? 0;
+            applyStepUI(block, i);
+            onStep(key, i, prevIdx);
+          } else {
+            c.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+          }
         });
         dots.appendChild(b);
       });

@@ -243,19 +243,19 @@
         </p>
       </div>
 
-      <!-- GRÁFICO 2 (H2 — Dumbbell de Trajetória 2022 -> 2026 + Origem) -->
+      <!-- GRÁFICO 2 (H2 — Dumbbell de Trajetória 2022 -> 2026 + Composição 2022 vs 2026) -->
       <section class="scrolly-block" id="sec-h2" data-chart="h2">
         <div class="scrolly-steps">
           <article class="step-card is-active" data-step="0">
-            <span class="step-tag">Passo 1 de 3 · Baseline 2022</span>
+            <span class="step-tag">Passo 1 de 4 · Baseline 2022 (Top 10 Partidos)</span>
             <h3>Orçamento inicial abaixo da paridade</h3>
             <p>
-              A <strong>Razão da Mediana</strong> compara a receita típica de mulheres e homens. Em <span class="hl-male">2022</span>, quase todas as grandes legendas ficaram abaixo de <span class="hl-gold">1,0×</span>.
+              A <strong>Razão da Mediana</strong> compara a receita típica de mulheres e homens. Analisamos os <strong>10 maiores partidos</strong> — as 10 legendas com mais candidaturas aptas com receita declarada em 2026 (mínimo de 5 mulheres e 5 homens em 2022 e 2026) — para evitar distorções de micro-partidos. Em <strong>2022</strong>, quase todos ficaram abaixo de <span class="hl-gold">1,0×</span>.
             </p>
           </article>
 
           <article class="step-card" data-step="1">
-            <span class="step-tag">Passo 2 de 3 · Trajetória até 2026</span>
+            <span class="step-tag">Passo 2 de 4 · Trajetória até 2026</span>
             <h3>Partidos seguem rumos opostos</h3>
             <p>
               Poucas siglas superam a paridade (<span class="hl-emerald">≥ 1,0×</span>). Na maioria, o abismo permanece ou <span class="hl-female">se aprofunda</span> em 2026. Clique em um partido para destacá-lo.
@@ -264,10 +264,18 @@
           </article>
 
           <article class="step-card" data-step="2">
-            <span class="step-tag">Passo 3 de 3 · Origem do Recurso</span>
-            <h3>Fundo público sustenta mulheres</h3>
+            <span class="step-tag">Passo 3 de 4 · Composição da Renda (2022)</span>
+            <h3>Fundo público sustenta mulheres em 2022</h3>
             <p>
-              Considerando todos os partidos, o <strong>FEFC/FP</strong> responde pela maior fatia da receita feminina (<span id="h2-dyn-pub">—</span>), enquanto recursos privados se concentram nos <span class="hl-male">homens</span>.
+              Considerando todos os partidos em <strong>2022</strong>, o <strong>Fundo Público (FEFC/FP)</strong> responde por <span id="h2-dyn-pub">—</span> da receita feminina, enquanto recursos privados se concentram nos homens.
+            </p>
+          </article>
+
+          <article class="step-card" data-step="3">
+            <span class="step-tag">Passo 4 de 4 · Comparação 2022 vs. 2026</span>
+            <h3>Dependência do fundo público cresce em 2026</h3>
+            <p>
+              Ao adicionar a barra de <strong>2026</strong>, a comparação direta mostra a fatia do <strong>Fundo Público</strong> subindo para <span id="h2-dyn-pub-26">—</span> entre mulheres (vs. <span id="h2-dyn-pub-m26">—</span> entre homens) frente a 2022.
             </p>
           </article>
         </div>
@@ -275,16 +283,16 @@
         <div class="scrolly-stage">
           <div class="chart-meta-row">
             <span class="chart-code-pill">Gráfico 2</span>
-            <span class="chart-recorte-label active-recorte-text">2022 → 2026 · Razão da Mediana e Origem (Todos os Partidos)</span>
+            <span class="chart-recorte-label" id="recorte-h2-label">Top 10 Partidos por volume de candidaturas com receita (2022 → 2026)</span>
           </div>
           <h3 class="chart-conclusive-title" id="title-h2">
             Na maioria dos 10 maiores partidos, a receita mediana feminina permanece menor que a masculina, mesmo com dependência do fundo público
           </h3>
           <div class="chart-controls-bar">
-            <div class="inline-legend">
+            <div class="inline-legend" id="legend-h2">
               <span class="legend-item"><i class="legend-swatch is-circle" style="background:#4B636E"></i> 2022 (início)</span>
               <span class="legend-item"><i class="legend-swatch is-circle" style="background:#FA532E"></i> 2026 · Recuou</span>
-              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#4B636E;border:2px solid #142620"></i> 2026 · Avançou (&lt;1,0×)</span>
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#0284C7"></i> 2026 · Avançou (&lt;1,0×)</span>
               <span class="legend-item"><i class="legend-swatch is-circle" style="background:#007D5B"></i> 2026 · Paridade (≥1,0×)</span>
             </div>
           </div>

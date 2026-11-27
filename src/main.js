@@ -357,26 +357,68 @@ function update() {
     selectedParty: state.party,
     limit: 10,
   });
-  const h2bRows = getScopedRows({ year: state.year, ignoreParty: true });
-  const h2b = computeH2PublicVsPrivate(computeH2(h2bRows), { selectedParty: state.party });
+  const h2b22Rows = getScopedRows({ year: 2022, ignoreParty: true });
+  const h2b26Rows = getScopedRows({ year: 2026, ignoreParty: true });
+  const h2b22 = computeH2PublicVsPrivate(computeH2(h2b22Rows), { selectedParty: state.party });
+  const h2b26 = computeH2PublicVsPrivate(computeH2(h2b26Rows), { selectedParty: state.party });
   renderVerdictPill('verdict-h2', h2Gap.verdict);
   const ratioValid = h2Gap.rows.filter((r) => r.medM2026 > 0 && r.medF2022 !== null);
   const belowParityPct = ratioValid.length > 0
     ? Math.round((ratioValid.filter((r) => r.medF2026 < r.medM2026).length / ratioValid.length) * 100)
     : 0;
-  setText('title-h2', `Em ${belowParityPct}% dos ${ratioValid.length} maiores partidos (2026), mulheres têm mediana menor; no total das legendas (${state.year}), ${fmtPct(h2b.pubShareF)} da receita feminina vem do fundo público`);
-  setText('h2-dyn-pub', fmtPct(h2b.pubShareF));
+  setText('h2-dyn-pub', fmtPct(h2b22.pubShareF));
+  setText('h2-dyn-pub-26', fmtPct(h2b26.pubShareF));
+  setText('h2-dyn-pub-m26', fmtPct(h2b26.pubShareM));
+
+  const syncH2UI = (stepIdx) => {
+    const legEl = document.getElementById('legend-h2');
+    const recEl = document.getElementById('recorte-h2-label');
+    if (stepIdx >= 3) {
+      setText('title-h2', `De 2022 para 2026 (todos os partidos), a fatia do Fundo Público na receita feminina passa de ${fmtPct(h2b22.pubShareF)} para ${fmtPct(h2b26.pubShareF)}`);
+      if (recEl) recEl.textContent = 'Todos os Partidos · Composição da Receita (2022 vs. 2026)';
+      if (legEl) {
+        legEl.innerHTML = `
+          <span class="legend-item"><i class="legend-swatch" style="background:#007D5B"></i> 2022 · Fundo Público</span>
+          <span class="legend-item"><i class="legend-swatch" style="background:#F8DF4F;border:1px solid #C98A00"></i> 2022 · Privado</span>
+          <span class="legend-item"><i class="legend-swatch" style="background:#0284C7"></i> 2026 · Fundo Público</span>
+          <span class="legend-item"><i class="legend-swatch" style="background:#FA532E"></i> 2026 · Privado</span>
+        `;
+      }
+    } else if (stepIdx === 2) {
+      setText('title-h2', `Em 2022 (todos os partidos), ${fmtPct(h2b22.pubShareF)} da receita feminina vem do Fundo Público (vs. ${fmtPct(h2b22.pubShareM)} entre homens)`);
+      if (recEl) recEl.textContent = 'Todos os Partidos · Composição da Receita (2022)';
+      if (legEl) {
+        legEl.innerHTML = `
+          <span class="legend-item"><i class="legend-swatch" style="background:#007D5B"></i> 2022 · Fundo Público (FEFC/FP)</span>
+          <span class="legend-item"><i class="legend-swatch" style="background:#F8DF4F;border:1px solid #C98A00"></i> 2022 · Recursos Privados / Próprios</span>
+        `;
+      }
+    } else {
+      setText('title-h2', `Em ${belowParityPct}% dos ${ratioValid.length} maiores partidos (2026), mulheres têm mediana menor que homens`);
+      if (recEl) recEl.textContent = 'Top 10 Partidos por candidaturas com receita · Razão 2022 → 2026';
+      if (legEl) {
+        legEl.innerHTML = `
+          <span class="legend-item"><i class="legend-swatch is-circle" style="background:#4B636E"></i> 2022 (início)</span>
+          <span class="legend-item"><i class="legend-swatch is-circle" style="background:#FA532E"></i> 2026 · Recuou</span>
+          <span class="legend-item"><i class="legend-swatch is-circle" style="background:#0284C7"></i> 2026 · Avançou (&lt;1,0×)</span>
+          <span class="legend-item"><i class="legend-swatch is-circle" style="background:#007D5B"></i> 2026 · Paridade (≥1,0×)</span>
+        `;
+      }
+    }
+  };
 
   const cH2 = document.getElementById('canvas-h2');
-  R.h2 = (step = stepOf('h2'), prevStep = stepOf('h2')) => renderH2Dumbbell(cH2, h2Gap, h2b, {
-    step,
-    prevStep,
-    width: getCanvasWidth(cH2),
-    activeYear: state.year,
-    selectedParty: state.party,
-    onSelectParty: toggleParty,
-    onClearParty: clearParty,
-  });
+  R.h2 = (step = stepOf('h2'), prevStep = stepOf('h2')) => {
+    syncH2UI(step);
+    renderH2Dumbbell(cH2, h2Gap, h2b22, h2b26, {
+      step,
+      prevStep,
+      width: getCanvasWidth(cH2),
+      selectedParty: state.party,
+      onSelectParty: toggleParty,
+      onClearParty: clearParty,
+    });
+  };
   R.h2();
 
   // H3 (escala fixa sem zoom, rotulando apenas legendas abaixo da meta proporcional)

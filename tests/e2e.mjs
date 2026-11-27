@@ -190,19 +190,49 @@ await page.waitForFunction(() => !document.getElementById('btn-recorte-chip').hi
 await page.click('#btn-recorte-chip');
 await page.waitForFunction(() => document.getElementById('btn-recorte-chip').hidden);
 
-// 3. H2: Dumbbell + clique em partido + barras de composição sem sobreposição
+// 3. H2 (4 passos): Passo 4 (composição 2022 vs 2026), Passo 3 (composição 2022 apenas) e Passo 2 (dumbbell limpo sem pontilhados/anotações)
+const h2Comp4 = await page.evaluate(() => ({
+  rows: document.querySelectorAll('#canvas-h2 .h2-row').length,
+  y22: document.querySelectorAll('#canvas-h2 .h2b-yr-2022').length,
+  y26: document.querySelectorAll('#canvas-h2 .h2b-yr-2026').length,
+}));
+if (h2Comp4.rows !== 0 || h2Comp4.y22 !== 2 || h2Comp4.y26 !== 2) {
+  throw new Error(`H2 Passo 4 deveria exibir apenas composição 2022+2026, obteve ${JSON.stringify(h2Comp4)}`);
+}
+await assertUnifiedHover('#canvas-h2 .h2b-src-bar', '#canvas-h2', 0);
+
+const h2Dots = await page.$$('#sec-h2 .step-dot');
+await h2Dots[2].click(); // Passo 3: apenas 2022
+const h2Comp3 = await page.evaluate(() => ({
+  rows: document.querySelectorAll('#canvas-h2 .h2-row').length,
+  y22: document.querySelectorAll('#canvas-h2 .h2b-yr-2022').length,
+  y26: document.querySelectorAll('#canvas-h2 .h2b-yr-2026').length,
+}));
+if (h2Comp3.rows !== 0 || h2Comp3.y22 !== 2 || h2Comp3.y26 !== 0) {
+  throw new Error(`H2 Passo 3 deveria exibir apenas composição 2022, obteve ${JSON.stringify(h2Comp3)}`);
+}
+
+await h2Dots[1].click(); // Passo 2: Dumbbell
 const h2RowsCount = await page.$$eval('#canvas-h2 .h2-row', (els) => els.length);
 if (h2RowsCount < 8) throw new Error(`H2 deveria ter ≥8 partidos, obteve ${h2RowsCount}`);
+const h2Extras = await page.evaluate(() => ({
+  annotations: document.querySelectorAll('#canvas-h2 svg .direct-annotation').length,
+  dashed: document.querySelectorAll('#canvas-h2 svg [stroke-dasharray]').length,
+}));
+if (h2Extras.annotations !== 0 || h2Extras.dashed !== 0) {
+  throw new Error(`H2 deveria estar sem textos internos e linhas pontilhadas: ${JSON.stringify(h2Extras)}`);
+}
 await assertUnifiedHover('#canvas-h2 .h2-row', '#canvas-h2', 0);
 const h2Geo = await checkSvgGeometry('#canvas-h2 svg', { checkBounds: true });
-if (h2Geo.overlaps.length > 0) {
-  throw new Error(`H2 textos sobrepostos: ${JSON.stringify(h2Geo.overlaps)}`);
+if (h2Geo.overlaps.length > 0 || h2Geo.clipped.length > 0) {
+  throw new Error(`H2 textos sobrepostos ou cortados: ${JSON.stringify(h2Geo)}`);
 }
 await page.click('#canvas-h2 .h2-row[data-party="PT"]');
 if ((await page.$eval('#filter-party', (el) => el.value)) !== 'PT') {
   throw new Error('Clique em PT em H2 não atualizou #filter-party');
 }
 await page.click('#canvas-h2 .h2-row[data-party="PT"]');
+await h2Dots[3].click(); // Restaura Passo 4 para checagem mobile
 
 // 4. H3: Escala fixa sem zoom + Cargo + Hover + zero colisões nos rótulos
 if (await page.$('#zoom-h3-group')) {
@@ -273,7 +303,7 @@ const mobileCheck = await page.evaluate(() => ({
   h5Count: document.querySelectorAll('#canvas-h5 .h5-party-label').length,
 }));
 const mobIssues = {};
-for (const sel of ['#canvas-h1 svg', '#canvas-h3 svg', '#canvas-h4 svg', '#canvas-h6 svg', '#canvas-limiar svg', '#canvas-h7 svg', '#canvas-h8 svg', '#canvas-h9-map svg']) {
+for (const sel of ['#canvas-h1 svg', '#canvas-h2 svg', '#canvas-h3 svg', '#canvas-h4 svg', '#canvas-limiar svg', '#canvas-h6 svg', '#canvas-h7 svg', '#canvas-h8 svg', '#canvas-h9-map svg']) {
   const g = await checkSvgGeometry(sel, {
     textSelector: sel.includes('h3') ? 'g[aria-label="text"] text' : 'text',
     checkBounds: true,

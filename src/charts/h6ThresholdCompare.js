@@ -102,29 +102,24 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
   const animate = shouldAnimate();
   const dur = animDur(480);
 
-  const visiblePanels = panels.filter((p) => step >= p.minStep);
-  const firstNewIdx = Math.max(0, visiblePanels.findIndex((p) => prevStep < p.minStep));
-  const visibleRows = Math.max(1, Math.ceil(visiblePanels.length / cols));
-  const footerY = visibleRows * (cardH + gap) - gap + 20;
+  const firstNewIdx = Math.max(0, panels.findIndex((p) => step >= p.minStep && prevStep < p.minStep));
 
-  visiblePanels.forEach((p, idx) => {
+  panels.forEach((p, idx) => {
     const col = idx % cols;
     const row = Math.floor(idx / cols);
     const gx = col * (cardW + gap);
     const gy = row * (cardH + gap);
+    const isLoaded = step >= p.minStep;
     const wasLoaded = prevStep >= p.minStep;
-    const enteringNow = animate && !wasLoaded;
+    const enteringNow = animate && isLoaded && !wasLoaded;
 
     const card = svg.append('g')
       .attr('class', 'limiar-panel')
       .attr('data-panel-id', p.id)
+      .attr('data-loaded', isLoaded ? 'true' : 'false')
       .attr('transform', `translate(${gx},${gy})`)
-      .style('opacity', enteringNow ? 0 : 1)
-      .style('cursor', 'pointer');
-
-    if (enteringNow) {
-      card.transition().duration(dur).ease(MOTION.easeOut).style('opacity', 1);
-    }
+      .style('opacity', isLoaded ? 1 : 0.58)
+      .style('cursor', isLoaded ? 'pointer' : 'default');
 
     card.append('rect')
       .attr('x', 0.5)
@@ -133,12 +128,13 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
       .attr('height', cardH - 1)
       .attr('rx', 8)
       .attr('fill', SEMANTIC_PALETTE.surfaceAlt)
-      .attr('stroke', '#D8E6DF');
+      .attr('stroke', '#D8E6DF')
+      .attr('stroke-dasharray', isLoaded ? 'none' : '4 3');
 
     card.append('text')
       .attr('x', 12)
       .attr('y', 21)
-      .attr('fill', SEMANTIC_PALETTE.ink)
+      .attr('fill', isLoaded ? SEMANTIC_PALETTE.ink : SEMANTIC_PALETTE.muted)
       .style('font-size', '11.5px')
       .style('font-weight', '700')
       .text(p.title);
@@ -150,46 +146,17 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
       .style('font-size', '10px')
       .text(p.subtitle);
 
-    const isUp = p.aboveVal >= p.floorVal;
-    const slopeColor = isUp ? SEMANTIC_PALETTE.emerald : SEMANTIC_PALETTE.female;
-    const badgeW = Math.min(72, p.deltaText.length * 6.5 + 14);
-    card.append('rect')
-      .attr('x', cardW - badgeW - 10)
-      .attr('y', 10)
-      .attr('width', badgeW)
-      .attr('height', 18)
-      .attr('rx', 9)
-      .attr('fill', isUp ? 'rgba(0, 125, 91, 0.12)' : 'rgba(250, 83, 46, 0.14)');
-    card.append('text')
-      .attr('x', cardW - 10 - badgeW / 2)
-      .attr('y', 22)
-      .attr('text-anchor', 'middle')
-      .attr('fill', slopeColor)
-      .style('font-size', '9.5px')
-      .style('font-weight', '700')
-      .text(p.deltaText);
-
-    // Coordenadas do Slopegraph dentro do card
+    // Coordenadas dos trilhos dentro do card
     const sidePad = isCompact ? 82 : 84;
     const xL = sidePad;
     const xR = cardW - sidePad;
     const yTop = 58;
     const yBot = cardH - 28;
 
-    const minV = Math.min(p.floorVal, p.aboveVal);
-    const maxV = Math.max(p.floorVal, p.aboveVal);
-    const span = Math.max(1e-6, maxV - minV);
-    const domLo = Math.max(0, minV - span * 0.45);
-    const domHi = Math.max(domLo + 1e-6, maxV + span * 0.45);
-    const yScale = d3.scaleLinear().domain([domLo, domHi]).range([yBot, yTop]);
-
-    const yL = yScale(p.floorVal);
-    const yR = yScale(p.aboveVal);
-
-    // Trilhos verticais sutis (30%–33% | > 33%)
+    // Trilhos verticais sutis (30%–33% | > 33%) sempre visíveis como moldura
     [
-      { x: xL, lbl: '30%–33%', color: '#7A5200' },
-      { x: xR, lbl: '> 33%', color: SEMANTIC_PALETTE.emerald },
+      { x: xL, lbl: '30%–33%', color: isLoaded ? '#7A5200' : SEMANTIC_PALETTE.muted },
+      { x: xR, lbl: '> 33%', color: isLoaded ? SEMANTIC_PALETTE.emerald : SEMANTIC_PALETTE.muted },
     ].forEach((axis) => {
       card.append('line')
         .attr('x1', axis.x)
@@ -208,6 +175,52 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
         .style('font-weight', '700')
         .text(axis.lbl);
     });
+
+    if (!isLoaded) {
+      card.append('text')
+        .attr('class', 'limiar-pending-label')
+        .attr('x', cardW / 2)
+        .attr('y', (yTop + yBot) / 2 + 2)
+        .attr('text-anchor', 'middle')
+        .attr('fill', SEMANTIC_PALETTE.muted)
+        .style('font-size', '10.2px')
+        .style('font-weight', '600')
+        .text(`Carrega no Passo ${p.minStep + 1}`);
+      return;
+    }
+
+    const isUp = p.aboveVal >= p.floorVal;
+    const slopeColor = isUp ? SEMANTIC_PALETTE.emerald : SEMANTIC_PALETTE.female;
+    const badgeW = Math.min(72, p.deltaText.length * 6.5 + 14);
+    const badgeG = card.append('g').style('opacity', enteringNow ? 0 : 1);
+    badgeG.append('rect')
+      .attr('x', cardW - badgeW - 10)
+      .attr('y', 10)
+      .attr('width', badgeW)
+      .attr('height', 18)
+      .attr('rx', 9)
+      .attr('fill', isUp ? 'rgba(0, 125, 91, 0.12)' : 'rgba(250, 83, 46, 0.14)');
+    badgeG.append('text')
+      .attr('x', cardW - 10 - badgeW / 2)
+      .attr('y', 22)
+      .attr('text-anchor', 'middle')
+      .attr('fill', slopeColor)
+      .style('font-size', '9.5px')
+      .style('font-weight', '700')
+      .text(p.deltaText);
+    if (enteringNow) {
+      badgeG.transition().duration(dur).ease(MOTION.easeOut).style('opacity', 1);
+    }
+
+    const minV = Math.min(p.floorVal, p.aboveVal);
+    const maxV = Math.max(p.floorVal, p.aboveVal);
+    const span = Math.max(1e-6, maxV - minV);
+    const domLo = Math.max(0, minV - span * 0.45);
+    const domHi = Math.max(domLo + 1e-6, maxV + span * 0.45);
+    const yScale = d3.scaleLinear().domain([domLo, domHi]).range([yBot, yTop]);
+
+    const yL = yScale(p.floorVal);
+    const yR = yScale(p.aboveVal);
 
     // Linha conectora do Slopegraph
     const slopeLine = card.append('path')
@@ -280,7 +293,7 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
 
   svg.append('text')
     .attr('x', 2)
-    .attr('y', footerY)
+    .attr('y', svgH - 6)
     .attr('fill', SEMANTIC_PALETTE.muted)
     .style('font-size', '10px')
     .text(`Recorte ${unitLabel} (${year}): ${fmtInt(floor.units)} em 30%–33% vs. ${fmtInt(above.units)} em >33% (${fmtInt(excludedBelow30)} abaixo de 30% excluídas).`);

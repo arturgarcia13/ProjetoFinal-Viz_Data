@@ -1,13 +1,13 @@
 import * as d3 from 'd3';
 import { SEMANTIC_PALETTE } from './palette.js';
-import { animDelay, animDur, MOTION, shouldAnimate } from './motion.js';
+import { animDelay, animDur, drawPath, MOTION, shouldAnimate } from './motion.js';
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtCompactBrl, fmtInt, fmtPct, fmtSignedPP } from './tooltip.js';
 
 /**
- * Ato 4B — Comparativo 30%–33% vs. > 33% (excluindo < 30%) em 4 dimensões:
- * 1. Investimento Mediano (F)
- * 2. Proporcionalidade do Fundo Público (F)
- * 3. Distribuição do Investimento (Concentração Top 10%)
+ * Gráfico 8 (Ato 4B) — Slopegraph Comparativo 30%–33% vs. > 33% (excluindo < 30%) em 4 dimensões:
+ * 1. Mediana de Investimento (F)
+ * 2. Proporcionalidade Pública (F)
+ * 3. Distribuição (Conc. Top 10%)
  * 4. Mulheres Eleitas (%)
  */
 export function renderThresholdCompare(container, compData, { step = 2, prevStep = 2, width = 720, year = 2022 } = {}) {
@@ -85,22 +85,22 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
   const tipCtrl = createChartTooltip(container, { wrapClass: 'limiar-wrap' });
   const cols = isCompact ? 1 : 2;
   const cardW = isCompact ? width : Math.floor((width - 14) / 2);
-  const cardH = 148;
+  const cardH = 172;
   const gap = 14;
   const svgW = width;
   const svgH = cols === 1 ? (cardH + gap) * 4 - gap + 28 : (cardH + gap) * 2 - gap + 28;
 
   const svg = d3.select(tipCtrl.wrap).append('svg')
-    .attr('class', 'limiar-compare-svg')
+    .attr('class', 'limiar-compare-svg limiar-slope-svg')
     .attr('viewBox', `0 0 ${svgW} ${svgH}`)
     .attr('width', svgW)
     .attr('height', svgH)
     .attr('role', 'img')
-    .attr('aria-label', `Comparativo 30%–33% versus acima de 33% (${unitLabel}) em ${year}`)
+    .attr('aria-label', `Slopegraph comparativo 30%–33% versus acima de 33% (${unitLabel}) em ${year}`)
     .style('font-family', 'Inter, system-ui, sans-serif');
 
   const animate = shouldAnimate();
-  const dur = animDur(460);
+  const dur = animDur(480);
 
   panels.forEach((p, idx) => {
     const col = idx % cols;
@@ -144,7 +144,8 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
       .style('font-size', '10px')
       .text(p.subtitle);
 
-    // Badge delta no canto superior direito
+    const isUp = p.aboveVal >= p.floorVal;
+    const slopeColor = isUp ? SEMANTIC_PALETTE.emerald : SEMANTIC_PALETTE.female;
     const badgeW = Math.min(72, p.deltaText.length * 6.5 + 14);
     card.append('rect')
       .attr('x', cardW - badgeW - 10)
@@ -152,73 +153,115 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
       .attr('width', badgeW)
       .attr('height', 18)
       .attr('rx', 9)
-      .attr('fill', 'rgba(0, 125, 91, 0.12)');
+      .attr('fill', isUp ? 'rgba(0, 125, 91, 0.12)' : 'rgba(250, 83, 46, 0.14)');
     card.append('text')
       .attr('x', cardW - 10 - badgeW / 2)
       .attr('y', 22)
       .attr('text-anchor', 'middle')
-      .attr('fill', SEMANTIC_PALETTE.emerald)
+      .attr('fill', slopeColor)
       .style('font-size', '9.5px')
       .style('font-weight', '700')
       .text(p.deltaText);
 
-    const barMax = Math.max(1e-6, Math.max(p.floorVal, p.aboveVal) * 1.18);
-    const labelW = 68;
-    const valSpace = 66;
-    const trackW = Math.max(60, cardW - labelW - valSpace - 24);
-    const xScale = d3.scaleLinear().domain([0, barMax]).range([0, trackW]);
+    // Coordenadas do Slopegraph dentro do card
+    const sidePad = isCompact ? 82 : 84;
+    const xL = sidePad;
+    const xR = cardW - sidePad;
+    const yTop = 58;
+    const yBot = cardH - 28;
 
-    const rowsData = [
-      { label: '30%–33%', val: p.floorVal, color: SEMANTIC_PALETTE.highlightInk, bg: SEMANTIC_PALETTE.highlight },
-      { label: '> 33%', val: p.aboveVal, color: SEMANTIC_PALETTE.emerald, bg: SEMANTIC_PALETTE.emerald },
-    ];
+    const minV = Math.min(p.floorVal, p.aboveVal);
+    const maxV = Math.max(p.floorVal, p.aboveVal);
+    const span = Math.max(1e-6, maxV - minV);
+    const domLo = Math.max(0, minV - span * 0.45);
+    const domHi = Math.max(domLo + 1e-6, maxV + span * 0.45);
+    const yScale = d3.scaleLinear().domain([domLo, domHi]).range([yBot, yTop]);
 
-    rowsData.forEach((r, rIdx) => {
-      const ry = 58 + rIdx * 38;
-      card.append('text')
-        .attr('x', 12)
-        .attr('y', ry + 15)
-        .attr('fill', SEMANTIC_PALETTE.ink)
-        .style('font-size', '10.5px')
-        .style('font-weight', '700')
-        .text(r.label);
+    const yL = yScale(p.floorVal);
+    const yR = yScale(p.aboveVal);
 
-      card.append('rect')
-        .attr('x', labelW)
-        .attr('y', ry + 2)
-        .attr('width', trackW)
-        .attr('height', 18)
-        .attr('rx', 4)
-        .attr('fill', '#E6EEEA');
-
-      const bw = Math.max(3, xScale(r.val));
-      const bar = card.append('rect')
-        .attr('x', labelW)
-        .attr('y', ry + 2)
-        .attr('width', animate && !isDimmed && wasDimmed ? 0 : bw)
-        .attr('height', 18)
-        .attr('rx', 4)
-        .attr('fill', r.bg)
-        .attr('stroke', r.color)
-        .attr('stroke-width', 0.8);
-
-      if (animate && !isDimmed && wasDimmed) {
-        bar.transition().duration(dur).delay(animDelay(rIdx * 70)).ease(MOTION.easeOut).attr('width', bw);
-      }
+    // Trilhos verticais sutis (30%–33% | > 33%)
+    [
+      { x: xL, lbl: '30%–33%', color: '#7A5200' },
+      { x: xR, lbl: '> 33%', color: SEMANTIC_PALETTE.emerald },
+    ].forEach((axis) => {
+      card.append('line')
+        .attr('x1', axis.x)
+        .attr('x2', axis.x)
+        .attr('y1', yTop - 6)
+        .attr('y2', yBot + 4)
+        .attr('stroke', '#D1DFD8')
+        .attr('stroke-width', 1.4);
 
       card.append('text')
-        .attr('x', labelW + trackW + 8)
-        .attr('y', ry + 15)
-        .attr('fill', r.color === SEMANTIC_PALETTE.highlightInk ? '#7A5200' : SEMANTIC_PALETTE.emerald)
-        .style('font-size', '11px')
+        .attr('x', axis.x)
+        .attr('y', cardH - 9)
+        .attr('text-anchor', 'middle')
+        .attr('fill', axis.color)
+        .style('font-size', '9.8px')
         .style('font-weight', '700')
-        .text(p.fmt(r.val));
+        .text(axis.lbl);
     });
+
+    // Linha conectora do Slopegraph
+    const slopeLine = card.append('path')
+      .attr('class', 'limiar-slope-line')
+      .attr('d', `M ${xL},${yL} L ${xR},${yR}`)
+      .attr('fill', 'none')
+      .attr('stroke', slopeColor)
+      .attr('stroke-width', 2.8)
+      .attr('stroke-linecap', 'round');
+
+    if (animate && !isDimmed && wasDimmed) {
+      drawPath(slopeLine, { duration: 480, delay: animDelay(idx * 55) });
+    }
+
+    // Ponto e rótulo da esquerda (30%–33%)
+    card.append('circle')
+      .attr('class', 'limiar-slope-dot')
+      .attr('cx', xL)
+      .attr('cy', yL)
+      .attr('r', 5.2)
+      .attr('fill', SEMANTIC_PALETTE.highlight)
+      .attr('stroke', SEMANTIC_PALETTE.highlightInk)
+      .attr('stroke-width', 1.8);
+
+    card.append('text')
+      .attr('x', xL - 9)
+      .attr('y', yL + 4)
+      .attr('text-anchor', 'end')
+      .attr('fill', '#7A5200')
+      .style('font-size', '10.8px')
+      .style('font-weight', '700')
+      .text(p.fmt(p.floorVal));
+
+    // Ponto e rótulo da direita (> 33%)
+    const dotR = card.append('circle')
+      .attr('class', 'limiar-slope-dot')
+      .attr('cx', xR)
+      .attr('cy', yR)
+      .attr('r', animate && !isDimmed && wasDimmed ? 0 : 5.6)
+      .attr('fill', slopeColor)
+      .attr('stroke', '#FFFFFF')
+      .attr('stroke-width', 1.6);
+
+    if (animate && !isDimmed && wasDimmed) {
+      dotR.transition().duration(300).delay(animDelay(idx * 55 + 260)).ease(MOTION.easeOut).attr('r', 5.6);
+    }
+
+    card.append('text')
+      .attr('x', xR + 9)
+      .attr('y', yR + 4)
+      .attr('text-anchor', 'start')
+      .attr('fill', slopeColor)
+      .style('font-size', '10.8px')
+      .style('font-weight', '700')
+      .text(p.fmt(p.aboveVal));
 
     bindTooltipEvents(card.node(), tipCtrl, () => buildTooltipCard({
       title: `${p.title} (${year} · ${unitLabel})`,
       badge: `Δ >33% vs 30–33%: ${p.deltaText}`,
-      badgeTone: 'above',
+      badgeTone: isUp ? 'above' : 'below',
       columns: ['Indicador', '30%–33%', '> 33%'],
       rows: [
         ...p.rows.map((rr) => ({ cells: [rr.label, rr.f, { text: rr.a, cls: 'is-focus' }] })),

@@ -93,7 +93,7 @@ const shellCheck = await page.evaluate(() => {
     || shellCheck.topBarH > 72
     || !shellCheck.heroFunnelSvg
     || shellCheck.roadmapLinks !== 5
-    || shellCheck.stepDotsGroups !== 10
+    || shellCheck.stepDotsGroups !== 9
     || shellCheck.covRows !== 3
     || shellCheck.readouts.some((v) => !v.endsWith('%'))
     || shellCheck.heroVals.some((v) => !v.endsWith('%'))
@@ -163,8 +163,11 @@ async function checkSvgGeometry(svgSelector, { textSelector = 'text', checkBound
   }, svgSelector, textSelector, checkBounds);
 }
 
-// 1. Verifica todos os gráficos renderizados (incluindo Ato 4 comparativo 30–33% vs >33% e Ato 5)
-for (const cid of ['#canvas-h1', '#canvas-h2', '#canvas-h3', '#canvas-h4', '#canvas-h5', '#canvas-h6', '#canvas-limiar', '#canvas-h7', '#canvas-h8', '#canvas-h9-map']) {
+// 1. Verifica todos os gráficos renderizados (9 blocos: H1..H6, H8/Gráfico 7, Limiar/Gráfico 8, Ato 5; H7 removido)
+if (await page.$('#sec-h7')) {
+  throw new Error('H7 deveria ter sido removido do DOM');
+}
+for (const cid of ['#canvas-h1', '#canvas-h2', '#canvas-h3', '#canvas-h4', '#canvas-h5', '#canvas-h6', '#canvas-h8', '#canvas-limiar', '#canvas-h9-map']) {
   const hasSvg = await page.$(`${cid} svg`);
   if (!hasSvg) throw new Error(`SVG ausente em ${cid}`);
 }
@@ -349,12 +352,32 @@ await h6Dots[3].click(); // Volta ao Passo 4 (2026 Mulheres + Homens)
 await assertUnifiedHover('#canvas-h6 .h6-dot', '#canvas-h6', 0);
 await page.click('[data-h6-year="2022"]');
 await page.click('[data-h6-year="2026"]');
+
+// H8 (Gráfico 7, logo após H6, sem direct-annotation, transição 2018->2026 no mesmo SVG) + Limiar (Gráfico 8 Slopegraph)
+const ato4OrderOk = await page.evaluate(() => {
+  const ids = [...document.querySelectorAll('#ato-04 .scrolly-block')].map((el) => el.id);
+  return ids.join(',') === 'sec-h6,sec-h8,sec-limiar';
+});
+if (!ato4OrderOk) throw new Error('Ordem esperada no Ato 4 é sec-h6 -> sec-h8 -> sec-limiar');
+const h8Annotations = await page.$$eval('#canvas-h8 svg .direct-annotation', (els) => els.length);
+if (h8Annotations !== 0) throw new Error(`H8 não deveria ter textos internos, obteve ${h8Annotations}`);
+const h8Dots = await page.$$('#sec-h8 .step-dot');
+await h8Dots[0].click(); // Passo 1: apenas 2018 visível
+const h8Step1Op26 = await page.$eval('#canvas-h8 .yr-g[data-year="2026"] .h8-dot', (el) => Number(el.getAttribute('opacity')));
+if (h8Step1Op26 !== 0) throw new Error(`H8 Passo 1 deveria ocultar 2026, obteve opacity=${h8Step1Op26}`);
+await h8Dots[2].click(); // Volta ao Passo 3 (2018->2026 + curva combinada)
+await assertUnifiedHover('#canvas-h8 .h8-dot', '#canvas-h8', 0);
+
+const slopeCheck = await page.evaluate(() => ({
+  lines: document.querySelectorAll('#canvas-limiar .limiar-slope-line').length,
+  dots: document.querySelectorAll('#canvas-limiar .limiar-slope-dot').length,
+}));
+if (slopeCheck.lines !== 4 || slopeCheck.dots !== 8) {
+  throw new Error(`Gráfico 8 (Slopegraph) inválido: ${JSON.stringify(slopeCheck)}`);
+}
 await assertUnifiedHover('#canvas-limiar .limiar-panel', '#canvas-limiar', 0);
 await page.click('[data-limiar-unit="party"]');
 await page.click('[data-limiar-unit="chapa"]');
-await assertUnifiedHover('#canvas-h7 .h7-agg-dot', '#canvas-h7', 0);
-await page.click('#btn-h7-2018');
-await assertUnifiedHover('#canvas-h8 .h8-dot', '#canvas-h8', 0);
 
 // 6. Ato 5 ("Onde a Cota Vira Voto"): 27 UFs reais, 8 callouts compactos, 5 passos, síntese e controles
 const h9Check = await page.evaluate(() => ({
@@ -400,7 +423,7 @@ const mobileCheck = await page.evaluate(() => ({
   h5Count: document.querySelectorAll('#canvas-h5 .h5-party-label').length,
 }));
 const mobIssues = {};
-for (const sel of ['#canvas-h1 svg', '#canvas-h2 svg', '#canvas-h3 svg', '#canvas-h4 svg', '#canvas-limiar svg', '#canvas-h6 svg', '#canvas-h7 svg', '#canvas-h8 svg', '#canvas-h9-map svg']) {
+for (const sel of ['#canvas-h1 svg', '#canvas-h2 svg', '#canvas-h3 svg', '#canvas-h4 svg', '#canvas-h6 svg', '#canvas-h8 svg', '#canvas-limiar svg', '#canvas-h9-map svg']) {
   const g = await checkSvgGeometry(sel, {
     textSelector: sel.includes('h3') ? 'g[aria-label="text"] text' : 'text',
     checkBounds: true,

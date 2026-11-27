@@ -545,14 +545,62 @@
         </div>
       </section>
 
-      <!-- COMPARATIVO 30%–33% vs. > 33% (EXCLUINDO < 30%) -->
+      <!-- GRÁFICO 7 (H8 — Hipótese 8: Adaptação Tática 2018 → 2022 → 2026) -->
+      <section class="scrolly-block" id="sec-h8" data-chart="h8">
+        <div class="scrolly-steps">
+          <article class="step-card is-active" data-step="0">
+            <span class="step-tag">Passo 1 de 3 · O Modelo Clássico em 2018</span>
+            <h3>Em 2018, contas zeradas dominavam</h3>
+            <p>
+              Na eleição de <strong>2018</strong>, a <strong>receita zerada (R$ 0)</strong> era o principal rastro de candidaturas sem estrutura financeira — alvo direto de cassações pela Súmula 73 do TSE.
+            </p>
+          </article>
+
+          <article class="step-card" data-step="1">
+            <span class="step-tag">Passo 2 de 3 · Transição 2018 → 2026</span>
+            <h3>Caem zeros, sobem lotes padronizados</h3>
+            <p>
+              Ao transicionar de <strong>2018</strong> até <span class="hl-female">2026</span>, contas zeradas recuam (<span id="h8-dyn-zero">—</span>), mas crescem os <span class="hl-pink">pacotes padronizados em lote</span> (<span id="h8-dyn-std">—</span>) que evitam o zero bruto.
+            </p>
+            <div class="diag-slot" id="verdict-h8"><span class="diag-pill diag-inconclusivo">Diagnóstico: Adaptação tática em curso</span></div>
+          </article>
+
+          <article class="step-card" data-step="2">
+            <span class="step-tag">Passo 3 de 3 · Soma Combinada (2018 → 2026)</span>
+            <h3>Volume vulnerável segue alto</h3>
+            <p>
+              Somando os dois regimes contábeis ao longo da trajetória <strong>2018 → 2026</strong>, a parcela vulnerável permanece elevada — evidenciando adaptação tática dos repasses.
+            </p>
+          </article>
+        </div>
+
+        <div class="scrolly-stage">
+          <div class="chart-meta-row">
+            <span class="chart-code-pill">Gráfico 7</span>
+            <span class="chart-recorte-label active-recorte-text">Hipótese 8 · Transição 2018 → 2022 → 2026 (Mulheres APTO)</span>
+          </div>
+          <h3 class="chart-conclusive-title" id="title-h8">
+            Em 2026, caem as contas zeradas brutas entre mulheres, mas crescem as movimentações mínimas e padronizadas em lote
+          </h3>
+          <div class="chart-controls-bar">
+            <div class="inline-legend">
+              <span class="legend-item"><i class="legend-swatch" style="background:#FA532E"></i> Receita zerada (Sinal B)</span>
+              <span class="legend-item"><i class="legend-swatch" style="background:#D946BE"></i> Lote padronizado (Sinal C)</span>
+              <span class="legend-item"><i class="legend-swatch is-line" style="color:#4B636E"></i> Soma combinada (B + C)</span>
+            </div>
+          </div>
+          <div class="svg-holder" id="canvas-h8"></div>
+        </div>
+      </section>
+
+      <!-- GRÁFICO 8 (COMPARATIVO 30%–33% vs. > 33% EM SLOPEGRAPH, EXCLUINDO < 30%) -->
       <section class="scrolly-block" id="sec-limiar" data-chart="limiar">
         <div class="scrolly-steps">
           <article class="step-card is-active" data-step="0">
             <span class="step-tag">Passo 1 de 3 · Orçamento e Proporcionalidade</span>
             <h3>30%–33% vs. acima de 33%</h3>
             <p>
-              Excluindo unidades abaixo de 30% (que já descumprem a cota), comparamos quem estaciona entre <span class="hl-gold">30% e 33%</span> com quem supera <span class="hl-emerald">33%</span> na <strong>mediana de investimento</strong> e na <strong>proporcionalidade do fundo público</strong>.
+              Excluindo unidades abaixo de 30% (que já descumprem a cota), o <strong>slopegraph</strong> compara quem estaciona entre <span class="hl-gold">30% e 33%</span> com quem supera <span class="hl-emerald">33%</span> na <strong>mediana de investimento</strong> e na <strong>proporcionalidade do fundo público</strong>.
             </p>
           </article>
 
@@ -560,7 +608,7 @@
             <span class="step-tag">Passo 2 de 3 · Distribuição do Recurso</span>
             <h3>Distribuição suave ou concentrada?</h3>
             <p>
-              Medimos quanto do fundo público feminino vai para as <strong>10% mais financiadas</strong> frente aos <strong>90% restantes</strong>, avaliando se o recurso é concentrado ou pulverizado.
+              Medimos quanto do fundo público feminino vai para as <strong>10% mais financiadas</strong> frente aos <strong>90% restantes</strong>, avaliando a inclinação entre as duas faixas.
             </p>
           </article>
 
@@ -576,7 +624,7 @@
 
         <div class="scrolly-stage">
           <div class="chart-meta-row">
-            <span class="chart-code-pill">Gráfico 7</span>
+            <span class="chart-code-pill">Gráfico 8</span>
             <span class="chart-recorte-label" id="recorte-limiar-label">2022 · Por Chapa (exclui &lt;30%)</span>
           </div>
           <h3 class="chart-conclusive-title" id="title-limiar">
@@ -584,8 +632,8 @@
           </h3>
           <div class="chart-controls-bar">
             <div class="inline-legend">
-              <span class="legend-item"><i class="legend-swatch" style="background:#F8DF4F;border:1px solid #C98A00"></i> Faixa 30%–33%</span>
-              <span class="legend-item"><i class="legend-swatch" style="background:#007D5B"></i> Acima de 33% (&gt;33%)</span>
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#F8DF4F;border:1.5px solid #C98A00"></i> Faixa 30%–33%</span>
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#007D5B"></i> Acima de 33% (&gt;33%)</span>
             </div>
             <div class="controls-cluster">
               <div class="segmented-group" id="controls-limiar-unit">
@@ -599,109 +647,6 @@
             </div>
           </div>
           <div class="svg-holder" id="canvas-limiar"></div>
-        </div>
-      </section>
-
-      <!-- GRÁFICO 7 LEGADO (H7 — Sinalizado para remoção futura) -->
-      <section class="scrolly-block" id="sec-h7" data-chart="h7">
-        <div class="scrolly-steps">
-          <article class="step-card is-active" data-step="0">
-            <span class="step-tag">Em revisão · Remoção na próxima etapa</span>
-            <h3>Chapas "na risca" têm mais alertas?</h3>
-            <p>
-              Dividimos chapas válidas (n ≥ 4) por faixa de cota feminina e medimos a taxa agregada de mulheres com <strong>≥2 sinais</strong> em cada grupo.
-            </p>
-            <p class="deprecation-notice">Sinalizado para remoção na próxima etapa: visualização substituída pela consolidação dos sinais (Gráfico 6) e pelo comparativo 30%–33% vs. &gt;33% (Gráfico 7).</p>
-          </article>
-
-          <article class="step-card" data-step="1">
-            <span class="step-tag">Passo 2 de 3 · Janela 30%–33%</span>
-            <h3>Pico no piso em 2022, migração em 2026</h3>
-            <p>
-              Em 2022, a faixa <span class="hl-gold">30%–33,3%</span> concentrava taxa maior de alertas que chapas &gt;40%. Em 2026, o risco no piso recua e se concentra nas chapas <span class="hl-female">&lt;30%</span>.
-            </p>
-            <div class="diag-slot" id="verdict-h7"><span class="diag-pill diag-vaza">Diagnóstico: Concentração por faixa</span></div>
-          </article>
-
-          <article class="step-card" data-step="2">
-            <span class="step-tag">Passo 3 de 3 · Mudança de Regime</span>
-            <h3>Compare com 2018</h3>
-            <p>
-              Ative <strong>Mostrar 2018</strong> no gráfico para comparar o regime anterior das coligações proporcionais com as federações de 2022 e 2026.
-            </p>
-          </article>
-        </div>
-
-        <div class="scrolly-stage">
-          <div class="chart-meta-row">
-            <span class="chart-code-pill">Em revisão (H7)</span>
-            <span class="chart-recorte-label active-recorte-text">Taxa Agregada de ≥2 Sinais por Faixa de Cota (n ≥ 4)</span>
-          </div>
-          <h3 class="chart-conclusive-title" id="title-h7">
-            Alertas concentrados no piso (30%–33,3%) em 2022 recuam em 2026 e migram para chapas abaixo de 30%
-          </h3>
-          <div class="chart-controls-bar">
-            <div class="inline-legend">
-              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#FFFFFF;border:2px solid #142620"></i> 2022</span>
-              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#FA532E"></i> 2026</span>
-              <span class="legend-item"><i class="legend-swatch" style="background:rgba(248,223,79,0.5);border:1px solid #C98A00"></i> Piso 30%–33%</span>
-            </div>
-            <div class="segmented-group" id="controls-h7">
-              <button type="button" class="segmented-btn" id="btn-h7-2018">Mostrar 2018</button>
-            </div>
-          </div>
-          <div class="svg-holder" id="canvas-h7"></div>
-          <p class="deprecation-notice">Sinalizado para remoção na próxima etapa após validação da consolidação dos sinais no Ato 4.</p>
-        </div>
-      </section>
-
-      <!-- GRÁFICO 8 LEGADO (H8 — Sinalizado para remoção futura) -->
-      <section class="scrolly-block" id="sec-h8" data-chart="h8">
-        <div class="scrolly-steps">
-          <article class="step-card is-active" data-step="0">
-            <span class="step-tag">Em revisão · Remoção na próxima etapa</span>
-            <h3>O modelo clássico: conta zerada</h3>
-            <p>
-              Em <span class="hl-male">2018 e 2022</span>, a <strong>receita zerada (R$ 0)</strong> era o principal rastro de candidaturas sem estrutura — alvo direto de cassações pela Súmula 73.
-            </p>
-            <p class="deprecation-notice">Sinalizado para remoção na próxima etapa: indicador detalhado de lotes padronizados em revisão metodológica.</p>
-          </article>
-
-          <article class="step-card" data-step="1">
-            <span class="step-tag">Passo 2 de 3 · Virada em 2026</span>
-            <h3>Caem zeros, sobem lotes mínimos</h3>
-            <p>
-              Em <span class="hl-female">2026</span>, contas zeradas recuam (<span id="h8-dyn-zero">—</span>), mas crescem os <span class="hl-pink">pacotes padronizados em lote</span> (<span id="h8-dyn-std">—</span>) que evitam o zero bruto.
-            </p>
-            <div class="diag-slot" id="verdict-h8"><span class="diag-pill diag-inconclusivo">Diagnóstico: Adaptação tática em curso</span></div>
-          </article>
-
-          <article class="step-card" data-step="2">
-            <span class="step-tag">Passo 3 de 3 · Soma Combinada</span>
-            <h3>Volume vulnerável segue alto</h3>
-            <p>
-              Somando os dois regimes contábeis, a parcela vulnerável permanece elevada — exigindo auditoria sobre repasses padronizados e fornecedores-hub.
-            </p>
-          </article>
-        </div>
-
-        <div class="scrolly-stage">
-          <div class="chart-meta-row">
-            <span class="chart-code-pill">Em revisão (H8)</span>
-            <span class="chart-recorte-label active-recorte-text">Série Histórica Comparativa · 2018 → 2022 → 2026</span>
-          </div>
-          <h3 class="chart-conclusive-title" id="title-h8">
-            Em 2026, caem as contas zeradas brutas entre mulheres, mas crescem as movimentações mínimas e padronizadas em lote
-          </h3>
-          <div class="chart-controls-bar">
-            <div class="inline-legend">
-              <span class="legend-item"><i class="legend-swatch" style="background:#FA532E"></i> Receita zerada (Sinal B)</span>
-              <span class="legend-item"><i class="legend-swatch" style="background:#D946BE"></i> Lote padronizado (Sinal C)</span>
-              <span class="legend-item"><i class="legend-swatch is-line" style="color:#4B636E"></i> Soma combinada (B + C)</span>
-            </div>
-          </div>
-          <div class="svg-holder" id="canvas-h8"></div>
-          <p class="deprecation-notice">Sinalizado para remoção na próxima etapa após validação da consolidação dos sinais no Ato 4.</p>
         </div>
       </section>
     </section>

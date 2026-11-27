@@ -10,7 +10,6 @@ import {
   computeH4Sankey1000,
   computeH5,
   computeH6Series,
-  computeH7Comparison,
   computeH8,
   computeThresholdBandComparison,
   countSignals,
@@ -24,7 +23,6 @@ import { renderH4Sankey } from './charts/h4SankeyNetwork.js';
 import { renderH5Conversion } from './charts/h5Conversion.js';
 import { renderH6Signals } from './charts/h6Signals.js';
 import { renderThresholdCompare } from './charts/h6ThresholdCompare.js';
-import { renderH7Boxplot } from './charts/h7Boxplot.js';
 import { renderH8Temporal } from './charts/h8Temporal.js';
 import {
   ATO5_STEPS,
@@ -50,7 +48,6 @@ const state = {
   h6UserLocked: false,
   limiarUnit: 'chapa',
   limiarYear: 2022,
-  h7Show2018: false,
   ato5Year: 2022,
   ato5Cargo: 'all',
   ato5HoveredUf: null,
@@ -529,48 +526,7 @@ function update() {
   };
   R.h6();
 
-  // Comparativo 30%–33% vs. >33% (excluindo <30%; alternável Por Chapa | Por Partido)
-  const limiarRows = getScopedRows({ year: state.limiarYear, ignoreParty: state.limiarUnit === 'party' });
-  const limiarData = computeThresholdBandComparison(limiarRows, { unit: state.limiarUnit });
-  renderVerdictPill('verdict-limiar', limiarData.verdict);
-  const unitNameLimiar = state.limiarUnit === 'party' ? 'Por Partido' : 'Por Chapa';
-  setText('recorte-limiar-label', `${state.limiarYear} · ${unitNameLimiar} (exclui <30%)`);
-  setText('title-limiar', `${unitNameLimiar} (${state.limiarYear}): faixa >33% tem ${fmtPctDirect(limiarData.above.pctEleitasF, 1)} de eleitas e mediana F de ${fmtCompactBrl(limiarData.above.medF)}, contra ${fmtPctDirect(limiarData.floor.pctEleitasF, 1)} e ${fmtCompactBrl(limiarData.floor.medF)} em 30%–33%`);
-  setText('limiar-dyn-text', `No recorte ${unitNameLimiar.toLowerCase()} de ${state.limiarYear}, eleitas passam de ${fmtPctDirect(limiarData.floor.pctEleitasF, 1)} (30%–33%) para ${fmtPctDirect(limiarData.above.pctEleitasF, 1)} (>33%)`);
-
-  const cLimiar = document.getElementById('canvas-limiar');
-  R.limiar = (step = stepOf('limiar'), prevStep = stepOf('limiar')) => renderThresholdCompare(cLimiar, limiarData, {
-    step,
-    prevStep,
-    width: getCanvasWidth(cLimiar),
-    year: state.limiarYear,
-  });
-  R.limiar();
-
-  // H7 (Sinalizado para remoção na próxima etapa)
-  const h7Comp = computeH7Comparison(APP_DATA.candidates, {
-    cargo: state.cargo,
-    uf: state.uf || null,
-    party: state.party || null,
-    parties: binParties,
-    voteThreshold: state.threshold,
-  });
-  renderVerdictPill('verdict-h7', h7Comp.verdict2022);
-  const fFloor22 = h7Comp.rows.find((r) => r.band === '30%–33,3%')?.y2022?.aggRatePct || 0;
-  const fFloor26 = h7Comp.rows.find((r) => r.band === '30%–33,3%')?.y2026?.aggRatePct || 0;
-  const fLt30_26 = h7Comp.rows.find((r) => r.band === '< 30%')?.y2026?.aggRatePct || 0;
-  setText('title-h7', `Alertas no piso (30%–33,3%) caem de ${fmtPctDirect(fFloor22)} (2022) para ${fmtPctDirect(fFloor26)} (2026), migrando para chapas <30% (${fmtPctDirect(fLt30_26)})`);
-
-  const cH7 = document.getElementById('canvas-h7');
-  R.h7 = (step = stepOf('h7'), prevStep = stepOf('h7')) => renderH7Boxplot(cH7, h7Comp, {
-    step,
-    prevStep,
-    width: getCanvasWidth(cH7),
-    show2018: state.h7Show2018,
-  });
-  R.h7();
-
-  // H8 (Sinalizado para remoção na próxima etapa)
+  // H8 (Hipótese 8 — Transição 2018 → 2022 → 2026 logo após H6)
   const h8 = computeH8(APP_DATA.candidates, {
     cargo: state.cargo,
     uf: state.uf || null,
@@ -590,6 +546,24 @@ function update() {
     width: getCanvasWidth(cH8),
   });
   R.h8();
+
+  // Gráfico 8 (Slopegraph Comparativo 30%–33% vs. >33%, excluindo <30%)
+  const limiarRows = getScopedRows({ year: state.limiarYear, ignoreParty: state.limiarUnit === 'party' });
+  const limiarData = computeThresholdBandComparison(limiarRows, { unit: state.limiarUnit });
+  renderVerdictPill('verdict-limiar', limiarData.verdict);
+  const unitNameLimiar = state.limiarUnit === 'party' ? 'Por Partido' : 'Por Chapa';
+  setText('recorte-limiar-label', `${state.limiarYear} · ${unitNameLimiar} (exclui <30%)`);
+  setText('title-limiar', `${unitNameLimiar} (${state.limiarYear}): faixa >33% tem ${fmtPctDirect(limiarData.above.pctEleitasF, 1)} de eleitas e mediana F de ${fmtCompactBrl(limiarData.above.medF)}, contra ${fmtPctDirect(limiarData.floor.pctEleitasF, 1)} e ${fmtCompactBrl(limiarData.floor.medF)} em 30%–33%`);
+  setText('limiar-dyn-text', `No recorte ${unitNameLimiar.toLowerCase()} de ${state.limiarYear}, eleitas passam de ${fmtPctDirect(limiarData.floor.pctEleitasF, 1)} (30%–33%) para ${fmtPctDirect(limiarData.above.pctEleitasF, 1)} (>33%)`);
+
+  const cLimiar = document.getElementById('canvas-limiar');
+  R.limiar = (step = stepOf('limiar'), prevStep = stepOf('limiar')) => renderThresholdCompare(cLimiar, limiarData, {
+    step,
+    prevStep,
+    width: getCanvasWidth(cLimiar),
+    year: state.limiarYear,
+  });
+  R.limiar();
 
   // Ato 5 — Onde a Cota Vira Voto (5 Passos Causa -> Efeito com dados reais TSE e contorno IBGE)
   const ato5Data = computeAto5Geography(APP_DATA.candidates, {
@@ -746,13 +720,6 @@ function bindEvents() {
       document.querySelectorAll('[data-ato5-year]').forEach((b) => b.classList.toggle('active', b === btn));
       update();
     });
-  });
-
-  document.getElementById('btn-h7-2018')?.addEventListener('click', (e) => {
-    state.h7Show2018 = !state.h7Show2018;
-    e.currentTarget.classList.toggle('active', state.h7Show2018);
-    e.currentTarget.textContent = state.h7Show2018 ? 'Ocultar 2018' : 'Mostrar 2018';
-    update();
   });
 
   document.getElementById('filter-threshold')?.addEventListener('input', (e) => {

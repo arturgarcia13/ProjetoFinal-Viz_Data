@@ -214,6 +214,9 @@
 - **2026-11-27 (Revisão Etapa 1 — Cor fixa de 2022 em H1 Passo 2):**
   - Corrigido [src/charts/h1Histogram.js](../../src/charts/h1Histogram.js) para manter a série de `2022` (barras `.bar-2022` e rótulos `.bar-lbl-2022`) sempre na cor ardósia `#4B636E` (`SEMANTIC_PALETTE.male`) em todos os passos (inclusive no Passo 2 antes da entrada de 2026), com asserção específica adicionada em [tests/e2e.mjs](../../tests/e2e.mjs).
 
+- **2026-11-27 (Revisão Etapa 2 — Zoom no Dumbbell de H2):**
+  - Ajustado o domínio horizontal de [src/charts/h2Dumbbell.js](../../src/charts/h2Dumbbell.js) ao intervalo `[min(r22, r26) − 6%, max(r22, r26) + 6%]` (em vez de partir de `0,0×`), com formatação adaptativa dos ticks e asserção em [tests/e2e.mjs](../../tests/e2e.mjs) garantindo ausência de `0,0×`.
+
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.
 - As melhorias de animação estão no working tree local (sem novo commit/push até solicitação do usuário).

@@ -228,9 +228,10 @@ if (h2RowsCount < 8) throw new Error(`H2 deveria ter ≥8 partidos, obteve ${h2R
 const h2Extras = await page.evaluate(() => ({
   annotations: document.querySelectorAll('#canvas-h2 svg .direct-annotation').length,
   dashed: document.querySelectorAll('#canvas-h2 svg [stroke-dasharray]').length,
+  ticks: [...document.querySelectorAll('#canvas-h2 .h2-x-axis .tick text')].map((el) => el.textContent.trim()),
 }));
-if (h2Extras.annotations !== 0 || h2Extras.dashed !== 0) {
-  throw new Error(`H2 deveria estar sem textos internos e linhas pontilhadas: ${JSON.stringify(h2Extras)}`);
+if (h2Extras.annotations !== 0 || h2Extras.dashed !== 0 || h2Extras.ticks.includes('0,0×')) {
+  throw new Error(`H2 deveria estar sem textos internos, sem pontilhados e com zoom ajustado: ${JSON.stringify(h2Extras)}`);
 }
 await assertUnifiedHover('#canvas-h2 .h2-row', '#canvas-h2', 0);
 const h2Geo = await checkSvgGeometry('#canvas-h2 svg', { checkBounds: true });

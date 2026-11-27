@@ -71,8 +71,13 @@ export function renderH2Dumbbell(
   const svgH = margin.top + dbH + margin.bottom;
   const W = svgW - margin.left - margin.right;
 
-  const maxRatio = Math.max(1.45, d3.max(rows, (r) => Math.max(r.r22, r.r26)) * 1.12);
-  const x = d3.scaleLinear().domain([0, maxRatio]).range([0, W]);
+  const minDataRatio = d3.min(rows, (r) => Math.min(r.r22, r.r26)) ?? 0;
+  const maxDataRatio = d3.max(rows, (r) => Math.max(r.r22, r.r26)) ?? 1.2;
+  const span = Math.max(0.25, maxDataRatio - minDataRatio);
+  const pad = span * 0.06;
+  const xMin = Math.max(0, minDataRatio - pad);
+  const xMax = maxDataRatio + pad;
+  const x = d3.scaleLinear().domain([xMin, xMax]).range([0, W]);
   const y = d3.scalePoint().domain(rows.map((r) => r.party)).range([12, dbH - 12]).padding(0.45);
 
   const tipCtrl = createChartTooltip(container, { wrapClass: 'h2-wrap', tooltipClass: 'h2-tooltip' });
@@ -119,10 +124,14 @@ export function renderH2Dumbbell(
 
   const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
-  // Eixo X inferior sem linhas pontilhadas horizontais
+  // Eixo X inferior ajustado ao menor e maior valor (zoom nos dados)
   g.append('g')
+    .attr('class', 'h2-x-axis')
     .attr('transform', `translate(0,${dbH})`)
-    .call(d3.axisBottom(x).ticks(5).tickFormat((d) => `${d.toFixed(1).replace('.', ',')}×`))
+    .call(d3.axisBottom(x).ticks(6).tickFormat((d) => {
+      const decimals = Math.abs(d * 10 - Math.round(d * 10)) < 1e-6 ? 1 : 2;
+      return `${d.toFixed(decimals).replace('.', ',')}×`;
+    }))
     .call((a) => a.select('.domain').attr('stroke', '#CBD5E1'))
     .call((a) => a.selectAll('.tick text').attr('fill', SEMANTIC_PALETTE.muted).style('font-size', '11px'));
 
@@ -142,24 +151,26 @@ export function renderH2Dumbbell(
     .call((a) => a.selectAll('.tick text').attr('fill', SEMANTIC_PALETTE.ink).style('font-size', isCompact ? '10px' : '11px').style('font-weight', '700'));
 
   // Linha de referência de paridade sólida e discreta (sem pontilhado)
-  const parityX = x(1.0);
-  g.append('line')
-    .attr('x1', parityX)
-    .attr('x2', parityX)
-    .attr('y1', -6)
-    .attr('y2', dbH)
-    .attr('stroke', H2_COLORS.y2026Paridade)
-    .attr('stroke-opacity', 0.45)
-    .attr('stroke-width', 1.5);
+  if (xMin <= 1.0 && xMax >= 1.0) {
+    const parityX = x(1.0);
+    g.append('line')
+      .attr('x1', parityX)
+      .attr('x2', parityX)
+      .attr('y1', -6)
+      .attr('y2', dbH)
+      .attr('stroke', H2_COLORS.y2026Paridade)
+      .attr('stroke-opacity', 0.45)
+      .attr('stroke-width', 1.5);
 
-  g.append('text')
-    .attr('x', parityX)
-    .attr('y', -14)
-    .attr('text-anchor', 'middle')
-    .attr('fill', H2_COLORS.y2026Paridade)
-    .style('font-size', '10.5px')
-    .style('font-weight', '700')
-    .text('Paridade (1,0×)');
+    g.append('text')
+      .attr('x', parityX)
+      .attr('y', -14)
+      .attr('text-anchor', 'middle')
+      .attr('fill', H2_COLORS.y2026Paridade)
+      .style('font-size', '10.5px')
+      .style('font-weight', '700')
+      .text('Paridade (1,0×)');
+  }
 
   const show26 = step >= 1;
   const prevShow26 = prevStep >= 1 && prevStep < 2;

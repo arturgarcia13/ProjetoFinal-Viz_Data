@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import gsap from 'gsap';
 import { IBGE_TO_UF, UF_NAMES } from '../data.js';
+import { selectTopWithTies } from '../indicators.js';
 import { SEMANTIC_PALETTE } from './palette.js';
 import { shouldAnimate } from './motion.js';
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtCompactBrl, fmtPct } from './tooltip.js';
@@ -48,11 +49,11 @@ export const ATO5_STEPS = [
   {
     index: 2,
     kicker: 'Passo 3 de 5 · Pilar 3',
-    badge: 'Concentração vs. Suavidade',
+    badge: 'Concentração no Top 10%',
     shortPill: '3. Concentração',
-    title: 'Investir com densidade ou diluir em kits mínimos?',
-    desc: 'Uma distribuição excessivamente pulverizada dilui o fundo em candidaturas sem viabilidade eleitoral. Os 5 estados iluminados concentram maior fatia do FEFC feminino nas 10% candidatas mais financiadas.',
-    podiumHeader: 'Top 5 · Concentração Top 10%',
+    title: 'Onde o fundo feminino concentra nas 10% mais financiadas',
+    desc: 'Concentração mede qual porcentagem de todo o FEFC destinado às mulheres vai para apenas as 10% candidatas mais financiadas da UF (frente aos 90% restantes). Os estados iluminados concentram maior fatia no topo.',
+    podiumHeader: 'Top 5 · Fatia do FEFC no Top 10% (F)',
     metricKey: 'concTop10',
     higherIsBetter: true,
     formatVal: (v) => `${v.toFixed(1).replace('.', ',')}% do FEFC`,
@@ -90,13 +91,16 @@ export const ATO5_STEPS = [
 ];
 
 function rankTop5(rows, stepMeta) {
-  const eligible = rows.filter((r) => r.validSample && (stepMeta.metricKey !== 'eleitasPct' || r.elTot > 0));
-  const sorted = [...eligible].sort((a, b) => (
-    stepMeta.higherIsBetter
-      ? b[stepMeta.metricKey] - a[stepMeta.metricKey]
-      : a[stepMeta.metricKey] - b[stepMeta.metricKey]
-  ) || a.uf.localeCompare(b.uf));
-  return sorted.slice(0, 5);
+  const eligible = rows.filter((r) => (
+    r.validSample
+    && (stepMeta.metricKey !== 'eleitasPct' || r.elTot > 0)
+    && (stepMeta.metricKey !== 'tetoTrapped' || r.slatesCount >= 2)
+  ));
+  const ranked = selectTopWithTies(eligible, stepMeta.metricKey, stepMeta.higherIsBetter, 5);
+  return {
+    rows: ranked.map((x) => x.item),
+    rankMap: new Map(ranked.map((x) => [x.item.uf, x.rank])),
+  };
 }
 
 function buildStateTooltipCard(d, stepIdx) {
@@ -155,7 +159,7 @@ export function renderAto5StepCards(container, geoData, {
     ATO5_STEPS.forEach((step, sIdx) => {
       const card = container.querySelector(`.step-card[data-step="${sIdx}"]`);
       if (!card) return;
-      const top5 = rankTop5(rows, step);
+      const { rows: top5, rankMap } = rankTop5(rows, step);
 
       let synthesisHtml = '';
       if (step.isSynthesis) {
@@ -168,12 +172,13 @@ export function renderAto5StepCards(container, geoData, {
         synthesisHtml = `
           <div class="ato5-synthesis-box">
             <strong>Síntese Causa → Efeito (${geoData.year}):</strong>
-            <strong>${twoPlus} de 5</strong> líderes em mulheres eleitas acumularam <strong>≥ 2 pilares estruturais</strong> (★2/4–4/4), e <strong>${anyPillar} de 5</strong> pontuaram em ao menos um pilar.${outlierNote}
+            <strong>${twoPlus} de ${top5.length}</strong> líderes em mulheres eleitas acumularam <strong>≥ 2 pilares estruturais</strong> (★2/4–4/4), e <strong>${anyPillar} de ${top5.length}</strong> pontuaram em ao menos um pilar.${outlierNote}
           </div>
         `;
       }
 
       const miniCardsHtml = top5.map((d, rankIdx) => {
+        const rankNum = rankMap.get(d.uf) || (rankIdx + 1);
         const revealedStars = revealedStarsAt(d, sIdx);
         const isSelected = selectedUF === d.uf;
         return `
@@ -183,7 +188,7 @@ export function renderAto5StepCards(container, geoData, {
             data-podium-uf="${d.uf}"
             aria-pressed="${isSelected ? 'true' : 'false'}"
           >
-            <span class="ato5-podium-rank${rankIdx === 0 ? ' is-first' : ''}">#${rankIdx + 1}</span>
+            <span class="ato5-podium-rank${rankNum === 1 ? ' is-first' : ''}">#${rankNum}</span>
             <span class="ato5-podium-meta">
               <strong>${UF_NAMES[d.uf] || d.uf} <small>(${d.uf})</small></strong>
               <small>${UF_REGIONS[d.uf] || ''}</small>
@@ -297,8 +302,7 @@ export function renderAto5MapStage(
   const stepMeta = ATO5_STEPS[clampedStep];
   const rows = geoData.rows || [];
   const byUf = new Map(rows.map((r) => [r.uf, r]));
-  const top5 = rankTop5(rows, stepMeta);
-  const top5RankMap = new Map(top5.map((d, idx) => [d.uf, idx + 1]));
+  const { rows: top5, rankMap: top5RankMap } = rankTop5(rows, stepMeta);
 
   const geoSig = `${svgW}|${geoData.year}|${geoData.cargo}`;
   let st = mapContainer.__ato5State;
@@ -324,16 +328,12 @@ export function renderAto5MapStage(
 
     const polyLayer = svg.append('g').attr('class', 'ato5-poly-layer');
     const ringLayer = svg.append('g').attr('class', 'ato5-ring-layer').style('pointer-events', 'none');
-    const lineLayer = svg.append('g').attr('class', 'ato5-line-layer').style('pointer-events', 'none');
     const labelLayer = svg.append('g').attr('class', 'ato5-label-layer').style('pointer-events', 'none');
 
     const polyEls = new Map();
     const ringEls = new Map();
     const ringLens = new Map();
     const labelEls = new Map();
-    const lineEls = new Map();
-    const dotEls = new Map();
-    const lineLens = new Map();
     const centroids = new Map();
 
     st = {
@@ -344,9 +344,6 @@ export function renderAto5MapStage(
       ringEls,
       ringLens,
       labelEls,
-      lineEls,
-      dotEls,
-      lineLens,
       currentStep: clampedStep,
       prevStep: clampedStep,
       currentData: geoData,
@@ -447,33 +444,6 @@ export function renderAto5MapStage(
         }
       });
     });
-
-    // Leader lines pré-montadas para os 8 estados compactos (RN..RJ)
-    const topPad = 24;
-    const botPad = svgH - 22;
-    const stepY = (botPad - topPad) / Math.max(1, COMPACT_UFS.length - 1);
-    COMPACT_UFS.forEach((uf, idx) => {
-      const centroid = centroids.get(uf);
-      if (!centroid) return;
-      const calloutY = topPad + idx * stepY;
-      const elbowX = Math.max(centroid[0] + 18, svgW - 36);
-      const lg = lineLayer.append('g').attr('data-line-uf', uf);
-      const line = lg.append('polyline')
-        .attr('points', `${centroid[0]},${centroid[1]} ${elbowX},${calloutY} ${svgW},${calloutY}`)
-        .attr('fill', 'none')
-        .attr('stroke', '#94A3B8')
-        .attr('stroke-width', 1);
-      const dot = lg.append('circle')
-        .attr('cx', centroid[0])
-        .attr('cy', centroid[1])
-        .attr('r', 2.2)
-        .attr('fill', '#94A3B8');
-      const lNode = line.node();
-      const lLen = typeof lNode.getTotalLength === 'function' ? lNode.getTotalLength() : 0;
-      lineEls.set(uf, lNode);
-      dotEls.set(uf, dot.node());
-      lineLens.set(uf, lLen);
-    });
   }
 
   // Atualiza referências dinâmicas no estado persistido
@@ -496,7 +466,6 @@ export function renderAto5MapStage(
   st.tl = tl;
 
   let newRingOrder = 0;
-  let newLineOrder = 0;
 
   rows.forEach((d) => {
     const uf = d.uf;
@@ -588,51 +557,6 @@ export function renderAto5MapStage(
         tl.fromTo(lbl.g, { opacity: 0.4, y: 4 }, { opacity: isDimmed ? 0.4 : 1, y: 0, duration: 0.3, ease: 'power2.out', clearProps: 'transform' }, 0.14);
       } else {
         lbl.g.style.opacity = isDimmed ? '0.4' : '1';
-      }
-    }
-
-    // Leader lines dos 8 estados compactos (svg-path-draw ao ganhar destaque)
-    if (COMPACT_SET.has(uf)) {
-      const lNode = st.lineEls.get(uf);
-      const dNode = st.dotEls.get(uf);
-      const lLen = st.lineLens.get(uf) || 0;
-      if (lNode && dNode) {
-        const lineColor = isTop5 ? SEMANTIC_PALETTE.female : (stars > 0 ? SEMANTIC_PALETTE.highlightInk : '#94A3B8');
-        const lineW = isTop5 || stars > 0 ? 1.65 : 1;
-        const dash = isTop5 || stars > 0 ? 'none' : '3,3';
-        const lineOp = isDimmed ? 0.35 : 0.92;
-        const dotR = isTop5 ? 3.4 : 2.2;
-
-        if (animate && ((isTop5 && !wasTop5) || (stars > 0 && prevStars === 0)) && lLen > 0) {
-          const lDelay = 0.06 + newLineOrder * 0.05;
-          newLineOrder += 1;
-          lNode.style.strokeDasharray = `${lLen}`;
-          tl.fromTo(
-            lNode,
-            { strokeDashoffset: lLen, opacity: lineOp, attr: { stroke: lineColor, 'stroke-width': lineW } },
-            {
-              strokeDashoffset: 0,
-              duration: 0.44,
-              ease: 'power2.out',
-              onComplete: () => { lNode.style.strokeDasharray = dash; },
-            },
-            lDelay,
-          );
-          tl.fromTo(
-            dNode,
-            { attr: { r: 0, fill: lineColor } },
-            { attr: { r: dotR }, duration: 0.3, ease: 'power3.out' },
-            lDelay,
-          );
-        } else {
-          lNode.style.strokeDasharray = dash;
-          lNode.style.strokeDashoffset = '0';
-          lNode.setAttribute('stroke', lineColor);
-          lNode.setAttribute('stroke-width', String(lineW));
-          lNode.style.opacity = String(lineOp);
-          dNode.setAttribute('fill', lineColor);
-          dNode.setAttribute('r', String(dotR));
-        }
       }
     }
   });

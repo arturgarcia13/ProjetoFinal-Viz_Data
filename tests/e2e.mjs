@@ -404,22 +404,35 @@ await assertUnifiedHover('#canvas-limiar .limiar-panel', '#canvas-limiar', 0);
 await page.click('[data-limiar-unit="party"]');
 await page.click('[data-limiar-unit="chapa"]');
 
-// 6. Ato 5 ("Onde a Cota Vira Voto"): 27 UFs reais, 8 callouts compactos, 5 passos, síntese e controles
+// 6. Ato 5 ("Onde a Cota Vira Voto"): 27 UFs reais, sem linhas pontilhadas/conectoras, empates na 5ª posição incluídos
 const h9Check = await page.evaluate(() => ({
   ufPaths: document.querySelectorAll('#canvas-h9-map svg path.ato5-state-path').length,
+  leaderLines: document.querySelectorAll('#canvas-h9-map svg .ato5-line-layer, #canvas-h9-map svg polyline').length,
   compactCallouts: document.querySelectorAll('#ato5-compact-callouts .ato5-callout-pill').length,
   stepsCount: document.querySelectorAll('#sec-h9 .step-card').length,
   navPills: document.querySelectorAll('#ato5-nav-pills .ato5-nav-pill').length,
   hasSynthesis: Boolean(document.querySelector('#sec-h9 .ato5-synthesis-box')),
   podiumCards: document.querySelectorAll('#sec-h9 .ato5-podium-card').length,
+  step5PodiumUfs: [...document.querySelectorAll('#sec-h9 .step-card[data-step="4"] .ato5-podium-card')].map((el) => ({
+    uf: el.getAttribute('data-podium-uf'),
+    rank: el.querySelector('.ato5-podium-rank')?.textContent?.trim(),
+  })),
+  step3ConcentracaoClarified: /10%\s+candidatas mais financiadas/i.test(
+    document.querySelector('#sec-h9 .step-card[data-step="2"]')?.textContent || '',
+  ),
 }));
+const step5RankMap = Object.fromEntries(h9Check.step5PodiumUfs.map((x) => [x.uf, x.rank]));
 if (
   h9Check.ufPaths !== 27
+  || h9Check.leaderLines !== 0
   || h9Check.compactCallouts !== 8
   || h9Check.stepsCount !== 5
   || h9Check.navPills !== 5
   || !h9Check.hasSynthesis
-  || h9Check.podiumCards !== 25
+  || h9Check.podiumCards < 25
+  || step5RankMap.RO !== '#5'
+  || step5RankMap.SE !== '#5'
+  || !h9Check.step3ConcentracaoClarified
 ) {
   throw new Error(`Ato 5 incompleto: ${JSON.stringify(h9Check)}`);
 }

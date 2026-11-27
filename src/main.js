@@ -595,7 +595,7 @@ function update() {
     setText('ato5-active-pill', `Passo ${stepIdx + 1}/5 · ${stepMeta.badge}`);
     setText('ato5-legend-top5', stepMeta.isSynthesis ? 'Top 5 Mulheres Eleitas' : 'Top 5 neste pilar');
     setText('title-h9', stepMeta.isSynthesis
-      ? `Em ${state.ato5Year}, ${ato5Data.twoPlusCount} de 5 líderes em mulheres eleitas acumularam ≥ 2 pilares estruturais`
+      ? `Em ${state.ato5Year}, ${ato5Data.twoPlusCount} de ${ato5Data.top5Eleitas.length} líderes em mulheres eleitas acumularam ≥ 2 pilares estruturais`
       : `${stepMeta.title} (${state.ato5Year} · ${cargoTagAto5})`);
 
     if (navPillsEl) {

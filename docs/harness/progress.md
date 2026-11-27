@@ -245,11 +245,16 @@
 - **2026-11-27 (Etapa 7 — Ato 4: remoção de H7, H8 animado pós-H6 e Slopegraph em Gráfico 8, itens 26, 27 e 28):**
   - Removidos `#sec-h7`, `src/charts/h7Boxplot.js`, `state.h7Show2018` e `#btn-h7-2018` ([public/index.html](../../public/index.html), [src/main.js](../../src/main.js)).
   - Promovido `#sec-h8` como **Gráfico 7** logo após `#sec-h6`, removida a anotação `addDirectAnnotation` e implementada constância de objeto em `<svg>` único em [src/charts/h8Temporal.js](../../src/charts/h8Temporal.js) com animação progressiva `2018 → 2022 → 2026`.
-  - Convertido [src/charts/h6ThresholdCompare.js](../../src/charts/h6ThresholdCompare.js) (`#sec-limiar`, **Gráfico 8**) para **Slopegraph** (`30%–33%` → `>33%`) nas 4 dimensões.
+  - Convertido [src/charts/h6ThresholdCompare.js](../../src/charts/h6ThresholdCompare.js) (`#sec-limiar`, **Gráfico 8**) para **Slopegraph** (`30%–33%` → `>33%`) nas 4 dimensões, carregando progressivamente apenas os quadros liberados até o passo ativo (mantendo molduras com trilhos vazios para etapas futuras).
+
+- **2026-11-27 (Etapa 8 — Ato 5: remoção de linhas conectoras, regra de empate na 5ª posição e clareza em Concentração, itens 23, 30 e 31):**
+  - Implementado `selectTopWithTies` em [src/indicators.js](../../src/indicators.js) e integrado em `computeAto5Geography` e em [src/charts/h9MapAndParallel.js](../../src/charts/h9MapAndParallel.js) (`rankTop5`), incluindo todas as UFs empatadas na posição de corte com ranking padrão de competição (ex.: em `2022` `Todos os cargos`, `RO` e `SE` dividem `#5` com `21,9%` de eleitas; títulos em [src/main.js](../../src/main.js) usam contagem dinâmica de líderes).
+  - Removidas completamente `.ato5-line-layer` e linhas conectoras/pontilhadas dos 8 estados compactos em [src/charts/h9MapAndParallel.js](../../src/charts/h9MapAndParallel.js), mantendo os 8 callouts interativos à direita.
+  - Explicitado em [public/index.html](../../public/index.html) e [src/charts/h9MapAndParallel.js](../../src/charts/h9MapAndParallel.js) que **Concentração** (Passo 3) mede a fatia do FEFC feminino destinada às **10% candidatas mais financiadas** da UF; atualizados [tests/test_indicators.py](../../tests/test_indicators.py) e [tests/e2e.mjs](../../tests/e2e.mjs).
+  - **Evidência:** `npm run build:vercel` (`dist/app.js 300.8kb`, `site/` 15 files / `11.40 MB`), `./init.sh` (`18 passed in 18.07s`), `E2E_ROOT=site node tests/e2e.mjs` (`leaderLines: 0`, `podiumCards: 26`, `RO: #5`, `SE: #5`, `step3ConcentracaoClarified: true`, `errors: []`, `overflowX: false`).
 
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.
-- As melhorias de animação estão no working tree local (sem novo commit/push até solicitação do usuário).
 
 ## 5. Next Action
-1. Revisar as animações localmente (`npm run build:vercel` + preview) e, se desejar publicar no Vercel, autorizar commit e `git push`.
+1. Executar a **Etapa 9** (revisão final, [docs/guia_dos_graficos.md](../../docs/guia_dos_graficos.md), nota metodológica em `#metodologia`, recibo final em `docs/harness/receipts/` e revisão adversarial em subagente `research`), validar tudo, commitar e enviar para `origin/master`.

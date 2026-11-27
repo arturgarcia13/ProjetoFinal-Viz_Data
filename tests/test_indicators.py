@@ -248,7 +248,7 @@ def test_ato4_threshold_band_comparison_and_ato5_geography():
       partyAboveUnits: byParty.above.units,
       geo22Count: geo22.rows.length,
       geo22Eligible: geo22.eligibleCount,
-      geo22Top5Len: geo22.top5Eleitas.length,
+      geo22Top5Ufs: geo22.top5Eleitas.map(r => ({ uf: r.uf, pct: r.eleitasPct, rank: r.eleitasRank })),
       geo22AnyPillar: geo22.anyPillarCount,
       geo26Count: geo26.rows.length,
     }));
@@ -265,7 +265,10 @@ def test_ato4_threshold_band_comparison_and_ato5_geography():
     assert out["chapaExcluded"] > 0
     assert out["partyFloorUnits"] >= 5 and out["partyAboveUnits"] >= 10
     assert out["geo22Count"] == 27 and out["geo22Eligible"] == 27
-    assert out["geo22Top5Len"] == 5 and out["geo22AnyPillar"] >= 1
+    top5_map = {item["uf"]: item for item in out["geo22Top5Ufs"]}
+    assert len(out["geo22Top5Ufs"]) >= 5 and out["geo22AnyPillar"] >= 1
+    assert top5_map["RO"]["rank"] == 5 and top5_map["SE"]["rank"] == 5
+    assert top5_map["RO"]["pct"] == top5_map["SE"]["pct"] == 21.9
     assert out["geo26Count"] == 27
 
 

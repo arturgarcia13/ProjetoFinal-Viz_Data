@@ -1733,6 +1733,28 @@ export function computeThresholdBandComparison(candidates, { unit = 'chapa' } = 
 }
 
 /**
+ * Seleciona até `limit` primeiros colocados incluindo todos os empates na posição de corte,
+ * com ranking padrão de competição (1, 2, 2, 4...).
+ */
+export function selectTopWithTies(items, key, higherIsBetter = true, limit = 5) {
+  const sorted = [...items].sort((a, b) => (
+    higherIsBetter ? b[key] - a[key] : a[key] - b[key]
+  ) || a.uf.localeCompare(b.uf));
+  if (sorted.length === 0) return [];
+  const cutoffIdx = Math.min(limit - 1, sorted.length - 1);
+  const cutoffVal = sorted[cutoffIdx][key];
+  let curRank = 1;
+  return sorted
+    .filter((d) => (higherIsBetter ? d[key] >= cutoffVal - 1e-9 : d[key] <= cutoffVal + 1e-9))
+    .map((d, idx, arr) => {
+      if (idx > 0 && Math.abs(d[key] - arr[idx - 1][key]) > 1e-9) {
+        curRank = idx + 1;
+      }
+      return { item: d, rank: curRank };
+    });
+}
+
+/**
  * Ato 5 — Onde a Cota Vira Voto (27 UFs · 4 Pilares Estruturais + Consequência na Urna)
  */
 export function computeAto5Geography(allCandidates, { year = 2022, cargo = 'all', party = '', parties = null, ufList = [] } = {}) {
@@ -1821,23 +1843,19 @@ export function computeAto5Geography(allCandidates, { year = 2022, cargo = 'all'
   ];
 
   for (const spec of pillarSpecs) {
-    const sorted = [...eligible]
-      .filter((r) => (spec.idx === 3 ? r.slatesCount >= 2 : true))
-      .sort((a, b) => (spec.higherIsBetter ? b[spec.key] - a[spec.key] : a[spec.key] - b[spec.key]) || a.uf.localeCompare(b.uf));
-    sorted.slice(0, 5).forEach((w, rankIdx) => {
+    const pool = eligible.filter((r) => (spec.idx === 3 ? r.slatesCount >= 2 : true));
+    selectTopWithTies(pool, spec.key, spec.higherIsBetter, 5).forEach(({ item: w, rank }) => {
       w.pillars[spec.idx] = true;
-      w.pillarRanks[spec.idx] = rankIdx + 1;
+      w.pillarRanks[spec.idx] = rank;
     });
   }
 
-  const sortedEleitas = [...eligible]
-    .filter((r) => r.elTot > 0)
-    .sort((a, b) => b.eleitasPct - a.eleitasPct || a.uf.localeCompare(b.uf));
-  sortedEleitas.slice(0, 5).forEach((w, rankIdx) => {
-    w.eleitasRank = rankIdx + 1;
+  const rankedEleitas = selectTopWithTies(eligible.filter((r) => r.elTot > 0), 'eleitasPct', true, 5);
+  rankedEleitas.forEach(({ item: w, rank }) => {
+    w.eleitasRank = rank;
   });
 
-  const top5Eleitas = sortedEleitas.slice(0, 5);
+  const top5Eleitas = rankedEleitas.map(({ item }) => item);
   const twoPlusCount = top5Eleitas.filter((d) => d.pillars.filter(Boolean).length >= 2).length;
   const anyPillarCount = top5Eleitas.filter((d) => d.pillars.filter(Boolean).length >= 1).length;
 
@@ -1846,7 +1864,7 @@ export function computeAto5Geography(allCandidates, { year = 2022, cargo = 'all'
     : {
         status: 'vaza',
         label: 'Desigualdade Estrutural por UF',
-        reason: `${twoPlusCount} de 5 UFs líderes em eleitas (${year}) acumularam ≥ 2 pilares estruturais (★2/4–4/4), e ${anyPillarCount} de 5 lideraram ao menos um pilar.`,
+        reason: `${twoPlusCount} de ${top5Eleitas.length} UFs líderes em eleitas (${year}) acumularam ≥ 2 pilares estruturais (★2/4–4/4), e ${anyPillarCount} de ${top5Eleitas.length} lideraram ao menos um pilar.`,
       };
 
   return {

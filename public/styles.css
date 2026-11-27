@@ -869,7 +869,8 @@ code {
   transition: opacity 0.25s ease;
 }
 
-.segmented-group.is-hidden {
+.segmented-group.is-hidden,
+.inline-legend.is-hidden {
   opacity: 0;
   pointer-events: none;
 }
@@ -903,6 +904,7 @@ code {
   gap: 0.8rem;
   font-size: 0.74rem;
   color: var(--text-secondary);
+  transition: opacity 0.25s ease;
 }
 
 .legend-item {

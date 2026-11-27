@@ -169,11 +169,21 @@ for (const cid of ['#canvas-h1', '#canvas-h2', '#canvas-h3', '#canvas-h4', '#can
   if (!hasSvg) throw new Error(`SVG ausente em ${cid}`);
 }
 
-// 2. H1: Inicia em Todas Registradas, alternância para Aptas + filtro coordenado e chip de recorte
+// 2. H1: Inicia em Todas Registradas, zero textos internos (direct-annotation), alternância para Aptas + filtro coordenado e chip de recorte
 const h1InitialMode = await page.$eval('#controls-h1 button.active', (el) => el.dataset.h1Mode);
 if (h1InitialMode !== 'reg') throw new Error(`H1 deveria iniciar em 'reg', obteve ${h1InitialMode}`);
+const h1DirectNotes = await page.$$eval('#canvas-h1 svg .direct-annotation', (els) => els.length);
+if (h1DirectNotes !== 0) throw new Error(`H1 não deveria ter textos internos (.direct-annotation), obteve ${h1DirectNotes}`);
+const h1LegendHiddenInFull = await page.$eval('#legend-h1', (el) => el.classList.contains('is-hidden'));
+if (h1LegendHiddenInFull) throw new Error('Legenda de H1 deveria estar visível no Passo 4 (?steps=full)');
 await assertUnifiedHover('#canvas-h1 .h1-col[data-bin="30-33"] .h1-col-hit', '#canvas-h1', 0);
+const h1SvgBefore = await page.evaluate(() => {
+  window.__h1SvgRef = document.querySelector('#canvas-h1 svg.h1-vertical-svg');
+  return Boolean(window.__h1SvgRef);
+});
 await page.click('#controls-h1 button[data-h1-mode="apto"]');
+const h1SvgPreserved = await page.evaluate(() => window.__h1SvgRef === document.querySelector('#canvas-h1 svg.h1-vertical-svg'));
+if (!h1SvgBefore || !h1SvgPreserved) throw new Error('H1 deveria preservar o mesmo <svg> ao transitar Registradas -> Aptas');
 await page.click('#controls-h1 button[data-h1-mode="reg"]');
 await page.click('#canvas-h1 .h1-col[data-bin="lt24"]');
 await page.waitForFunction(() => !document.getElementById('btn-recorte-chip').hidden);

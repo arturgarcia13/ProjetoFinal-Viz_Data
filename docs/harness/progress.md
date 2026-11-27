@@ -11,7 +11,22 @@
 
 ---
 
-## 1. Task Contract (Lista Consolidada de Alterações + Ato 5 Geografia da Cota)
+## 1. Task Contract (Plano em 9 Etapas — 31 Alterações nos Gráficos 1–8 e Atos 1–5)
+
+- **Outcome:** Executar passo a passo as 9 etapas auditáveis do plano aprovado ([plano_de_acao_alteracoes.md](file:///home/arturgarcia/.gemini/antigravity-cli/brain/72445484-f4c8-4d9c-ac6a-a00a41abc7aa/plano_de_acao_alteracoes.md)), cobrindo os 31 ajustes em H1–H8 e Ato 5 (`H9`) mantendo o design system editorial (`#FBF8F1`, `#007D5B`, `#FA532E`, `#F8DF4F`/`#C98A00`, `#4B636E`, **Newsreader** + **Inter**) e os dados reais do TSE (`data/analytical_base.json`, `data/br_uf.json`):
+  - **Etapa 1 (concluída):** Gráfico 1 (`H1` — itens 1, 2, 3, 12): legenda oculta nos Passos 1–2 (`#legend-h1.is-hidden`), remoção dos textos internos `addDirectAnnotation` e constância de objeto no mesmo `<svg>` na transição Passo 3 → Passo 4 (`Registradas → Aptas`).
+  - **Etapas 2–8 (pendentes):** `H2` (itens 4, 5, 11, 13, 14), `H3` (itens 6, 7, 15, 16, 17, 18, 19), `H4` Sankey 1.000 votos + 4 destinos separados sem `h4Hubs.js` (itens 8, 9, 20), `H5` sem textos/slopegraph (itens 10, 21), `H6` 4 passos `2018(F)→2022(F)→2026(F)→2026(F+M)` sem `≥2` (itens 22, 24, 25, 29), Ato 4 (`H8` pós-`H6` animado, `Slopegraph` em `#sec-limiar`, remoção definitiva de `H7` — itens 26, 27, 28) e Ato 5 (sem *leader lines*, empate `RO`/`SE` 2022, explicitação de *Concentração* — itens 23, 30, 31).
+- **Scope & Non-goals:**
+  - *In-scope:* `public/index.html`, `public/styles.css`, `src/indicators.js`, `src/main.js`, `src/charts/*.js`, `tests/test_indicators.py`, `tests/e2e.mjs`, `docs/guia_dos_graficos.md`, `docs/harness/`.
+  - *Non-goals:* alterar ETL/CSVs brutos (`data/raw/`), alterar a capa (`.hero-section`), expor PII, executar `git push` sem aprovação.
+- **Acceptance Evidence (por etapa):**
+  - `npm run build:vercel` gera `dist/app.js` e `site/` sem erros.
+  - `./init.sh` sai com código `0`.
+  - `E2E_ROOT=site node tests/e2e.mjs` passa com `errors: []`, `overflowX: false` e 0 colisões em `1280×820` e `390×844` (+ verificação de scroll sem `?steps=full`).
+- **Actions Needing Human Approval:** `git push`/deploy no Vercel; avanço entre etapas se surgir nova decisão de escopo.
+- **Iteration Ceiling & Retry Budget:** máximo de 3 falhas consecutivas na mesma verificação antes de parar e reportar.
+
+### Contrato anterior (histórico — Lista Consolidada de Alterações + Ato 5 Geografia da Cota)
 
 - **Outcome:** Aplicar as alterações especificadas nos Atos 1, 2, 4 e 5 mantendo o design system editorial vigente (`#FBF8F1`, `#007D5B`, `#FA532E`, `#F8DF4F`/`#C98A00`, `#4B636E`, **Newsreader** + **Inter**) e a base real do TSE (`data/analytical_base.json`, `data/br_uf.json`):
   1. **Ato 1 (`H1`):** manter capa atual e corte `n ≥ 4`; atualizar título do Ato 1 e texto narrativo especificado; exibir **Todas Registradas** antes de **Aptas** com transição automática ao entrar no passo 3; destacar `%` de chapas `< 30%` em 2022 e 2026; implementar reset automático do filtro ao sair da tela/etapa do passo 3.
@@ -186,6 +201,10 @@
   - **Ato 4 (`H6` consolidado + Comparativo `30%–33%` vs. `>33%` + `H7`/`H8` em revisão):** `H6` ([h6Signals.js](../../src/charts/h6Signals.js)) consolidado em gráfico único comparando `Sinal A`, `Sinal B`, `Sinal C` e `≥ 2 sinais` entre Mulheres e Homens (`2018 | 2022 | 2026`), registrando formalmente o veredicto **Inconclusivo**; criado `computeThresholdBandComparison` ([indicators.js](../../src/indicators.js)) e `renderThresholdCompare` ([h6ThresholdCompare.js](../../src/charts/h6ThresholdCompare.js)) em `#sec-limiar` comparando `30%–33%` vs. `>33%` (excluindo `<30%`) nas 4 dimensões (*mediana*, *proporcionalidade pública*, *concentração Top 10%*, *eleitas*) com seletor **`Por Chapa | Por Partido`**; `H7` e `H8` mantidos com banner explícito de remoção na próxima etapa.
   - **Ato 5 (`H9` → "Onde a Cota Vira Voto"):** substituído integralmente pelo *scrollytelling* geográfico de 5 passos (`computeAto5Geography` em [indicators.js](../../src/indicators.js) + [h9MapAndParallel.js](../../src/charts/h9MapAndParallel.js)) com dados reais do TSE (`2018 | 2022 | 2026` × `Todos | Dep. Estadual | Dep. Federal`), contorno geográfico real (`data/br_uf.json`), anéis dourados acumulativos (`★1/4`–`★4/4`), 8 callouts laterais + *leader lines* (`RN, PB, PE, AL, SE, DF, ES, RJ`), pódio Top 5 em mini-cards clicáveis, Síntese de Causa e Efeito no Passo 5 e tooltip unificado sob o design system vigente (`#FBF8F1`, `#007D5B`, `#FA532E`, `#F8DF4F`/`#C98A00`, `#4B636E`, **Newsreader** + **Inter**).
   - **Evidência final:** `npm run build:vercel` (`dist/app.js 416.0kb`, `site/` 15 arquivos / `11.51 MB`), `.venv/bin/python -m pytest -v` (`17 passed in 18.64s`), `E2E_ROOT=site node tests/e2e.mjs` (`errors: []`, `overflowX: false` em `1280×820` e `390×844`) e teste de rolagem ao vivo sem `?steps=full` (`initialH1: "reg" -> afterEnterStep3: "apto"`, `chipVisible: true -> chipHiddenAfterExit: true`, `ato5Pill: "Passo 5/5 · Mulheres Eleitas"`, `ato5GoldRings: 16`, `errors: []`).
+
+- **2026-11-27 (Etapa 1 — Gráfico 1 / H1, itens 1, 2, 3 e 12):**
+  - Ocultada `#legend-h1` nos Passos 1 e 2 (`idx < 2`) em [public/index.html](../../public/index.html), [public/styles.css](../../public/styles.css) e [src/main.js](../../src/main.js), removidos os callouts internos `addDirectAnnotation` em [src/charts/h1Histogram.js](../../src/charts/h1Histogram.js) e refatorado `renderH1Histogram` para preservar o mesmo `<svg>` (`container.__h1State`), interpolando barras e rótulos numéricos (`tween`) na transição Passo 3 → Passo 4 (`Registradas → Aptas`, timer `320ms`).
+  - **Evidência:** `npm run build:vercel` (`dist/app.js 491.2kb`, `site/` 15 files / `11.58 MB`), `./init.sh` (`17 passed in 17.86s`), `E2E_ROOT=site node tests/e2e.mjs` (`errors: []`, `overflowX: false`) e scroll ao vivo em Chromium sem `?steps=full` (`step_0/1` `legendHidden: true`, `step_2/3` `legendHidden: false`, `sameSvgAsStep2: true`, `activeMode: "reg" -> "apto"`, `directAnnotations: 0`).
 
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.

@@ -236,6 +236,7 @@ function populateSelects() {
 function syncStepControlsVisibility(chartKey, idx) {
   if (chartKey === 'h1') {
     document.getElementById('controls-h1')?.classList.toggle('is-hidden', idx < 2);
+    document.getElementById('legend-h1')?.classList.toggle('is-hidden', idx < 2);
   }
   if (chartKey === 'h3') {
     const cargoGroup = document.getElementById('cargo-h3-group');
@@ -884,7 +885,7 @@ async function init() {
           state.h1Mode = 'apto';
           syncH1ModeButtons();
           update();
-        }, 650);
+        }, 320);
       }
     }
 

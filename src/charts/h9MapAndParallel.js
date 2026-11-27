@@ -150,6 +150,7 @@ export function renderAto5StepCards(container, geoData, {
   onSelectUF = null,
 } = {}) {
   if (!container || !geoData) return;
+  container.__ato5Handlers = { onHoverUF, onSelectUF };
   const rows = geoData.rows || [];
   const dataSig = `${geoData.year}|${geoData.cargo}|${geoData.eligibleCount}`;
   const needsRebuild = container.dataset.ato5Sig !== dataSig;
@@ -217,16 +218,14 @@ export function renderAto5StepCards(container, geoData, {
 
       slot.querySelectorAll('.ato5-podium-card').forEach((btn) => {
         const uf = btn.dataset.podiumUf;
-        if (onHoverUF) {
-          btn.addEventListener('mouseenter', () => onHoverUF(uf));
-          btn.addEventListener('mouseleave', () => onHoverUF(null));
-        }
-        if (onSelectUF) {
-          btn.addEventListener('click', (evt) => {
-            evt.stopPropagation();
-            onSelectUF(uf);
-          });
-        }
+        btn.addEventListener('mouseenter', () => container.__ato5Handlers?.onHoverUF?.(uf));
+        btn.addEventListener('mouseleave', () => container.__ato5Handlers?.onHoverUF?.(null));
+        btn.addEventListener('focus', () => container.__ato5Handlers?.onHoverUF?.(uf));
+        btn.addEventListener('blur', () => container.__ato5Handlers?.onHoverUF?.(null));
+        btn.addEventListener('click', (evt) => {
+          evt.stopPropagation();
+          container.__ato5Handlers?.onSelectUF?.(uf);
+        });
       });
     });
   }
@@ -451,6 +450,7 @@ export function renderAto5MapStage(
   st.prevStep = prevStep;
   st.currentData = geoData;
   st.byUf = byUf;
+  st.top5Set = new Set(top5.map((d) => d.uf));
   st.selectedUF = selectedUF;
   st.onHoverUF = onHoverUF;
   st.onSelectUF = onSelectUF;
@@ -490,10 +490,10 @@ export function renderAto5MapStage(
 
     polyNode.setAttribute('aria-label', `${UF_NAMES[uf] || uf}: ${stepMeta.formatVal(d[stepMeta.metricKey])}`);
 
+    polyNode.style.fillOpacity = '';
     if (animate) {
       tl.to(polyNode, {
-        attr: { fill: targetFill, stroke: targetStroke, 'stroke-width': targetStrokeW },
-        fillOpacity: targetOpacity,
+        attr: { fill: targetFill, 'fill-opacity': targetOpacity, stroke: targetStroke, 'stroke-width': targetStrokeW },
         duration: 0.42,
         ease: 'power2.inOut',
       }, 0);
@@ -506,6 +506,7 @@ export function renderAto5MapStage(
 
     // Anel dourado cumulativo com svg-path-draw quando o estado entra no Top 5 estrutural
     if (ringNode) {
+      ringNode.style.strokeOpacity = '';
       const rLen = st.ringLens.get(uf) || 0;
       const targetRingW = stars >= 2 ? 2.8 : 1.9;
       const targetRingOp = stars > 0 ? (isDimmed ? 0.45 : 0.95) : 0;
@@ -516,10 +517,10 @@ export function renderAto5MapStage(
         ringNode.style.strokeDasharray = `${rLen}`;
         tl.fromTo(
           ringNode,
-          { strokeDashoffset: rLen, strokeOpacity: 0.95, attr: { 'stroke-width': targetRingW } },
+          { attr: { 'stroke-opacity': 0.95, 'stroke-width': targetRingW }, strokeDashoffset: rLen },
           {
             strokeDashoffset: 0,
-            strokeOpacity: targetRingOp,
+            attr: { 'stroke-opacity': targetRingOp },
             duration: 0.56,
             ease: 'power2.out',
             onComplete: () => { ringNode.style.strokeDasharray = 'none'; },
@@ -530,8 +531,7 @@ export function renderAto5MapStage(
         ringNode.style.strokeDasharray = 'none';
         ringNode.style.strokeDashoffset = '0';
         tl.to(ringNode, {
-          strokeOpacity: targetRingOp,
-          attr: { 'stroke-width': targetRingW },
+          attr: { 'stroke-opacity': targetRingOp, 'stroke-width': targetRingW },
           duration: stars === 0 ? 0.24 : 0.35,
           ease: 'power1.out',
         }, 0);
@@ -631,22 +631,38 @@ export function renderAto5MapStage(
 }
 
 export function highlightAto5UF(mapContainer, calloutsContainer, stepsContainer, targetUF) {
+  const st = mapContainer?.__ato5State;
   if (mapContainer) {
+    let focusedPoly = null;
     mapContainer.querySelectorAll('.ato5-state-path').forEach((el) => {
       const uf = el.dataset.uf;
-      if (!targetUF) {
-        el.setAttribute('fill-opacity', '1');
-      } else {
-        el.setAttribute('fill-opacity', uf === targetUF ? '1' : '0.42');
-      }
+      const isTop5 = st?.top5Set?.has(uf) || false;
+      const isTarget = Boolean(targetUF && uf === targetUF);
+      el.style.fillOpacity = '';
+      el.setAttribute('fill-opacity', !targetUF || isTarget ? '1' : '0.32');
+      el.setAttribute('stroke', isTarget ? SEMANTIC_PALETTE.ink : (isTop5 ? '#FFFFFF' : '#B9CAC2'));
+      el.setAttribute('stroke-width', isTarget ? '2.5' : (isTop5 ? '1.5' : '0.9'));
+      if (isTarget) focusedPoly = el;
     });
+    if (focusedPoly?.parentNode) {
+      focusedPoly.parentNode.appendChild(focusedPoly);
+    }
     mapContainer.querySelectorAll('.ato5-ring-layer path').forEach((el) => {
       const uf = el.dataset.ufRing;
-      const curOp = Number(el.getAttribute('stroke-opacity') || 0);
-      if (curOp > 0) {
-        el.setAttribute('stroke-opacity', !targetUF || uf === targetUF ? '0.95' : '0.38');
+      el.style.strokeOpacity = '';
+      const d = st?.byUf?.get(uf);
+      const hasStars = st ? revealedStarsAt(d, st.currentStep) > 0 : Number(el.getAttribute('stroke-opacity') || 0) > 0;
+      if (hasStars) {
+        el.setAttribute('stroke-opacity', !targetUF || uf === targetUF ? '0.95' : '0.3');
+      } else {
+        el.setAttribute('stroke-opacity', '0');
       }
     });
+    if (st?.labelEls) {
+      st.labelEls.forEach((lbl, uf) => {
+        lbl.g.style.opacity = targetUF && uf !== targetUF ? '0.32' : '1';
+      });
+    }
   }
   if (calloutsContainer) {
     calloutsContainer.querySelectorAll('.ato5-callout-pill').forEach((el) => {

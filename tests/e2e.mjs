@@ -455,6 +455,21 @@ if (
   throw new Error(`Ato 5 incompleto: ${JSON.stringify(h9Check)}`);
 }
 await assertUnifiedHover('#canvas-h9-map svg path.ato5-state-path[data-uf="SP"]', '#canvas-h9-map', 0);
+await page.hover('#sec-h9 .step-card[data-step="4"] .ato5-podium-card[data-podium-uf="AP"]');
+const h9PodiumHover = await page.evaluate(() => {
+  const ap = document.querySelector('#canvas-h9-map path.ato5-state-path[data-uf="AP"]');
+  const rj = document.querySelector('#canvas-h9-map path.ato5-state-path[data-uf="RJ"]');
+  return {
+    apOp: getComputedStyle(ap).fillOpacity,
+    apStroke: ap.getAttribute('stroke'),
+    apStrokeW: ap.getAttribute('stroke-width'),
+    rjOp: Number(getComputedStyle(rj).fillOpacity),
+  };
+});
+if (h9PodiumHover.apOp !== '1' || h9PodiumHover.apStroke !== '#142620' || Number(h9PodiumHover.apStrokeW) < 2 || h9PodiumHover.rjOp >= 0.5) {
+  throw new Error(`Hover em card Top 5 do Ato 5 não destacou estado no mapa: ${JSON.stringify(h9PodiumHover)}`);
+}
+await page.mouse.move(10, 10);
 await page.click('#ato5-compact-callouts .ato5-callout-pill[data-uf="DF"]');
 await page.waitForFunction(() => !document.getElementById('btn-map-reset-uf').hidden);
 await page.click('#btn-map-reset-uf');

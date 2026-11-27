@@ -18,9 +18,9 @@
 
 ## Evidências objetivas
 
-- `npm run build:vercel` → `dist/app.js 301.3kb`, `site/` com `15` arquivos (`11.40 MB`)
-- `./init.sh` → `18 passed in 18.13s`
-- `E2E_ROOT=site node tests/e2e.mjs` → `E2E OK` (`stepDotsGroups: 9`, `h2RowsCount: 10`, `podiumCards: 26`, `leaderLines: 0`, `missingLblTransforms: 0`, `errors: []`, `overflowX: false`)
+- `npm run build:vercel` → `dist/app.js 302.0kb`, `site/` com `15` arquivos (`11.40 MB`)
+- `./init.sh` → `18 passed in 18.08s`
+- `E2E_ROOT=site node tests/e2e.mjs` → `E2E OK` (`stepDotsGroups: 9`, `h2RowsCount: 10`, `podiumCards: 26`, `leaderLines: 0`, `missingLblTransforms: 0`, `errors: []`, `overflowX: false`) + hover ao vivo nos cards Top 5 destacando a UF (`fillOpacity: "1"`, `stroke: "#142620"`, demais UFs `0.32`)
 - Scroll ao vivo sem `?steps=full` → `{"errs":[],"h1Fill22":"#4B636E","lim0":2,"lim1":3,"lim2":4,"h9BadLbl":0}`
 
 ## Riscos residuais

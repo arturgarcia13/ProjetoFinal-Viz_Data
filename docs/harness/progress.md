@@ -257,7 +257,7 @@
   - Revisão final em [public/index.html](../../public/index.html) (removido rótulo residual `(H6)`/`≥2` em `#boca-da-taca` e referências ao antigo `H7` em `#metodologia`), [src/data.js](../../src/data.js) (comentário atualizado para `H1/Gráfico 8`) e reescrita completa de [docs/guia_dos_graficos.md](../../docs/guia_dos_graficos.md) alinhada aos 9 blocos gráficos ativos.
   - Revisão adversarial em contexto frio apontou divergências de redação em `guia_dos_graficos.md`, título/legenda de `H2` no Passo 1 em [src/main.js](../../src/main.js), `tabindex` de barras ocultas em [src/charts/h8Temporal.js](../../src/charts/h8Temporal.js) e seta `←` de *outlier* em [src/charts/h3Scatter.js](../../src/charts/h3Scatter.js) — todos corrigidos com asserções em [tests/e2e.mjs](../../tests/e2e.mjs).
   - Recibo registrado em [docs/harness/receipts/2026-11-27-plano-31-alteracoes.md](receipts/2026-11-27-plano-31-alteracoes.md).
-  - **Evidência:** `npm run build:vercel` (`dist/app.js 301.3kb`, `site/` 15 arquivos / `11.40 MB`), `./init.sh` (`18 passed in 18.13s`), `E2E_ROOT=site node tests/e2e.mjs` (`E2E OK`, `errors: []`, `overflowX: false`).
+  - **Evidência:** `npm run build:vercel` (`dist/app.js 302.0kb`, `site/` 15 arquivos / `11.40 MB`), `./init.sh` (`18 passed in 18.08s`), `E2E_ROOT=site node tests/e2e.mjs` (`E2E OK`, hover em `.ato5-podium-card` validado, `errors: []`, `overflowX: false`).
 
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.

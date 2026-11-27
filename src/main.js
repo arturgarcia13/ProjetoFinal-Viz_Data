@@ -7,6 +7,7 @@ import {
   computeH2GapEvolution,
   computeH2PublicVsPrivate,
   computeH3,
+  computeH4Sankey1000,
   computeH5,
   computeH6Series,
   computeH7Comparison,
@@ -19,8 +20,7 @@ import { tweenPctText } from './charts/motion.js';
 import { computeH1EightBins, renderH1Histogram } from './charts/h1Histogram.js';
 import { renderH2Dumbbell } from './charts/h2Dumbbell.js';
 import { renderH3Scatter } from './charts/h3Scatter.js';
-import { computeH4FlowStats, renderH4Sankey } from './charts/h4SankeyNetwork.js';
-import { renderH4Hubs } from './charts/h4Hubs.js';
+import { renderH4Sankey } from './charts/h4SankeyNetwork.js';
 import { renderH5Conversion } from './charts/h5Conversion.js';
 import { renderH6Signals } from './charts/h6Signals.js';
 import { renderThresholdCompare } from './charts/h6ThresholdCompare.js';
@@ -46,7 +46,6 @@ const state = {
   h1BinFilter: null,
   h3Cargo: 'all',
   h3CargoLocked: false,
-  h4Cohort: 'all',
   h5View: 'bars',
   h6Year: 2022,
   limiarUnit: 'chapa',
@@ -443,27 +442,14 @@ function update() {
   };
   R.h3();
 
-  // H4 (Sankey passo 0-1, Rede de Hubs passo 2)
+  // H4 (Sankey interativo em 3 colunas: Origem -> Corte 1.000 votos -> Destinos separados)
   const h4Rows = getScopedRows({ year: state.year });
-  const flowStats = computeH4FlowStats(h4Rows, { cohort: state.h4Cohort });
-  setText('title-h4', stepOf('h4') >= 2
-    ? `Principais fornecedores-hub (${state.year}) atendem dezenas de candidaturas simultaneamente, incluindo campanhas de baixa votação`
-    : `Cerca de ${Math.round(flowStats.sharedPct)}% dos recursos (${fmtCompactBrl(flowStats.totShared)}) fluem para fornecedores compartilhados e ${fmtPctDirect(flowStats.partyPct, 1)} para partidos/terceiros`);
+  const h4Sankey = computeH4Sankey1000(h4Rows, { voteCutoff: 1000 });
+  setText('title-h4', `Entre candidaturas aptas (${state.year}), ${fmtPctDirect(h4Sankey.sharedPct, 1)} dos gastos vão para fornecedores compartilhados e ${fmtPctDirect(h4Sankey.directPct, 1)} para campanha direta`);
 
   const cH4 = document.getElementById('canvas-h4');
   R.h4 = (step = stepOf('h4'), prevStep = stepOf('h4')) => {
-    if (step >= 2) {
-      const hubYear = APP_DATA.hubs?.years?.[String(state.year)] || APP_DATA.hubs?.years?.['2022'];
-      renderH4Hubs(cH4, hubYear, {
-        width: getCanvasWidth(cH4),
-        year: state.year,
-        uf: state.uf,
-        party: state.party,
-        animate: prevStep < 2,
-      });
-    } else {
-      renderH4Sankey(cH4, flowStats, { step, prevStep, width: getCanvasWidth(cH4) });
-    }
+    renderH4Sankey(cH4, h4Sankey, { step, prevStep, width: getCanvasWidth(cH4) });
   };
   R.h4();
 
@@ -690,14 +676,6 @@ function bindEvents() {
       state.h3Cargo = btn.dataset.h3Cargo;
       state.h3CargoLocked = true;
       document.querySelectorAll('[data-h3-cargo]').forEach((b) => b.classList.toggle('active', b === btn));
-      update();
-    });
-  });
-
-  document.querySelectorAll('[data-h4-cohort]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      state.h4Cohort = btn.dataset.h4Cohort;
-      document.querySelectorAll('[data-h4-cohort]').forEach((b) => b.classList.toggle('active', b === btn));
       update();
     });
   });
@@ -943,12 +921,6 @@ async function init() {
         const curB = yr === 2026 ? (isA ? b27B.a26.pct : b27B.r26.pct) : (isA ? b27B.a22.pct : b27B.r22.pct);
         setText('title-h1', `Em ${yr} (${isA ? 'Aptas' : 'Registradas'}), ${fmtPctDirect(curQ, 0)} das chapas ficam em 30%–33%, contra ${fmtPctDirect(curB, 0)} logo abaixo (27%–30%)`);
       }
-    }
-    if (key === 'h4') {
-      const fS = computeH4FlowStats(getScopedRows({ year: state.year }), { cohort: state.h4Cohort });
-      setText('title-h4', idx >= 2
-        ? `Principais fornecedores-hub (${state.year}) atendem dezenas de candidaturas simultaneamente, incluindo campanhas de baixa votação`
-        : `Cerca de ${Math.round(fS.sharedPct)}% dos recursos (${fmtCompactBrl(fS.totShared)}) fluem para fornecedores compartilhados e ${fmtPctDirect(fS.partyPct, 1)} para partidos/terceiros`);
     }
   }, {
     onExitBlock: (key) => {

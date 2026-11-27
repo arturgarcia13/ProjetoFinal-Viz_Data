@@ -267,3 +267,46 @@ def test_ato4_threshold_band_comparison_and_ato5_geography():
     assert out["geo22Count"] == 27 and out["geo22Eligible"] == 27
     assert out["geo22Top5Len"] == 5 and out["geo22AnyPillar"] >= 1
     assert out["geo26Count"] == 27
+
+
+def test_h4_sankey_1000_votes_cutoff_and_destinations():
+    script = """
+    import fs from 'node:fs';
+    import { decodeAnalyticalBase, filterCandidates } from './src/data.js';
+    import { computeH4Sankey1000 } from './src/indicators.js';
+
+    const raw = JSON.parse(fs.readFileSync('data/analytical_base.json', 'utf8'));
+    const cov = JSON.parse(fs.readFileSync('data/coverage.json', 'utf8')).years['2022'];
+    const { candidates } = decodeAnalyticalBase(raw);
+    const rows22 = filterCandidates(candidates, { year: 2022, cargo: 'all' });
+    const s = computeH4Sankey1000(rows22, { voteCutoff: 1000 });
+
+    console.log(JSON.stringify({
+      nApto: s.nApto,
+      covApto: cov.population.gender_apto.F + cov.population.gender_apto.M,
+      profilesCount: s.profiles.length,
+      profileSumN: s.profiles.reduce((acc, p) => acc + p.n, 0),
+      destIds: s.destinations.map(d => d.id),
+      totRec: Math.round(s.totRec),
+      sumSources: Math.round(s.totPub + s.totPriv),
+      totExp: Math.round(s.totExp),
+      sumDests: Math.round(s.totShared + s.totDirect + s.totCands + s.totParty),
+      links01: s.links01.length,
+      links12: s.links12.length,
+    }));
+    """
+    proc = subprocess.run(
+        ["node", "--input-type=module", "-e", script],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    out = json.loads(proc.stdout)
+    assert out["nApto"] == out["covApto"] == out["profileSumN"]
+    assert out["profilesCount"] == 4
+    assert out["destIds"] == ["shared", "direct", "cands", "party"]
+    assert out["totRec"] == out["sumSources"]
+    assert out["totExp"] == out["sumDests"]
+    assert out["links01"] == 8
+    assert out["links12"] >= 14

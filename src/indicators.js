@@ -1860,3 +1860,127 @@ export function computeAto5Geography(allCandidates, { year = 2022, cargo = 'all'
     verdict,
   };
 }
+
+/**
+ * H4 — Sankey Interativo em 3 Colunas (Apenas APTO, corte em 1.000 votos):
+ * Coluna 1: Origem do Recurso (Fundo Público vs. Recursos Privados)
+ * Coluna 2: Perfil da Candidatura (Mulheres >1000, Mulheres <=1000, Homens >1000, Homens <=1000)
+ * Coluna 3: Destino do Gasto (Fornecedores Compartilhados, Campanha Direta, Repasses a Candidaturas, Direção Partidária)
+ */
+export function computeH4Sankey1000(candidates, { voteCutoff = 1000 } = {}) {
+  const apto = candidates.filter((c) => c.apto && (c.g === 'F' || c.g === 'M'));
+
+  const profilesDef = [
+    { id: 'f_gt', label: 'Mulheres > 1.000 votos', short: 'F > 1.000v', gender: 'F', high: true, test: (c) => c.g === 'F' && c.v > voteCutoff },
+    { id: 'f_le', label: 'Mulheres ≤ 1.000 votos', short: 'F ≤ 1.000v', gender: 'F', high: false, test: (c) => c.g === 'F' && c.v <= voteCutoff },
+    { id: 'm_gt', label: 'Homens > 1.000 votos', short: 'M > 1.000v', gender: 'M', high: true, test: (c) => c.g === 'M' && c.v > voteCutoff },
+    { id: 'm_le', label: 'Homens ≤ 1.000 votos', short: 'M ≤ 1.000v', gender: 'M', high: false, test: (c) => c.g === 'M' && c.v <= voteCutoff },
+  ];
+
+  const profiles = profilesDef.map((def) => {
+    const grp = apto.filter(def.test);
+    let pub = 0;
+    let priv = 0;
+    let shared = 0;
+    let direct = 0;
+    let cands = 0;
+    let party = 0;
+    let elCount = 0;
+
+    for (const c of grp) {
+      pub += (c.fefc || 0) + (c.fp || 0);
+      priv += (c.prop || 0) + (c.priv || 0);
+      shared += c.toShared || 0;
+      direct += c.toExcl || 0;
+      cands += (c.toCandF || 0) + (c.toCandM || 0) + (c.toCandU || 0);
+      party += c.toParty || 0;
+      if (c.el) elCount += 1;
+    }
+
+    const recTotal = pub + priv;
+    const expTotal = shared + direct + cands + party;
+    return {
+      ...def,
+      n: grp.length,
+      elCount,
+      pub,
+      priv,
+      recTotal,
+      shared,
+      direct,
+      cands,
+      party,
+      expTotal,
+      weight: Math.max(recTotal, expTotal),
+    };
+  });
+
+  const totPub = profiles.reduce((s, p) => s + p.pub, 0);
+  const totPriv = profiles.reduce((s, p) => s + p.priv, 0);
+  const totRec = totPub + totPriv;
+
+  const totShared = profiles.reduce((s, p) => s + p.shared, 0);
+  const totDirect = profiles.reduce((s, p) => s + p.direct, 0);
+  const totCands = profiles.reduce((s, p) => s + p.cands, 0);
+  const totParty = profiles.reduce((s, p) => s + p.party, 0);
+  const totExp = totShared + totDirect + totCands + totParty;
+
+  const sources = [
+    { id: 'pub', label: 'Fundo Público (FEFC + FP)', short: 'Fundo Público', val: totPub },
+    { id: 'priv', label: 'Recursos Privados', short: 'Privados', val: totPriv },
+  ];
+
+  const destinations = [
+    { id: 'shared', label: 'Fornecedores Compartilhados', short: 'Compartilhados', val: totShared },
+    { id: 'direct', label: 'Campanha Direta', short: 'Camp. Direta', val: totDirect },
+    { id: 'cands', label: 'Repasses a Candidaturas', short: 'Repasses Cand.', val: totCands },
+    { id: 'party', label: 'Direção Partidária', short: 'Partidos', val: totParty },
+  ];
+
+  const links01 = [];
+  for (const s of sources) {
+    for (const p of profiles) {
+      const val = s.id === 'pub' ? p.pub : p.priv;
+      if (val > 0) {
+        links01.push({ source: s.id, target: p.id, val, sourceLabel: s.label, targetLabel: p.label });
+      }
+    }
+  }
+
+  const links12 = [];
+  for (const p of profiles) {
+    for (const d of destinations) {
+      const val = p[d.id] || 0;
+      if (val > 0) {
+        links12.push({ source: p.id, target: d.id, val, sourceLabel: p.label, targetLabel: d.label });
+      }
+    }
+  }
+
+  const fLe = profiles.find((p) => p.id === 'f_le');
+  const fGt = profiles.find((p) => p.id === 'f_gt');
+  const sharedPct = safeDiv(totShared, totExp) * 100;
+  const directPct = safeDiv(totDirect, totExp) * 100;
+
+  return {
+    voteCutoff,
+    nApto: apto.length,
+    totPub,
+    totPriv,
+    totRec,
+    totShared,
+    totDirect,
+    totCands,
+    totParty,
+    totExp,
+    sharedPct,
+    directPct,
+    fLeShareOfPub: safeDiv(fLe?.pub || 0, totPub) * 100,
+    fGtShareOfPub: safeDiv(fGt?.pub || 0, totPub) * 100,
+    sources,
+    profiles,
+    destinations,
+    links01,
+    links12,
+  };
+}

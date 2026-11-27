@@ -284,8 +284,26 @@ if (h3Geo.overlaps.length > 0 || h3Geo.clipped.length > 0) {
   throw new Error(`H3 rótulos colidiram ou saíram do SVG: ${JSON.stringify(h3Geo)}`);
 }
 
-// 5. H4 (Hubs em step 2) + H5 + H6 (Consolidado) + Comparativo 30–33% vs >33% + H7/H8 sinalizados
-await assertUnifiedHover('#canvas-h4 .h4-hub', '#canvas-h4', 0);
+// 5. H4 (Sankey 3 colunas com corte 1.000 votos, apenas APTO, hover em todos os nós/fluxos incl. Campanha Direta) + H5 + H6 + Limiar + H7/H8
+if (await page.$('#cohort-h4-group')) {
+  throw new Error('H4 não deveria mais exibir seletor Todas vs Sem Top 10%');
+}
+const h4Check = await page.evaluate(() => ({
+  nodes: document.querySelectorAll('#canvas-h4 .h4-node').length,
+  links01: document.querySelectorAll('#canvas-h4 .h4-link-01').length,
+  links12: document.querySelectorAll('#canvas-h4 .h4-link-12').length,
+  hubs: document.querySelectorAll('#canvas-h4 .h4-hub').length,
+}));
+if (h4Check.nodes !== 10 || h4Check.links01 !== 8 || h4Check.links12 < 12 || h4Check.hubs !== 0) {
+  throw new Error(`H4 Sankey 1000v inválido: ${JSON.stringify(h4Check)}`);
+}
+await assertUnifiedHover('#canvas-h4 .h4-link-12[data-source="f_gt"][data-target="direct"]', '#canvas-h4', 0);
+await assertUnifiedHover('#canvas-h4 .h4-link-12[data-source="m_gt"][data-target="direct"]', '#canvas-h4', 0);
+await assertUnifiedHover('#canvas-h4 .h4-node[data-node-id="party"]', '#canvas-h4', 0);
+const h4Geo = await checkSvgGeometry('#canvas-h4 svg', { checkBounds: true });
+if (h4Geo.overlaps.length > 0 || h4Geo.clipped.length > 0) {
+  throw new Error(`H4 textos sobrepostos ou cortados: ${JSON.stringify(h4Geo)}`);
+}
 await assertUnifiedHover('#canvas-h5 .h5-party-row', '#canvas-h5', 0);
 await page.click('[data-h5-view="slope"]');
 await page.click('[data-h5-view="bars"]');

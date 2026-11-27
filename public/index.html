@@ -357,55 +357,43 @@
         </div>
       </section>
 
-      <!-- GRÁFICO 4 (H4 — Sankey de Fluxo + Rede Bipartida de Hubs) -->
+      <!-- GRÁFICO 4 (H4 — Sankey Interativo: Origem -> Corte 1.000 votos -> Destinos) -->
       <section class="scrolly-block" id="sec-h4" data-chart="h4">
         <div class="scrolly-steps">
           <article class="step-card is-active" data-step="0">
-            <span class="step-tag">Passo 1 de 3 · Entrada do Recurso</span>
-            <h3>Receber não garante autonomia</h3>
+            <span class="step-tag">Passo 1 de 2 · Origem e Corte de 1.000 Votos</span>
+            <h3>Entrada pública vs. privada por desempenho</h3>
             <p>
-              O dinheiro sai do partido para <span class="hl-female">mulheres</span> e <span class="hl-male">homens</span>, mas o registro da receita não revela quem concentra o gasto real.
+              Considerando apenas candidaturas <strong>aptas</strong>, separamos a entrada de <strong>Fundo Público (FEFC + Fundo Partidário)</strong> e <strong>Recursos Privados</strong> entre <span class="hl-female">mulheres</span> e <span class="hl-male">homens</span> acima e abaixo de <strong>1.000 votos</strong>.
             </p>
           </article>
 
           <article class="step-card" data-step="1">
-            <span class="step-tag">Passo 2 de 3 · Destino das Despesas</span>
-            <h3>Fluxo para CNPJs compartilhados</h3>
+            <span class="step-tag">Passo 2 de 2 · Destino do Gasto</span>
+            <h3>Para onde vai o gasto em cada perfil</h3>
             <p>
-              Parcela relevante converge para <span class="hl-pink">Fornecedores Compartilhados</span> pela mesma chapa, além de retornos à direção partidária e terceiros.
+              Rastreamos separadamente cada destino da despesa: <span class="hl-pink">Fornecedores Compartilhados</span>, <strong>Campanha Direta</strong>, <strong>Repasses a Candidaturas</strong> e <strong>Direção Partidária</strong>. Passe o cursor sobre qualquer fluxo ou bloco para ver os valores.
             </p>
-            <div class="diag-slot" id="verdict-h4"><span class="diag-pill diag-vaza">Diagnóstico: Concentração e hubs</span></div>
-          </article>
-
-          <article class="step-card" data-step="2">
-            <span class="step-tag">Passo 3 de 3 · Rede de Hubs (Em revisão)</span>
-            <h3>Fornecedores-hub em comum</h3>
-            <p>
-              Na rede real, <span class="hl-gold">fornecedores centrais</span> atendem dezenas de candidaturas ao mesmo tempo. A espessura das faixas mostra quantas delas têm <span class="hl-female">baixa votação</span>.
-            </p>
-            <p class="deprecation-notice">Sinalizado para remoção na próxima etapa: esta visão de hubs será descartada após revisão metodológica.</p>
+            <div class="diag-slot" id="verdict-h4"><span class="diag-pill diag-vaza">Diagnóstico: Fluxo desigual por perfil</span></div>
           </article>
         </div>
 
         <div class="scrolly-stage">
           <div class="chart-meta-row">
             <span class="chart-code-pill">Gráfico 4</span>
-            <span class="chart-recorte-label active-recorte-text">Rastreamento de Despesas · Prestação de Contas TSE</span>
+            <span class="chart-recorte-label active-recorte-text">Candidaturas Aptas · Corte em 1.000 votos · Prestação de Contas TSE</span>
           </div>
           <h3 class="chart-conclusive-title" id="title-h4">
-            Fatia expressiva dos recursos flui para fornecedores compartilhados e estruturas partidárias
+            Fluxo de recursos entre Fundo Público, Recursos Privados, perfis de votação (1.000 votos) e destinos do gasto
           </h3>
           <div class="chart-controls-bar">
-            <div class="segmented-group" id="cohort-h4-group">
-              <button type="button" class="segmented-btn active" data-h4-cohort="all">Todas as Candidaturas</button>
-              <button type="button" class="segmented-btn" data-h4-cohort="noTop10">Sem Top 10% (Base)</button>
-            </div>
             <div class="inline-legend" id="legend-h4">
               <span class="legend-item"><i class="legend-swatch" style="background:#007D5B"></i> Fundo Público</span>
+              <span class="legend-item"><i class="legend-swatch" style="background:#E5A910"></i> Recursos Privados</span>
               <span class="legend-item"><i class="legend-swatch" style="background:#FA532E"></i> Mulheres (F)</span>
               <span class="legend-item"><i class="legend-swatch" style="background:#4B636E"></i> Homens (M)</span>
               <span class="legend-item"><i class="legend-swatch" style="background:#D946BE"></i> Fornec. Compartilhado</span>
-              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#F8DF4F;border:1.5px solid #007D5B"></i> Hub (passo 3)</span>
+              <span class="legend-item"><i class="legend-swatch" style="background:#0284C7"></i> Campanha Direta</span>
             </div>
           </div>
           <div class="svg-holder" id="canvas-h4"></div>

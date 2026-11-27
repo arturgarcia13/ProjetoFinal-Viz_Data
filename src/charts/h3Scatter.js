@@ -382,7 +382,7 @@ export function renderH3Scatter(
     const pr = rScale(d.pubTotal);
     let textStr = d.party;
     if (d.isOutlier) {
-      const arrow = d.yPct > DOMAIN_MAX ? '↑' : (d.yPct < DOMAIN_MIN ? '↓' : '→');
+      const arrow = d.yPct > DOMAIN_MAX ? '↑' : (d.yPct < DOMAIN_MIN ? '↓' : (d.xPct < DOMAIN_MIN ? '←' : '→'));
       const valPct = d.yPct > DOMAIN_MAX || d.yPct < DOMAIN_MIN ? d.yPct : d.xPct;
       textStr = `${d.party} (${Math.round(valPct)}%) ${arrow}`;
     }

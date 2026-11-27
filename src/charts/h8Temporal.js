@@ -193,6 +193,7 @@ export function renderH8Temporal(container, h8Data, { step = 2, prevStep = 2, wi
 
       rect.interrupt();
       lbl.interrupt();
+      rect.attr('tabindex', isVisible ? 0 : -1);
 
       if (animate && (isVisible !== wasVisible || isFreshMount)) {
         rect.transition().duration(dur).delay(delay).ease(MOTION.easeOut)

@@ -374,6 +374,9 @@ function update() {
   const h2b26 = computeH2PublicVsPrivate(computeH2(h2b26Rows), { selectedParty: state.party });
   renderVerdictPill('verdict-h2', h2Gap.verdict);
   const ratioValid = h2Gap.rows.filter((r) => r.medM2026 > 0 && r.medF2022 !== null);
+  const belowParity22Pct = ratioValid.length > 0
+    ? Math.round((ratioValid.filter((r) => r.medF2022 < r.medM2022).length / ratioValid.length) * 100)
+    : 0;
   const belowParityPct = ratioValid.length > 0
     ? Math.round((ratioValid.filter((r) => r.medF2026 < r.medM2026).length / ratioValid.length) * 100)
     : 0;
@@ -402,6 +405,14 @@ function update() {
         legEl.innerHTML = `
           <span class="legend-item"><i class="legend-swatch" style="background:#007D5B"></i> 2022 · Fundo Público (FEFC/FP)</span>
           <span class="legend-item"><i class="legend-swatch" style="background:#F8DF4F;border:1px solid #C98A00"></i> 2022 · Recursos Privados / Próprios</span>
+        `;
+      }
+    } else if (stepIdx === 0) {
+      setText('title-h2', `Em ${belowParity22Pct}% dos ${ratioValid.length} maiores partidos (2022), mulheres têm mediana menor que homens`);
+      if (recEl) recEl.textContent = 'Top 10 Partidos por candidaturas com receita em 2026 · Baseline 2022 (F÷M)';
+      if (legEl) {
+        legEl.innerHTML = `
+          <span class="legend-item"><i class="legend-swatch is-circle" style="background:#4B636E"></i> 2022 (início)</span>
         `;
       }
     } else {

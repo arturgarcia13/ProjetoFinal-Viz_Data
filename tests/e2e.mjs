@@ -225,6 +225,15 @@ if (h2Comp3.rows !== 0 || h2Comp3.y22 !== 2 || h2Comp3.y26 !== 0) {
   throw new Error(`H2 Passo 3 deveria exibir apenas composição 2022, obteve ${JSON.stringify(h2Comp3)}`);
 }
 
+await h2Dots[0].click(); // Passo 1: Baseline 2022 sem legenda/título de 2026
+const h2Step1Ui = await page.evaluate(() => ({
+  recorte: document.getElementById('recorte-h2-label')?.textContent?.trim() || '',
+  legendItems: document.querySelectorAll('#legend-h2 .legend-item').length,
+}));
+if (!h2Step1Ui.recorte.includes('Baseline 2022') || h2Step1Ui.legendItems !== 1) {
+  throw new Error(`H2 Passo 1 deveria exibir recorte Baseline 2022 e legenda apenas 2022: ${JSON.stringify(h2Step1Ui)}`);
+}
+
 await h2Dots[1].click(); // Passo 2: Dumbbell
 const h2RowsCount = await page.$$eval('#canvas-h2 .h2-row', (els) => els.length);
 if (h2RowsCount < 8) throw new Error(`H2 deveria ter ≥8 partidos, obteve ${h2RowsCount}`);
@@ -363,8 +372,13 @@ const h8Annotations = await page.$$eval('#canvas-h8 svg .direct-annotation', (el
 if (h8Annotations !== 0) throw new Error(`H8 não deveria ter textos internos, obteve ${h8Annotations}`);
 const h8Dots = await page.$$('#sec-h8 .step-dot');
 await h8Dots[0].click(); // Passo 1: apenas 2018 visível
-const h8Step1Op26 = await page.$eval('#canvas-h8 .yr-g[data-year="2026"] .h8-dot', (el) => Number(el.getAttribute('opacity')));
-if (h8Step1Op26 !== 0) throw new Error(`H8 Passo 1 deveria ocultar 2026, obteve opacity=${h8Step1Op26}`);
+const h8Step1 = await page.$eval('#canvas-h8 .yr-g[data-year="2026"] .h8-dot', (el) => ({
+  op: Number(el.getAttribute('opacity')),
+  tabindex: el.getAttribute('tabindex'),
+}));
+if (h8Step1.op !== 0 || h8Step1.tabindex !== '-1') {
+  throw new Error(`H8 Passo 1 deveria ocultar 2026 e remover tabindex: ${JSON.stringify(h8Step1)}`);
+}
 await h8Dots[2].click(); // Volta ao Passo 3 (2018->2026 + curva combinada)
 await assertUnifiedHover('#canvas-h8 .h8-dot', '#canvas-h8', 0);
 

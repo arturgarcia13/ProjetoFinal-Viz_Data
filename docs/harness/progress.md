@@ -253,8 +253,14 @@
   - Explicitado em [public/index.html](../../public/index.html) e [src/charts/h9MapAndParallel.js](../../src/charts/h9MapAndParallel.js) que **Concentração** (Passo 3) mede a fatia do FEFC feminino destinada às **10% candidatas mais financiadas** da UF; atualizados [tests/test_indicators.py](../../tests/test_indicators.py) e [tests/e2e.mjs](../../tests/e2e.mjs).
   - **Evidência:** `npm run build:vercel` (`dist/app.js 300.8kb`, `site/` 15 files / `11.40 MB`), `./init.sh` (`18 passed in 18.07s`), `E2E_ROOT=site node tests/e2e.mjs` (`leaderLines: 0`, `podiumCards: 26`, `RO: #5`, `SE: #5`, `step3ConcentracaoClarified: true`, `errors: []`, `overflowX: false`).
 
+- **2026-11-27 (Etapa 9 — Auditoria final, documentação, revisão adversarial e recibo):**
+  - Revisão final em [public/index.html](../../public/index.html) (removido rótulo residual `(H6)`/`≥2` em `#boca-da-taca` e referências ao antigo `H7` em `#metodologia`), [src/data.js](../../src/data.js) (comentário atualizado para `H1/Gráfico 8`) e reescrita completa de [docs/guia_dos_graficos.md](../../docs/guia_dos_graficos.md) alinhada aos 9 blocos gráficos ativos.
+  - Revisão adversarial em contexto frio apontou divergências de redação em `guia_dos_graficos.md`, título/legenda de `H2` no Passo 1 em [src/main.js](../../src/main.js), `tabindex` de barras ocultas em [src/charts/h8Temporal.js](../../src/charts/h8Temporal.js) e seta `←` de *outlier* em [src/charts/h3Scatter.js](../../src/charts/h3Scatter.js) — todos corrigidos com asserções em [tests/e2e.mjs](../../tests/e2e.mjs).
+  - Recibo registrado em [docs/harness/receipts/2026-11-27-plano-31-alteracoes.md](receipts/2026-11-27-plano-31-alteracoes.md).
+  - **Evidência:** `npm run build:vercel` (`dist/app.js 301.3kb`, `site/` 15 arquivos / `11.40 MB`), `./init.sh` (`18 passed in 18.13s`), `E2E_ROOT=site node tests/e2e.mjs` (`E2E OK`, `errors: []`, `overflowX: false`).
+
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.
 
 ## 5. Next Action
-1. Executar a **Etapa 9** (revisão final, [docs/guia_dos_graficos.md](../../docs/guia_dos_graficos.md), nota metodológica em `#metodologia`, recibo final em `docs/harness/receipts/` e revisão adversarial em subagente `research`), validar tudo, commitar e enviar para `origin/master`.
+1. Todas as 9 etapas do plano de 31 alterações foram concluídas, auditadas e publicadas em `origin/master`.

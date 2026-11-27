@@ -312,9 +312,43 @@ if (h5Annotations !== 0) {
   throw new Error(`H5 não deveria ter textos internos (.direct-annotation), obteve ${h5Annotations}`);
 }
 await assertUnifiedHover('#canvas-h5 .h5-party-row', '#canvas-h5', 0);
+
+// H6: 3 sinais (sem >=2 combinados), APTO explícito, 4 passos 2018(F)->2022(F)->2026(F)->2026(F+M) no mesmo SVG
+const h6Init = await page.evaluate(() => ({
+  groups: document.querySelectorAll('#canvas-h6 .h6-signal-group').length,
+  hasTwoPlus: Boolean(document.querySelector('#canvas-h6 .h6-signal-group[data-signal="twoPlus"]')),
+  svgText: document.querySelector('#canvas-h6 svg')?.textContent || '',
+  menOp: Number(document.querySelector('#canvas-h6 .h6-dot-M')?.getAttribute('opacity') || 0),
+  annotations: document.querySelectorAll('#canvas-h6 svg .direct-annotation').length,
+  hasSvgRef: Boolean(window.__h6SvgRef = document.querySelector('#canvas-h6 svg.h6-series-svg')),
+}));
+if (
+  h6Init.groups !== 3
+  || h6Init.hasTwoPlus
+  || h6Init.svgText.includes('≥ 2')
+  || !h6Init.svgText.includes('2026')
+  || !h6Init.svgText.includes('Lote ≥3')
+  || h6Init.menOp !== 1
+  || h6Init.annotations !== 0
+) {
+  throw new Error(`H6 Passo 4 inválido: ${JSON.stringify(h6Init)}`);
+}
+const h6Dots = await page.$$('#sec-h6 .step-dot');
+for (const [stepIdx, yrStr] of [[0, '2018'], [1, '2022'], [2, '2026']]) {
+  await h6Dots[stepIdx].click();
+  const sCheck = await page.evaluate(() => ({
+    menOp: Number(document.querySelector('#canvas-h6 .h6-dot-M')?.getAttribute('opacity') || 0),
+    tag: document.querySelector('#canvas-h6 .h6-year-tag')?.textContent || '',
+    sameSvg: window.__h6SvgRef === document.querySelector('#canvas-h6 svg.h6-series-svg'),
+  }));
+  if (sCheck.menOp !== 0 || !sCheck.tag.includes(yrStr) || !sCheck.sameSvg) {
+    throw new Error(`H6 Passo ${stepIdx + 1} (${yrStr} somente mulheres) inválido: ${JSON.stringify(sCheck)}`);
+  }
+}
+await h6Dots[3].click(); // Volta ao Passo 4 (2026 Mulheres + Homens)
 await assertUnifiedHover('#canvas-h6 .h6-dot', '#canvas-h6', 0);
-await page.click('[data-h6-year="2026"]');
 await page.click('[data-h6-year="2022"]');
+await page.click('[data-h6-year="2026"]');
 await assertUnifiedHover('#canvas-limiar .limiar-panel', '#canvas-limiar', 0);
 await page.click('[data-limiar-unit="party"]');
 await page.click('[data-limiar-unit="chapa"]');

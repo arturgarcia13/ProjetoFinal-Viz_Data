@@ -46,7 +46,8 @@ const state = {
   h1BinFilter: null,
   h3Cargo: 'all',
   h3CargoLocked: false,
-  h6Year: 2022,
+  h6Year: 2026,
+  h6UserLocked: false,
   limiarUnit: 'chapa',
   limiarYear: 2022,
   h7Show2018: false,
@@ -245,6 +246,21 @@ function syncStepControlsVisibility(chartKey, idx) {
         b.classList.toggle('active', b.dataset.h3Cargo === state.h3Cargo);
       });
     }
+  }
+  if (chartKey === 'h6') {
+    const ctrl = document.getElementById('controls-h6');
+    const menLeg = document.getElementById('legend-h6-men');
+    if (ctrl) ctrl.classList.toggle('is-hidden', idx < 3);
+    if (menLeg) menLeg.classList.toggle('is-hidden', idx < 3);
+    if (idx < 3) {
+      state.h6UserLocked = false;
+      state.h6Year = idx === 0 ? 2018 : (idx === 1 ? 2022 : 2026);
+    } else if (!state.h6UserLocked) {
+      state.h6Year = 2026;
+    }
+    document.querySelectorAll('[data-h6-year]').forEach((b) => {
+      b.classList.toggle('active', Number(b.dataset.h6Year) === state.h6Year);
+    });
   }
 }
 
@@ -471,7 +487,7 @@ function update() {
   });
   R.h5();
 
-  // H6 (Consolidado — Sinais A, B, C e >=2 comparando Mulheres vs. Homens)
+  // H6 (Sinais A, B e C em candidaturas APTAS: 2018 F -> 2022 F -> 2026 F -> 2026 F+M)
   const h6Series = computeH6Series(APP_DATA.candidates, {
     cargo: state.cargo,
     uf: state.uf || null,
@@ -479,25 +495,38 @@ function update() {
     parties: binParties,
     voteThreshold: state.threshold,
   });
-  const h6YearObj = h6Series.byYear[state.h6Year] || h6Series.byYear[2022];
-  const fS6 = h6YearObj?.summary?.F || { n: 1, sigA: 0, sigB: 0, sigC: 0, twoPlus: 0 };
-  const mS6 = h6YearObj?.summary?.M || { n: 1, sigA: 0, sigB: 0, sigC: 0, twoPlus: 0 };
-  const h6InconclusiveVerdict = {
-    status: 'inconclusivo',
-    label: 'Inconclusivo',
-    reason: `Em ${state.h6Year}, sinais individuais são próximos entre mulheres e homens (Sinal A: ${fmtPct(fS6.sigA / (fS6.n || 1))} F vs. ${fmtPct(mS6.sigA / (mS6.n || 1))} M; ≥2 sinais: ${fmtPct(h6YearObj?.pct2PlusF || 0)} F vs. ${fmtPct(h6YearObj?.pct2PlusM || 0)} M). Indicadores isolados são inconclusivos sem prova documental.`,
-  };
-  renderVerdictPill('verdict-h6', h6InconclusiveVerdict);
-  setText('h6-dyn-summary', `Sinal A ${fmtPct(fS6.sigA / (fS6.n || 1))} vs. ${fmtPct(mS6.sigA / (mS6.n || 1))}, Sinal B ${fmtPct(fS6.sigB / (fS6.n || 1))} vs. ${fmtPct(mS6.sigB / (mS6.n || 1))}, Sinal C ${fmtPct(fS6.sigC / (fS6.n || 1))} vs. ${fmtPct(mS6.sigC / (mS6.n || 1))}`);
-  setText('title-h6', `Em ${state.h6Year}, sinais A, B e C têm taxas próximas entre mulheres (${fmtPct(h6YearObj?.pct2PlusF || 0)} ≥2) e homens (${fmtPct(h6YearObj?.pct2PlusM || 0)} ≥2) — quadro inconclusivo`);
+  const y18F = h6Series.byYear[2018]?.summary?.F || { n: 1, sigA: 0, sigB: 0, sigC: 0 };
+  const y22F = h6Series.byYear[2022]?.summary?.F || { n: 1, sigA: 0, sigB: 0, sigC: 0 };
+  const y26F = h6Series.byYear[2026]?.summary?.F || { n: 1, sigA: 0, sigB: 0, sigC: 0 };
+  setText('h6-dyn-f22', `Sinal B ${fmtPct(y18F.sigB / (y18F.n || 1))} → ${fmtPct(y22F.sigB / (y22F.n || 1))}; Sinal C ${fmtPct(y18F.sigC / (y18F.n || 1))} → ${fmtPct(y22F.sigC / (y22F.n || 1))}`);
+  setText('h6-dyn-f26', `Sinal B ${fmtPct(y26F.sigB / (y26F.n || 1))}, Sinal C ${fmtPct(y26F.sigC / (y26F.n || 1))}`);
 
   const cH6 = document.getElementById('canvas-h6');
-  R.h6 = (step = stepOf('h6'), prevStep = stepOf('h6')) => renderH6Signals(cH6, h6Series, {
-    step,
-    prevStep,
-    width: getCanvasWidth(cH6),
-    year: state.h6Year,
-  });
+  R.h6 = (step = stepOf('h6'), prevStep = stepOf('h6')) => {
+    const activeYr = step === 0 ? 2018 : (step === 1 ? 2022 : (step === 2 ? 2026 : state.h6Year));
+    const yObj = h6Series.byYear[activeYr] || h6Series.byYear[2026];
+    const fS6 = yObj?.summary?.F || { n: 1, sigA: 0, sigB: 0, sigC: 0 };
+    const mS6 = yObj?.summary?.M || { n: 1, sigA: 0, sigB: 0, sigC: 0 };
+    const h6Verdict = {
+      status: 'inconclusivo',
+      label: 'Inconclusivo',
+      reason: `Em ${activeYr}, sinais A, B e C são próximos entre mulheres e homens aptos (Sinal A: ${fmtPct(fS6.sigA / (fS6.n || 1))} F vs. ${fmtPct(mS6.sigA / (mS6.n || 1))} M; Sinal C: ${fmtPct(fS6.sigC / (fS6.n || 1))} F vs. ${fmtPct(mS6.sigC / (mS6.n || 1))} M). Indicadores isolados são inconclusivos sem prova documental.`,
+    };
+    renderVerdictPill('verdict-h6', h6Verdict);
+    setText('h6-dyn-summary', `Sinal A ${fmtPct(fS6.sigA / (fS6.n || 1))} vs. ${fmtPct(mS6.sigA / (mS6.n || 1))}, Sinal B ${fmtPct(fS6.sigB / (fS6.n || 1))} vs. ${fmtPct(mS6.sigB / (mS6.n || 1))}, Sinal C ${fmtPct(fS6.sigC / (fS6.n || 1))} vs. ${fmtPct(mS6.sigC / (mS6.n || 1))}`);
+    setText('recorte-h6-label', step >= 3
+      ? `${activeYr} · Apenas candidaturas aptas · Mulheres vs. Homens`
+      : `${activeYr} · Apenas candidaturas aptas · Somente Mulheres`);
+    setText('title-h6', step >= 3
+      ? `Em ${activeYr}, mulheres aptas e homens aptos registram taxas próximas nos sinais A, B e C — evidência inconclusiva`
+      : `Em ${activeYr} (mulheres aptas): Sinal A ${fmtPct(fS6.sigA / (fS6.n || 1))}, Sinal B ${fmtPct(fS6.sigB / (fS6.n || 1))} e Sinal C ${fmtPct(fS6.sigC / (fS6.n || 1))}`);
+    renderH6Signals(cH6, h6Series, {
+      step,
+      prevStep,
+      width: getCanvasWidth(cH6),
+      year: state.h6Year,
+    });
+  };
   R.h6();
 
   // Comparativo 30%–33% vs. >33% (excluindo <30%; alternável Por Chapa | Por Partido)
@@ -681,6 +710,7 @@ function bindEvents() {
   document.querySelectorAll('[data-h6-year]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.h6Year = Number(btn.dataset.h6Year);
+      state.h6UserLocked = true;
       document.querySelectorAll('[data-h6-year]').forEach((b) => b.classList.toggle('active', b === btn));
       update();
     });
@@ -771,7 +801,8 @@ function bindEvents() {
     state.h1BinFilter = null;
     state.h3Cargo = 'all';
     state.h3CargoLocked = false;
-    state.h6Year = 2022;
+    state.h6Year = 2026;
+    state.h6UserLocked = false;
     state.limiarUnit = 'chapa';
     state.limiarYear = 2022;
     state.ato5Year = 2022;
@@ -785,8 +816,7 @@ function bindEvents() {
     if (thr) thr.value = '10';
     setText('threshold-out', '10');
     syncH1ModeButtons();
-    ['h1', 'h3'].forEach((k) => syncStepControlsVisibility(k, stepOf(k)));
-    document.querySelectorAll('[data-h6-year]').forEach((b) => b.classList.toggle('active', Number(b.dataset.h6Year) === 2022));
+    ['h1', 'h3', 'h6'].forEach((k) => syncStepControlsVisibility(k, stepOf(k)));
     document.querySelectorAll('[data-limiar-unit]').forEach((b) => b.classList.toggle('active', b.dataset.limiarUnit === 'chapa'));
     document.querySelectorAll('[data-limiar-year]').forEach((b) => b.classList.toggle('active', Number(b.dataset.limiarYear) === 2022));
     document.querySelectorAll('[data-ato5-cargo]').forEach((b) => b.classList.toggle('active', b.dataset.ato5Cargo === 'all'));
@@ -924,7 +954,7 @@ async function init() {
     },
   });
 
-  ['h1', 'h3'].forEach((k) => syncStepControlsVisibility(k, stepOf(k)));
+  ['h1', 'h3', 'h6'].forEach((k) => syncStepControlsVisibility(k, stepOf(k)));
   bindEvents();
   update();
 }

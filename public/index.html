@@ -485,52 +485,60 @@
         </label>
       </div>
 
-      <!-- GRÁFICO 6 (H6 CONSOLIDADO — Sinais A, B, C e >=2 para Homens vs. Mulheres) -->
+      <!-- GRÁFICO 6 (H6 — Sinais A, B e C em candidaturas APTAS: 2018 F -> 2022 F -> 2026 F -> 2026 F+M) -->
       <section class="scrolly-block" id="sec-h6" data-chart="h6">
         <div class="scrolly-steps">
           <article class="step-card is-active" data-step="0">
-            <span class="step-tag">Passo 1 de 3 · Cálculo dos Sinais</span>
-            <h3>Sinais A, B e C sob a mesma régua</h3>
+            <span class="step-tag">Passo 1 de 4 · 2018 · Somente Mulheres Aptas</span>
+            <h3>Sinais A, B e C em 2018</h3>
             <p>
-              Consolidamos em um único quadro os três sinais observáveis nos microdados do TSE: <strong>Sinal A</strong> (votação ≤ limiar), <strong>Sinal B</strong> (receita zerada R$ 0) e <strong>Sinal C</strong> (lote contábil padronizado ≥3 candidaturas).
+              Analisando <strong>exclusivamente candidaturas aptas</strong>, medimos três sinais objetivos nos microdados do TSE em <strong>2018</strong> para mulheres: <strong>Sinal A</strong> (votação ≤ limiar), <strong>Sinal B</strong> (receita zerada R$ 0) e <strong>Sinal C (lote padronizado)</strong>: grupo de <strong>≥ 3 candidaturas aptas</strong> da mesma UF e partido com <strong>valor idêntico ao centavo</strong> no mesmo fornecedor/data ou no mesmo repasse FEFC+FP.
             </p>
           </article>
 
           <article class="step-card" data-step="1">
-            <span class="step-tag">Passo 2 de 3 · Diferenças Inexpressivas</span>
-            <h3>Homens e mulheres têm taxas próximas</h3>
+            <span class="step-tag">Passo 2 de 4 · Transição 2018 → 2022 (Mulheres Aptas)</span>
+            <h3>Mudança de perfil contábil em 2022</h3>
             <p>
-              Em 2022 e 2026, cada sinal aparece em proporções quase idênticas entre <span class="hl-female">mulheres</span> e <span class="hl-male">homens</span> (<span id="h6-dyn-summary">—</span>), evidenciando que esses indicadores isolados são inexpressivos para comprovar fraude.
+              Ao avançar para <strong>2022</strong> (ainda entre mulheres aptas), as contas zeradas (Sinal B) recuam após a consolidação da Súmula 73, enquanto os lotes padronizados (Sinal C) ganham peso (<span id="h6-dyn-f22">—</span>).
             </p>
-            <div class="diag-slot" id="verdict-h6"><span class="diag-pill diag-inconclusivo">Diagnóstico: Inconclusivo</span></div>
           </article>
 
           <article class="step-card" data-step="2">
-            <span class="step-tag">Passo 3 de 3 · Registro Metodológico</span>
-            <h3>Inconclusivo sem prova documental</h3>
+            <span class="step-tag">Passo 3 de 4 · Transição 2022 → 2026 (Mulheres Aptas)</span>
+            <h3>Série feminina até 2026</h3>
             <p>
-              Os microdados numéricos do TSE não registram atos efetivos de campanha. Registramos formalmente o caráter <strong>inconclusivo</strong> dessa frente de sinais financeiros sem investigação documental complementar.
+              Na transição para <strong>2026</strong> entre mulheres aptas (<span id="h6-dyn-f26">—</span>), o Sinal C permanece elevado enquanto a votação residual (Sinal A) oscila conforme o patamar de votos escolhido.
             </p>
+          </article>
+
+          <article class="step-card" data-step="3">
+            <span class="step-tag">Passo 4 de 4 · Mulheres vs. Homens (2026 · Aptas/os)</span>
+            <h3>Homens têm taxas próximas — evidência inconclusiva</h3>
+            <p>
+              Ao inserir os <span class="hl-male">homens aptos em 2026</span> sob a mesma régua, os três sinais aparecem em proporções próximas entre os dois gêneros (<span id="h6-dyn-summary">—</span>). Sem atos efetivos de campanha nos microdados, o quadro é <strong>inconclusivo</strong> para comprovar fraude isoladamente.
+            </p>
+            <div class="diag-slot" id="verdict-h6"><span class="diag-pill diag-inconclusivo">Diagnóstico: Inconclusivo</span></div>
           </article>
         </div>
 
         <div class="scrolly-stage">
           <div class="chart-meta-row">
             <span class="chart-code-pill">Gráfico 6</span>
-            <span class="chart-recorte-label active-recorte-text">Sinais de Alerta (Súmula 73/TSE) · Mulheres vs. Homens</span>
+            <span class="chart-recorte-label" id="recorte-h6-label">2018 · Apenas candidaturas aptas (Mulheres)</span>
           </div>
           <h3 class="chart-conclusive-title" id="title-h6">
-            Sinais A, B e C atingem proporções próximas entre homens e mulheres — evidência inconclusiva nos microdados
+            Sinais A, B e C entre candidaturas aptas (2018 → 2026) — evidência inconclusiva ao comparar mulheres e homens
           </h3>
           <div class="chart-controls-bar">
-            <div class="inline-legend">
-              <span class="legend-item"><i class="legend-swatch" style="background:#FA532E"></i> Mulheres (F)</span>
-              <span class="legend-item"><i class="legend-swatch" style="background:#4B636E"></i> Homens (M)</span>
+            <div class="inline-legend" id="legend-h6">
+              <span class="legend-item"><i class="legend-swatch" style="background:#FA532E"></i> Mulheres (F · Aptas)</span>
+              <span class="legend-item is-hidden" id="legend-h6-men"><i class="legend-swatch" style="background:#4B636E"></i> Homens (M · Aptos)</span>
             </div>
-            <div class="segmented-group" id="controls-h6">
+            <div class="segmented-group is-hidden" id="controls-h6">
               <button type="button" class="segmented-btn" data-h6-year="2018">2018</button>
-              <button type="button" class="segmented-btn active" data-h6-year="2022">2022</button>
-              <button type="button" class="segmented-btn" data-h6-year="2026">2026</button>
+              <button type="button" class="segmented-btn" data-h6-year="2022">2022</button>
+              <button type="button" class="segmented-btn active" data-h6-year="2026">2026</button>
             </div>
           </div>
           <div class="svg-holder" id="canvas-h6"></div>

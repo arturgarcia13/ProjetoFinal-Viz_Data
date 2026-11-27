@@ -913,6 +913,10 @@ code {
   gap: 0.35rem;
 }
 
+.legend-item.is-hidden {
+  display: none;
+}
+
 .legend-swatch {
   width: 10px;
   height: 10px;

@@ -19,7 +19,8 @@
   - **Etapa 3 (concluída):** Gráfico 3 (`H3` — itens 6, 7, 15, 16, 17, 18, 19): apenas os 5 piores partidos por distância negativa abaixo da diagonal (`p.p.`) rotulados; remoção de `addDirectAnnotation` e das legendas redundantes mantendo apenas a legenda de tamanho das bolas; quadrantes renomeados e selo `Cota mínima (30%)`; escala 1:1 fixa `15%–65%` (diagonal `45°`) com *outliers* ancorados na borda; transição fluida `Geral → Federal` com recálculo dinâmico e constância de objeto no mesmo `<svg>`.
   - **Etapa 4 (concluída):** Gráfico 4 (`H4` — itens 8, 9, 20): substituído por Sankey interativo em 3 colunas sobre candidaturas **aptas** com corte de `1.000` votos (`Origem do Recurso` → `Mulheres/Homens >1000 / ≤1000` → `Fornecedores Compartilhados`, `Campanha Direta`, `Repasses a Candidaturas` e `Direção Partidária` separados), com hover/tooltip completo em 100% dos nós e fluxos e remoção de `src/charts/h4Hubs.js`.
   - **Etapa 5 (concluída):** Gráfico 5 (`H5` — itens 10, 21): removidos os textos internos `addDirectAnnotation` e removido completamente o modo e o botão de *Slopegraph* (`#view-h5-group`).
-  - **Etapas 6–8 (pendentes):** `H6` 4 passos `2018(F)→2022(F)→2026(F)→2026(F+M)` sem `≥2` (itens 22, 24, 25, 29), Ato 4 (`H8` pós-`H6` animado, `Slopegraph` em `#sec-limiar`, remoção definitiva de `H7` — itens 26, 27, 28) e Ato 5 (sem *leader lines*, empate `RO`/`SE` 2022, explicitação de *Concentração* — itens 23, 30, 31).
+  - **Etapa 6 (concluída):** Gráfico 6 (`H6` — itens 22, 24, 25, 29): explicitado o critério do Sinal C (lote padronizado ≥3 APTO na mesma UF/partido ao centavo) e o universo exclusivo de candidaturas aptas; removida a barra/menção `≥ 2 sinais combinados`; reestruturada a narrativa em 4 passos no mesmo `<svg>` (`2018 F → 2022 F → 2026 F → 2026 F+M`).
+  - **Etapas 7–8 (pendentes):** Ato 4 (`H8` pós-`H6` animado, `Slopegraph` em `#sec-limiar`, remoção definitiva de `H7` — itens 26, 27, 28) e Ato 5 (sem *leader lines*, empate `RO`/`SE` 2022, explicitação de *Concentração* — itens 23, 30, 31).
 - **Scope & Non-goals:**
   - *In-scope:* `public/index.html`, `public/styles.css`, `src/indicators.js`, `src/main.js`, `src/charts/*.js`, `tests/test_indicators.py`, `tests/e2e.mjs`, `docs/guia_dos_graficos.md`, `docs/harness/`.
   - *Non-goals:* alterar ETL/CSVs brutos (`data/raw/`), alterar a capa (`.hero-section`), expor PII, executar `git push` sem aprovação.
@@ -235,6 +236,10 @@
 
 - **2026-11-27 (Etapa 5 — Gráfico 5 / H5, itens 10 e 21):**
   - Removidos os callouts internos `addDirectAnnotation` e o modo *Slopegraph* em [src/charts/h5Conversion.js](../../src/charts/h5Conversion.js), o seletor `#view-h5-group` e o texto correspondente em [public/index.html](../../public/index.html), além de `state.h5View` em [src/main.js](../../src/main.js).
+
+- **2026-11-27 (Etapa 6 — Gráfico 6 / H6, itens 22, 24, 25 e 29):**
+  - Reescrito [src/charts/h6Signals.js](../../src/charts/h6Signals.js) com apenas os 3 sinais (`Sinal A`, `Sinal B`, `Sinal C`, sem `≥ 2 sinais combinados` e sem `addDirectAnnotation`), explicitação do Sinal C (`≥3 candidaturas APTO da mesma UF/partido com valor idêntico ao centavo`) e do universo exclusivo `APTO`, além de constância de objeto em `<svg>` único para a narrativa em 4 passos (`2018 F → 2022 F → 2026 F → 2026 F+M`).
+  - Atualizados [public/index.html](../../public/index.html), [public/styles.css](../../public/styles.css) e [src/main.js](../../src/main.js) para sincronizar controles e legenda (`#legend-h6-men`, `#controls-h6`) com os 4 passos e remover referências a `≥2` em H6.
 
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.

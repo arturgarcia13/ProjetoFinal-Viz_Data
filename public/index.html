@@ -312,19 +312,19 @@
           </article>
 
           <article class="step-card" data-step="1">
-            <span class="step-tag">Passo 2 de 3 · Abaixo da Meta</span>
-            <h3>Foco nos partidos que não cumprem a meta</h3>
+            <span class="step-tag">Passo 2 de 3 · 5 Piores em Distância (p.p.)</span>
+            <h3>Foco nos 5 piores partidos abaixo da meta</h3>
             <p>
-              As siglas rotuladas no gráfico ficam <span class="hl-female">abaixo da linha Y = X</span> (<span id="h3-dyn-deficit">—</span> de déficit acumulado). Passe o cursor nas bolhas ou clique para filtrar.
+              Rotulamos apenas os <strong>5 piores partidos em distância negativa</strong> abaixo da linha Y = X (em pontos percentuais), dentro de um déficit total de <span id="h3-dyn-deficit">—</span>. Passe o cursor sobre qualquer bolha ou clique para filtrar.
             </p>
             <div class="diag-slot" id="verdict-h3"><span class="diag-pill diag-vaza">Diagnóstico: Travado no piso de 30%</span></div>
           </article>
 
           <article class="step-card" data-step="2">
-            <span class="step-tag">Passo 3 de 3 · Federal vs. Estadual</span>
+            <span class="step-tag">Passo 3 de 3 · Geral → Câmara Federal</span>
             <h3>Gargalo maior na Câmara Federal</h3>
             <p>
-              Em <span class="hl-female">Deputado Federal</span>, onde campanhas custam mais, o subfinanciamento se acentua frente às disputas estaduais.
+              Ao entrar aqui, o gráfico transita de <strong>Geral</strong> para <span class="hl-female">Deputado Federal</span>, onde campanhas custam mais e a distância abaixo da diagonal se acentua.
             </p>
           </article>
         </div>
@@ -338,11 +338,12 @@
             Legendas abaixo da linha proporcional repassam às mulheres fatia do Fundo Público inferior ao seu peso nas chapas
           </h3>
           <div class="chart-controls-bar">
-            <div class="inline-legend">
-              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#FA532E"></i> Não cumpre meta (&lt; Y=X)</span>
-              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#007D5B"></i> Proporcional (≥ Y=X)</span>
-              <span class="legend-item"><i class="legend-swatch is-solid-line" style="color:#C98A00"></i> Diagonal Y = X</span>
-              <span class="legend-item" style="color:var(--text-muted)">Escala fixa (0%–100%)</span>
+            <div class="inline-legend" id="legend-h3">
+              <span class="legend-item">
+                <i class="legend-swatch is-circle" style="width:7px;height:7px;background:#CBD5E1;border:1px solid #4B636E"></i>
+                <i class="legend-swatch is-circle" style="width:13px;height:13px;background:#CBD5E1;border:1px solid #4B636E"></i>
+                Tamanho da bola = volume total do Fundo Público (FEFC + FP) em R$ · Rótulos = 5 piores em distância (p.p.)
+              </span>
             </div>
             <div class="controls-cluster">
               <div class="segmented-group is-hidden" id="cargo-h3-group">

@@ -245,10 +245,39 @@ if ((await page.$eval('#filter-party', (el) => el.value)) !== 'PT') {
 await page.click('#canvas-h2 .h2-row[data-party="PT"]');
 await h2Dots[3].click(); // Restaura Passo 4 para checagem mobile
 
-// 4. H3: Escala fixa sem zoom + Cargo + Hover + zero colisões nos rótulos
+// 4. H3: Escala 1:1 (15%–65%), selo Cota mínima (30%), quadrantes novos, máx. 5 piores rotulados + transição fluida Geral -> Federal
 if (await page.$('#zoom-h3-group')) {
   throw new Error('H3 não deveria mais exibir controle de zoom');
 }
+const h3InitCheck = await page.evaluate(() => ({
+  recorte: document.getElementById('recorte-h3-label')?.textContent?.trim(),
+  annotations: document.querySelectorAll('#canvas-h3 svg .direct-annotation').length,
+  worstLabels: document.querySelectorAll('#canvas-h3 svg g[aria-label="text"] text[data-worst5="1"]').length,
+  allText: document.querySelector('#canvas-h3 svg')?.textContent || '',
+  legendText: document.getElementById('legend-h3')?.textContent || '',
+  hasSvgRef: Boolean(window.__h3SvgRef = document.querySelector('#canvas-h3 svg.h3-scatter-svg')),
+}));
+if (
+  !h3InitCheck.recorte?.includes('Deputado Federal')
+  || h3InitCheck.annotations !== 0
+  || h3InitCheck.worstLabels > 5
+  || !h3InitCheck.allText.includes('Cota mínima (30%)')
+  || !h3InitCheck.allText.includes('↑ Repasse proporcional (ou acima)')
+  || !h3InitCheck.allText.includes('↓ Repasse menor que o peso na chapa')
+  || !h3InitCheck.legendText.includes('Tamanho da bola')
+) {
+  throw new Error(`H3 configuração inválida: ${JSON.stringify(h3InitCheck)}`);
+}
+const h3Dots = await page.$$('#sec-h3 .step-dot');
+await h3Dots[1].click(); // Passo 2 (Geral)
+const h3Step2Check = await page.evaluate(() => ({
+  recorte: document.getElementById('recorte-h3-label')?.textContent?.trim(),
+  sameSvg: window.__h3SvgRef === document.querySelector('#canvas-h3 svg.h3-scatter-svg'),
+}));
+if (!h3Step2Check.recorte?.includes('Federal + Estadual') || !h3Step2Check.sameSvg) {
+  throw new Error(`H3 transição Passo 3->2 falhou: ${JSON.stringify(h3Step2Check)}`);
+}
+await h3Dots[2].click(); // Volta ao Passo 3 (Federal)
 await assertUnifiedHover('#canvas-h3 .party-bubble', '#canvas-h3', 0);
 const h3Geo = await checkSvgGeometry('#canvas-h3 svg', { textSelector: 'g[aria-label="text"] text', checkBounds: true });
 if (h3Geo.overlaps.length > 0 || h3Geo.clipped.length > 0) {

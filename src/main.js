@@ -421,26 +421,26 @@ function update() {
   };
   R.h2();
 
-  // H3 (escala fixa sem zoom, rotulando apenas legendas abaixo da meta proporcional)
-  const h3Rows = getScopedRows({ year: state.year, cargo: state.h3Cargo, ignoreParty: true });
-  const h3 = computeH3(h3Rows);
-  renderVerdictPill('verdict-h3', h3.verdict);
-  setText('recorte-h3-label', `${state.year} · ${CARGO_LABEL[state.h3Cargo]} · ${state.uf ? UF_NAMES[state.uf] : 'Brasil'}`);
-  setText('title-h3', h3.subfinancedCount > 0
-    ? `${h3.subfinancedCount} de ${h3.parties.length} legendas repassam às mulheres fatia inferior ao peso na chapa em ${state.year} (déficit de −${fmtCompactBrl(h3.totalDeficitBrl).replace('R$ ', 'R$ ')})`
-    : `Todas as ${h3.parties.length} legendas analisadas em ${state.year} alcançam proporcionalidade no Fundo Público (razão ${h3.equityRatio.toFixed(2).replace('.', ',')}×)`);
-  setText('h3-dyn-deficit', `−${fmtCompactBrl(h3.totalDeficitBrl)}`);
-
+  // H3 (escala 1:1 15%–65%, rotulando apenas os 5 piores por distância em p.p., transição fluida Geral -> Federal)
   const cH3 = document.getElementById('canvas-h3');
-  R.h3 = (step = stepOf('h3'), prevStep = stepOf('h3')) => renderH3Scatter(cH3, h3, {
-    step,
-    prevStep,
-    width: getCanvasWidth(cH3),
-    zoomMode: 'all',
-    selectedParty: state.party,
-    onSelectParty: toggleParty,
-    onClearParty: clearParty,
-  });
+  R.h3 = (step = stepOf('h3'), prevStep = stepOf('h3')) => {
+    const h3Rows = getScopedRows({ year: state.year, cargo: state.h3Cargo, ignoreParty: true });
+    const h3 = computeH3(h3Rows);
+    renderVerdictPill('verdict-h3', h3.verdict);
+    setText('recorte-h3-label', `${state.year} · ${CARGO_LABEL[state.h3Cargo]} · ${state.uf ? UF_NAMES[state.uf] : 'Brasil'}`);
+    setText('title-h3', h3.subfinancedCount > 0
+      ? `${h3.subfinancedCount} de ${h3.parties.length} legendas repassam às mulheres fatia inferior ao peso na chapa em ${state.year} (déficit de −${fmtCompactBrl(h3.totalDeficitBrl).replace('R$ ', 'R$ ')})`
+      : `Todas as ${h3.parties.length} legendas analisadas em ${state.year} alcançam proporcionalidade no Fundo Público (razão ${h3.equityRatio.toFixed(2).replace('.', ',')}×)`);
+    setText('h3-dyn-deficit', `−${fmtCompactBrl(h3.totalDeficitBrl)}`);
+    renderH3Scatter(cH3, h3, {
+      step,
+      prevStep,
+      width: getCanvasWidth(cH3),
+      selectedParty: state.party,
+      onSelectParty: toggleParty,
+      onClearParty: clearParty,
+    });
+  };
   R.h3();
 
   // H4 (Sankey passo 0-1, Rede de Hubs passo 2)
@@ -817,7 +817,7 @@ function bindEvents() {
     if (thr) thr.value = '10';
     setText('threshold-out', '10');
     syncH1ModeButtons();
-    document.querySelectorAll('[data-h3-cargo]').forEach((b) => b.classList.toggle('active', b.dataset.h3Cargo === 'all'));
+    ['h1', 'h3'].forEach((k) => syncStepControlsVisibility(k, stepOf(k)));
     document.querySelectorAll('[data-h6-year]').forEach((b) => b.classList.toggle('active', Number(b.dataset.h6Year) === 2022));
     document.querySelectorAll('[data-limiar-unit]').forEach((b) => b.classList.toggle('active', b.dataset.limiarUnit === 'chapa'));
     document.querySelectorAll('[data-limiar-year]').forEach((b) => b.classList.toggle('active', Number(b.dataset.limiarYear) === 2022));

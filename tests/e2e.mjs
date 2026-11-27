@@ -420,6 +420,9 @@ const h9Check = await page.evaluate(() => ({
   step3ConcentracaoClarified: /10%\s+candidatas mais financiadas/i.test(
     document.querySelector('#sec-h9 .step-card[data-step="2"]')?.textContent || '',
   ),
+  missingLblTransforms: [...document.querySelectorAll('#canvas-h9-map .ato5-label-layer g')]
+    .filter((g) => !/^translate\(/.test(g.getAttribute('transform') || ''))
+    .length,
 }));
 const step5RankMap = Object.fromEntries(h9Check.step5PodiumUfs.map((x) => [x.uf, x.rank]));
 if (
@@ -433,6 +436,7 @@ if (
   || step5RankMap.RO !== '#5'
   || step5RankMap.SE !== '#5'
   || !h9Check.step3ConcentracaoClarified
+  || h9Check.missingLblTransforms !== 0
 ) {
   throw new Error(`Ato 5 incompleto: ${JSON.stringify(h9Check)}`);
 }

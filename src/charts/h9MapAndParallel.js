@@ -554,7 +554,7 @@ export function renderAto5MapStage(
       lbl.sub.textContent = subText;
       lbl.sub.setAttribute('fill', isTop5 ? '#F8DF4F' : '#8A5D00');
       if (animate && isTop5 && !wasTop5) {
-        tl.fromTo(lbl.g, { opacity: 0.4, y: 4 }, { opacity: isDimmed ? 0.4 : 1, y: 0, duration: 0.3, ease: 'power2.out', clearProps: 'transform' }, 0.14);
+        tl.fromTo(lbl.g, { opacity: 0.4 }, { opacity: isDimmed ? 0.4 : 1, duration: 0.3, ease: 'power2.out' }, 0.14);
       } else {
         lbl.g.style.opacity = isDimmed ? '0.4' : '1';
       }

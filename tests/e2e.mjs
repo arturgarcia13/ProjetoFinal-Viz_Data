@@ -169,7 +169,17 @@ for (const cid of ['#canvas-h1', '#canvas-h2', '#canvas-h3', '#canvas-h4', '#can
   if (!hasSvg) throw new Error(`SVG ausente em ${cid}`);
 }
 
-// 2. H1: Inicia em Todas Registradas, zero textos internos (direct-annotation), alternância para Aptas + filtro coordenado e chip de recorte
+// 2. H1: Inicia em Todas Registradas, zero textos internos (direct-annotation), 2022 sempre em ardósia (#4B636E) no Passo 2, alternância para Aptas + filtro coordenado e chip de recorte
+const h1Dots = await page.$$('#sec-h1 .step-dot');
+await h1Dots[1].click(); // Passo 2: apenas 2022
+const h1Step2Check = await page.evaluate(() => ({
+  bar22Fill: document.querySelector('#canvas-h1 .h1-col[data-bin="30-33"] .bar-2022')?.getAttribute('fill'),
+  legendHidden: document.getElementById('legend-h1')?.classList.contains('is-hidden'),
+}));
+if (h1Step2Check.bar22Fill?.toUpperCase() !== '#4B636E' || !h1Step2Check.legendHidden) {
+  throw new Error(`H1 Passo 2 inválido (esperado #4B636E e legenda oculta): ${JSON.stringify(h1Step2Check)}`);
+}
+await h1Dots[3].click(); // Restaura Passo 4
 const h1InitialMode = await page.$eval('#controls-h1 button.active', (el) => el.dataset.h1Mode);
 if (h1InitialMode !== 'reg') throw new Error(`H1 deveria iniciar em 'reg', obteve ${h1InitialMode}`);
 const h1DirectNotes = await page.$$eval('#canvas-h1 svg .direct-annotation', (els) => els.length);

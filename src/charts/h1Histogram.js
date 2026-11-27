@@ -364,7 +364,7 @@ export function renderH1Histogram(
     els.hit.attr('stroke', selected ? SEMANTIC_PALETTE.ink : 'none');
 
     const w22 = show26 ? x.bandwidth() * 0.46 : x.bandwidth();
-    const fill22 = show26 ? SEMANTIC_PALETTE.male : SEMANTIC_PALETTE.female;
+    const fill22 = SEMANTIC_PALETTE.male;
     const targetY22 = show22 ? y(v22) : H;
     const targetH22 = show22 ? Math.max(0, H - y(v22)) : 0;
     const targetY26 = show26 ? y(v26) : H;
@@ -448,7 +448,7 @@ export function renderH1Histogram(
       prev.v22,
       v22,
       x(b.range) + w22 / 2,
-      show26 ? SEMANTIC_PALETTE.male : '#D93814',
+      SEMANTIC_PALETTE.male,
       220,
     );
     updateBarLabel(

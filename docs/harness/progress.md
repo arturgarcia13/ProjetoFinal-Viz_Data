@@ -211,6 +211,9 @@
   - Removidos pontilhados e `addDirectAnnotation` em [src/charts/h2Dumbbell.js](../../src/charts/h2Dumbbell.js); setas ajustadas (`x2` recuado `7.5px` antes do círculo `r=6` e suprimidas quando `|dx| < 14px`) e números movidos para coluna tabular dedicada à direita; cores dedicadas por rótulo (`2022` sempre `#4B636E`, `2026 · Avançou` `#0284C7`); explicitado o critério dos 10 maiores partidos em [public/index.html](../../public/index.html); Passo 3 isolado para Composição `2022` e adicionado Passo 4 comparando `2022` vs. `2026` (`h2b22` e `h2b26` em [src/main.js](../../src/main.js)); habilitada navegação de `.step-dot` em `isStaticMode()` em [src/components/scrolly.js](../../src/components/scrolly.js).
   - **Evidência:** `npm run build:vercel` (`dist/app.js 494.9kb`, `site/` 15 files / `11.59 MB`), `./init.sh` (`17 passed in 19.10s`) e `E2E_ROOT=site node tests/e2e.mjs` (`errors: []`, `overflowX: false`, 0 colisões/clipping em desktop e mobile `390×844` incluindo `#canvas-h2 svg`, 0 pontilhados e 0 `.direct-annotation`).
 
+- **2026-11-27 (Revisão Etapa 1 — Cor fixa de 2022 em H1 Passo 2):**
+  - Corrigido [src/charts/h1Histogram.js](../../src/charts/h1Histogram.js) para manter a série de `2022` (barras `.bar-2022` e rótulos `.bar-lbl-2022`) sempre na cor ardósia `#4B636E` (`SEMANTIC_PALETTE.male`) em todos os passos (inclusive no Passo 2 antes da entrada de 2026), com asserção específica adicionada em [tests/e2e.mjs](../../tests/e2e.mjs).
+
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.
 - As melhorias de animação estão no working tree local (sem novo commit/push até solicitação do usuário).

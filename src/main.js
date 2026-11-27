@@ -46,7 +46,6 @@ const state = {
   h1BinFilter: null,
   h3Cargo: 'all',
   h3CargoLocked: false,
-  h5View: 'bars',
   h6Year: 2022,
   limiarUnit: 'chapa',
   limiarYear: 2022,
@@ -465,7 +464,6 @@ function update() {
   R.h5 = (step = stepOf('h5'), prevStep = stepOf('h5')) => renderH5Conversion(cH5, h5, {
     step,
     prevStep,
-    view: state.h5View,
     width: getCanvasWidth(cH5),
     selectedParty: state.party,
     onSelectParty: toggleParty,
@@ -676,14 +674,6 @@ function bindEvents() {
       state.h3Cargo = btn.dataset.h3Cargo;
       state.h3CargoLocked = true;
       document.querySelectorAll('[data-h3-cargo]').forEach((b) => b.classList.toggle('active', b === btn));
-      update();
-    });
-  });
-
-  document.querySelectorAll('[data-h5-view]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      state.h5View = btn.dataset.h5View;
-      document.querySelectorAll('[data-h5-view]').forEach((b) => b.classList.toggle('active', b === btn));
       update();
     });
   });

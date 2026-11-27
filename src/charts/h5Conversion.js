@@ -1,18 +1,17 @@
 import * as d3 from 'd3';
 import { SEMANTIC_PALETTE } from './palette.js';
-import { addDirectAnnotation } from './annotate.js';
-import { animDelay, animDur, drawPath, MOTION, shouldAnimate } from './motion.js';
+import { animDelay, animDur, MOTION, shouldAnimate } from './motion.js';
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtPct } from './tooltip.js';
 
 const SHORT = { REPUBLICANOS: 'REPUBL.', SOLIDARIEDADE: 'SOLID.', CIDADANIA: 'CIDAD.' };
 
 /**
- * H5 — Funil de conversão por partido com constância de objeto bidirecional (step <-> prevStep).
+ * H5 — Funil de conversão por partido (Barras Agrupadas) com constância de objeto bidirecional (step <-> prevStep).
  */
 export function renderH5Conversion(
   container,
   h5Data,
-  { step = 2, prevStep = 2, view = 'bars', width = 700, selectedParty = '', onSelectParty = null, onClearParty = null } = {},
+  { step = 2, prevStep = 2, width = 700, selectedParty = '', onSelectParty = null, onClearParty = null } = {},
 ) {
   container.innerHTML = '';
   const parties = (h5Data?.byParty || []).map((p) => ({
@@ -91,41 +90,22 @@ export function renderH5Conversion(
       .attr('font-size', isCompact ? 9.5 : 10.5).attr('font-weight', 700)
       .attr('fill', selectedParty === p.party ? SEMANTIC_PALETTE.female : SEMANTIC_PALETTE.ink).text(label);
 
-    if (view === 'bars') {
-      stages.forEach((s) => {
-        const wasShown = prevStep >= s.min;
-        const isShown = step >= s.min;
-        if (!wasShown && !isShown) return;
-        const targetY = y(p[s.key]);
-        const targetH = H - targetY;
-        const bar = row.append('rect').attr('class', `h5-bar h5-bar-${s.key}`)
-          .attr('x', x1(s.key)).attr('width', x1.bandwidth()).attr('rx', 2).attr('fill', s.color)
-          .attr('y', animate ? (wasShown ? targetY : H) : (isShown ? targetY : H))
-          .attr('height', animate ? (wasShown ? targetH : 0) : (isShown ? targetH : 0));
-        if (animate && wasShown !== isShown) {
-          bar.transition().duration(dur).delay(delay).ease(MOTION.easeOut)
-            .attr('y', isShown ? targetY : H)
-            .attr('height', isShown ? targetH : 0);
-        }
-      });
-    } else {
-      const visible = stages.filter((s) => step >= s.min);
-      const pts = visible.map((s) => ({ s, cx: x1(s.key) + x1.bandwidth() / 2, cy: y(p[s.key]) }));
-      if (pts.length > 1) {
-        const slopePath = row.append('path').datum(pts).attr('d', d3.line().x((d) => d.cx).y((d) => d.cy))
-          .attr('fill', 'none').attr('stroke', p.eleitas >= 30 ? SEMANTIC_PALETTE.emerald : '#94A3B8')
-          .attr('stroke-width', p.eleitas >= 30 ? 3 : 2).attr('stroke-opacity', 0.88);
-        if (animate && step > prevStep) drawPath(slopePath, { duration: 480, delay });
+    stages.forEach((s) => {
+      const wasShown = prevStep >= s.min;
+      const isShown = step >= s.min;
+      if (!wasShown && !isShown) return;
+      const targetY = y(p[s.key]);
+      const targetH = H - targetY;
+      const bar = row.append('rect').attr('class', `h5-bar h5-bar-${s.key}`)
+        .attr('x', x1(s.key)).attr('width', x1.bandwidth()).attr('rx', 2).attr('fill', s.color)
+        .attr('y', animate ? (wasShown ? targetY : H) : (isShown ? targetY : H))
+        .attr('height', animate ? (wasShown ? targetH : 0) : (isShown ? targetH : 0));
+      if (animate && wasShown !== isShown) {
+        bar.transition().duration(dur).delay(delay).ease(MOTION.easeOut)
+          .attr('y', isShown ? targetY : H)
+          .attr('height', isShown ? targetH : 0);
       }
-      pts.forEach((pt) => {
-        const isNew = animate && step > prevStep && pt.s.min === step;
-        const c = row.append('circle').attr('class', 'h5-bar')
-          .attr('cx', pt.cx).attr('cy', pt.cy)
-          .attr('r', isNew ? 0 : 4.6)
-          .attr('fill', pt.s.color);
-        if (isNew) c.transition().duration(320).delay(delay + 120).ease(MOTION.easeOut).attr('r', 4.6);
-      });
-    }
+    });
 
     const node = row.node();
     node.setAttribute('tabindex', '0');
@@ -145,31 +125,4 @@ export function renderH5Conversion(
       row.on('keydown', (evt) => { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); onSelectParty(p.party); } });
     }
   });
-
-  const annG = g.append('g');
-  if (step === 1) {
-    const worst = [...parties].sort((a, b) => (b.cand - b.votos) - (a.cand - a.votos))[0];
-    if (worst) {
-      const tx = x0(worst.party) + x1('votos') + x1.bandwidth() / 2;
-      const ty = y(worst.votos);
-      addDirectAnnotation(annG, {
-        x1: Math.max(70, tx - 110), y1: Math.max(24, ty - 40), x2: tx, y2: ty - 4,
-        title: `${worst.party}: −${(worst.cand - worst.votos).toFixed(1).replace('.', ',')} p.p. já na urna`,
-        subtitle: 'Votos concentram-se nos homens', color: '#7A5200',
-        animate: prevStep !== 1,
-      });
-    }
-  }
-  if (step >= 2) {
-    const best = [...parties].sort((a, b) => b.eleitas - a.eleitas)[0];
-    if (best) {
-      const tx = x0(best.party) + x1('eleitas') + x1.bandwidth() / 2;
-      const ty = y(best.eleitas);
-      addDirectAnnotation(annG, {
-        x1: Math.min(W - 140, tx + 40), y1: Math.max(24, ty - 24), x2: tx + 3, y2: ty - 3,
-        title: `${best.party}: maior fatia de eleitas`, subtitle: `${fmtPct(best.eleitas)} das cadeiras`, color: SEMANTIC_PALETTE.emerald,
-        animate: prevStep < 2,
-      });
-    }
-  }
 }

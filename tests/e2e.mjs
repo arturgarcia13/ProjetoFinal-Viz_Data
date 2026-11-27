@@ -304,9 +304,14 @@ const h4Geo = await checkSvgGeometry('#canvas-h4 svg', { checkBounds: true });
 if (h4Geo.overlaps.length > 0 || h4Geo.clipped.length > 0) {
   throw new Error(`H4 textos sobrepostos ou cortados: ${JSON.stringify(h4Geo)}`);
 }
+if (await page.$('#view-h5-group')) {
+  throw new Error('H5 não deveria mais exibir controle de Slopegraph');
+}
+const h5Annotations = await page.$$eval('#canvas-h5 svg .direct-annotation', (els) => els.length);
+if (h5Annotations !== 0) {
+  throw new Error(`H5 não deveria ter textos internos (.direct-annotation), obteve ${h5Annotations}`);
+}
 await assertUnifiedHover('#canvas-h5 .h5-party-row', '#canvas-h5', 0);
-await page.click('[data-h5-view="slope"]');
-await page.click('[data-h5-view="bars"]');
 await assertUnifiedHover('#canvas-h6 .h6-dot', '#canvas-h6', 0);
 await page.click('[data-h6-year="2026"]');
 await page.click('[data-h6-year="2022"]');

@@ -68,13 +68,9 @@ export function renderH3Scatter(
   }
 
   const isCompact = width < 480;
-  const margin = { top: 32, right: isCompact ? 18 : 28, bottom: 48, left: isCompact ? 46 : 54 };
-  const availW = Math.max(220, width - margin.left - margin.right);
-  // Proporção rigorosamente 1:1 (quadrada) para que a diagonal Y = X permaneça exatamente a 45°
-  const plotSize = isCompact ? availW : Math.min(availW, 430);
-  const W = plotSize;
-  const H = plotSize;
-  const sidePad = Math.max(0, Math.floor((availW - plotSize) / 2));
+  const margin = { top: 32, right: isCompact ? 18 : 24, bottom: 48, left: isCompact ? 46 : 54 };
+  const W = Math.max(220, width - margin.left - margin.right);
+  const H = isCompact ? Math.max(240, Math.min(W, 300)) : Math.max(360, Math.min(430, Math.round(W * 0.62)));
   const svgW = width;
   const svgH = H + margin.top + margin.bottom;
 
@@ -83,7 +79,7 @@ export function renderH3Scatter(
   const maxPub = d3.max(allParties, (d) => d.pubTotal) || 1;
   const rScale = d3.scaleSqrt().domain([0, maxPub]).range([isCompact ? 4.5 : 5, isCompact ? 12.5 : 15.5]);
 
-  const sig = `${svgW}|${svgH}|${plotSize}`;
+  const sig = `${svgW}|${svgH}|${W}|${H}`;
   let st = container.__h3State;
   const isFreshMount = !st || st.sig !== sig || !container.querySelector('svg.h3-scatter-svg');
 
@@ -99,7 +95,7 @@ export function renderH3Scatter(
       .attr('aria-label', 'Relação 1:1 entre percentual de candidatas mulheres e percentual do Fundo Público por partido (15% a 65%)')
       .style('font-family', 'Inter, system-ui, sans-serif');
 
-    const g = svg.append('g').attr('transform', `translate(${margin.left + sidePad},${margin.top})`);
+    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
 
     const zonesG = g.append('g').attr('aria-label', 'h3-quadrants');
     zonesG.append('polygon').attr('points', `0,0 ${W},0 0,${H}`).attr('fill', 'rgba(0, 125, 91, 0.08)');

@@ -223,6 +223,9 @@
   - Corrigido o recálculo dinâmico de `R.h3` e `resetAll()` em [src/main.js](../../src/main.js) para transicionar suavemente `Geral → Federal` no Passo 3 mantendo o mesmo `<svg>`; atualizada a legenda em [public/index.html](../../public/index.html) mantendo apenas a explicação do tamanho das bolas.
   - **Evidência:** `npm run build:vercel` (`dist/app.js 497.2kb`, `site/` 15 files / `11.59 MB`), `./init.sh` (`17 passed in 19.21s`), `E2E_ROOT=site node tests/e2e.mjs` (`errors: []`, 0 colisões/clipping em desktop e mobile `390×844`) e scroll ao vivo sem `?steps=full` (`Federal + Estadual` → `Deputado Federal`, `pstuCy: 243.62 → 337.56`, `sameSvgAsStep1: true`).
 
+- **2026-11-27 (Revisão Etapa 3 — Largura total de H3 no card branco):**
+  - Removido o recuo lateral (`sidePad`) em [src/charts/h3Scatter.js](../../src/charts/h3Scatter.js) para esticar a área útil do gráfico (`W = width - margin.left - margin.right`) ocupando toda a largura do card `.scrolly-stage` mantendo domínio `15%–65%` nos dois eixos.
+
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.
 - As melhorias de animação estão no working tree local (sem novo commit/push até solicitação do usuário).

@@ -11,7 +11,20 @@
 
 ---
 
-## 1. Task Contract (Plano em 9 Etapas — 31 Alterações nos Gráficos 1–8 e Atos 1–5)
+## 1. Task Contract (Nova Capa "Da Cota à Cadeira" — Navbar, Hero Editorial, Plenário 100 Cadeiras & Modal)
+
+- **Outcome:** Reestruturar completamente a barra de navegação fixa (`h-16`) e a *Hero Section* (`min-h-[calc(100vh-4rem)]`) de acordo com `especifica_o_de_design_nova_capa_da_cota_cadeira.md`, adotando os tokens (`#046646`, `#034731`, `#033927`, `#135740`, `#F8FAF9`, `#B8D8C9`, `#ECD64C`, `#E872D0`, `#EE6A4B`), fontes `Fraunces` + `Inter` + `JetBrains Mono`, textura `.editorial-grid-bg`, o componente interativo **Plenário Dinâmico de 100 Cadeiras (Hemiciclo SVG)** conectado aos dados reais do TSE e o **Modal de Metodologia** (`<dialog>` nativo acessível acionado por `Fonte: TSE` e `Metodologia →`), preservando os 5 atos, gráficos `H1–H9`, `#sintese`, `#boca-da-taca` e `#metodologia`.
+- **Scope & Non-goals:**
+  - *In-scope:* `package.json` (`@fontsource/fraunces`, `@fontsource/jetbrains-mono`), `public/assets/fonts/`, `public/index.html`, `public/styles.css`, `src/charts/heroPlenario.js` (substituindo `src/charts/heroFunnel.js`), `src/main.js`, `tests/e2e.mjs`, `docs/guia_dos_graficos.md`, `docs/harness/progress.md`.
+  - *Non-goals:* alterar ETL, `data/*.json`, regras metodológicas ou gráficos `H1–H9` nos Atos 1–5, fazer `git push`/deploy sem aprovação.
+- **Acceptance Evidence:**
+  - `npm run build:vercel` gera `dist/app.js` e `site/` sem erros.
+  - `./init.sh` sai com código `0` (todos os testes Python verdes).
+  - `E2E_ROOT=site node tests/e2e.mjs` passa com `errors: []`, `overflowX: false`, 100 cadeiras no hemiciclo, ciclo de 3 etapas + pausa/retomada, modal de metodologia (`Fonte: TSE` / `Metodologia →` / `Escape` / backdrop), e validação responsiva em `1440px`, `1280px`, `768px` e `390px`.
+- **Actions Needing Human Approval:** `git push`/deploy no Vercel.
+- **Iteration Ceiling & Retry Budget:** máximo de 3 falhas consecutivas na mesma verificação antes de parar e reportar.
+
+### Contrato anterior (histórico — Plano em 9 Etapas — 31 Alterações nos Gráficos 1–8 e Atos 1–5)
 
 - **Outcome:** Executar passo a passo as 9 etapas auditáveis do plano aprovado ([plano_de_acao_alteracoes.md](file:///home/arturgarcia/.gemini/antigravity-cli/brain/72445484-f4c8-4d9c-ac6a-a00a41abc7aa/plano_de_acao_alteracoes.md)), cobrindo os 31 ajustes em H1–H8 e Ato 5 (`H9`) mantendo o design system editorial (`#FBF8F1`, `#007D5B`, `#FA532E`, `#F8DF4F`/`#C98A00`, `#4B636E`, **Newsreader** + **Inter**) e os dados reais do TSE (`data/analytical_base.json`, `data/br_uf.json`):
   - **Etapa 1 (concluída):** Gráfico 1 (`H1` — itens 1, 2, 3, 12): legenda oculta nos Passos 1–2 (`#legend-h1.is-hidden`), remoção dos textos internos `addDirectAnnotation` e constância de objeto no mesmo `<svg>` na transição Passo 3 → Passo 4 (`Registradas → Aptas`).
@@ -259,8 +272,18 @@
   - Recibo registrado em [docs/harness/receipts/2026-11-27-plano-31-alteracoes.md](receipts/2026-11-27-plano-31-alteracoes.md).
   - **Evidência:** `npm run build:vercel` (`dist/app.js 302.0kb`, `site/` 15 arquivos / `11.40 MB`), `./init.sh` (`18 passed in 18.08s`), `E2E_ROOT=site node tests/e2e.mjs` (`E2E OK`, hover em `.ato5-podium-card` validado, `errors: []`, `overflowX: false`).
 
+- **2026-11-28 (Nova Capa — Navbar Minimalista, Hero 5/7, Plenário de 100 Cadeiras & Modal de Metodologia):**
+  - Aplicada a especificação `especifica_o_de_design_nova_capa_da_cota_cadeira.md` mantendo integralmente os 5 atos, gráficos `H1–H9`, `#sintese`, `#boca-da-taca` e `#metodologia`.
+  - Instalados `@fontsource/fraunces` e `@fontsource/jetbrains-mono` ([package.json](../../package.json)), com 6 arquivos `.woff2` auto-hospedados em [public/assets/fonts/](../../public/assets/fonts/) (`Fraunces` `500/600/700` + `600 italic`, `JetBrains Mono` `500/600`) junto a `Inter` e `Newsreader`.
+  - Atualizada a barra fixa (`h-16` / `64px`, `rgba(3, 71, 49, 0.90)` + `backdrop-filter: blur(12px)`) e removidas as ondas laterais (`.hero-silhouettes-bg`) e cards duplicados (`.roadmap`) em [public/index.html](../../public/index.html) e [public/styles.css](../../public/styles.css).
+  - Criado [src/charts/heroPlenario.js](../../src/charts/heroPlenario.js) (substituindo `src/charts/heroFunnel.js`) com o hemiciclo SVG de exatamente `100` cadeiras em 5 fileiras (`12/16/20/24/28`), linha radial do piso legal de `30%`, ciclo automático de `4.5s` com pausa manual ao clicar nas abas, badge `−16,3 p.p. na urna` na etapa `03 · Cadeira`, suporte completo a `prefers-reduced-motion: reduce` e conexão aos indicadores reais do TSE em [src/main.js](../../src/main.js).
+  - Implementado modal nativo `<dialog id="methodology-modal" closedby="any">` (com fallback `pointerdown/pointerup` no backdrop) acionado por `Fonte: TSE` e `Metodologia →`; atualizados [docs/guia_dos_graficos.md](../guia_dos_graficos.md) e [tests/e2e.mjs](../../tests/e2e.mjs) (incluindo checagem de colisão zero no hemiciclo e viewports `1440×900`, `1280×820`, `768×1024`, `390×844`).
+  - Revisão adversarial independente em contexto frio (`research`, `8b7f8cab`) emitiu **`Veredicto: APROVADO`**.
+  - **Recibo:** [2026-11-28-nova-capa-plenario.md](receipts/2026-11-28-nova-capa-plenario.md).
+  - **Evidência:** `npm run build:vercel` (`dist/app.js 305.9kb`, `site/` 21 arquivos / `11.53 MB`), `E2E_ROOT=site node tests/e2e.mjs` (`E2E OK`, `seatsCount: 100`, `filledInit: 34`, `hemicycleCollisionCount: 0`, `errors: []`, `overflowX: false`) e `./init.sh` (`18 passed in 30.27s`).
+
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.
 
 ## 5. Next Action
-1. Todas as 9 etapas do plano de 31 alterações foram concluídas, auditadas e publicadas em `origin/master`.
+1. Nova capa concluída, verificada e com commit local pronto; aguardar aprovação humana para `git push` / deploy na Vercel.

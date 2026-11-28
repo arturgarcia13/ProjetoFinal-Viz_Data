@@ -6,7 +6,7 @@ Este guia documenta os **9 blocos gráficos da aplicação** (`Gráfico 1` a `Gr
 
 ## 1. Arquitetura Editorial, Paleta Semântica e Interações
 
-* **Abertura em funil de 3 passos (Hero Esmeralda `#007D5B`):** traduz o argumento central logo na dobra inicial — **1. No Papel (`% candidatas`) → 2. No Dinheiro (`% Fundo Público`) → 3. Na Urna (`% cadeiras eleitas`)** — conectado aos filtros globais.
+* **Abertura em Plenário Dinâmico de 100 Cadeiras (Hero Esmeralda `#046646` + textura `.editorial-grid-bg`):** traduz o argumento central logo na primeira dobra — **01 · Papel (`34,2%`) → 02 · Dinheiro (`34,4%`) → 03 · Cadeira (`17,9%`, `−16,3 p.p. na urna`)** — em um hemiciclo interativo de 5 fileiras com piso legal de `30%`, conectado aos filtros globais e acompanhado de modal metodológico (`Fonte: TSE`).
 * **Scrollytelling em split-screen (35% narrativa / 65% palco sticky):** cada gráfico evolui no mesmo `<svg>` conforme a rolagem pelos cartões `.step-card` (ou cliques nos `.step-dot`), preservando constância de objeto.
 * **Paleta semântica clara ([palette.js](../src/charts/palette.js)):**
   * **Papel & tinta:** Creme `#FBF8F1`, superfície `#FFFFFF` / `#F3EFE6`, tinta `#142620`, ardósia `#4B636E`.

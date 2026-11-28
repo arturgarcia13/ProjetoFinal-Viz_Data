@@ -52,28 +52,36 @@ await page.goto(`http://127.0.0.1:${port}/?steps=full`, { waitUntil: 'networkidl
 await page.waitForSelector('#canvas-h1 svg');
 await page.evaluate(() => document.fonts.ready);
 
-// 0. Shell Martini Glass, Editorial Palette & Typography
+// 0. Shell Nova Capa, Paleta Editorial, Plenário 100 Cadeiras & Modal de Metodologia
 const shellCheck = await page.evaluate(() => {
   const bodyS = getComputedStyle(document.body);
   const h1S = getComputedStyle(document.querySelector('h1'));
+  const h1EmS = getComputedStyle(document.querySelector('h1 em'));
   const skip = document.querySelector('a.skip-link');
   const topBar = document.querySelector('.top-editorial-bar').getBoundingClientRect();
-  const heroFunnelSvg = Boolean(document.querySelector('#hero-funnel-svg'));
-  const roadmapLinks = document.querySelectorAll('.roadmap a').length;
+  const navActLinks = [...document.querySelectorAll('.act-pills a')].map((a) => a.getAttribute('href'));
+  const seatsCount = document.querySelectorAll('#hemicycle-seats circle.hemicycle-seat').length;
+  const filledInit = document.querySelectorAll('#hemicycle-seats circle.hemicycle-seat.is-filled').length;
+  const plenarioTabs = document.querySelectorAll('.plenario-tabs [role="tab"]').length;
   const stepDotsGroups = document.querySelectorAll('.step-dots').length;
   const covRows = document.querySelectorAll('#coverage-tbody tr').length;
   const readouts = [...document.querySelectorAll('.readout-box strong')].map((el) => el.textContent.trim());
-  const heroVals = ['hero-val-cand', 'hero-val-verba', 'hero-val-eleitas'].map((id) => document.getElementById(id)?.textContent?.trim() || '');
+  const heroVals = ['plenario-pct-0', 'plenario-pct-1', 'plenario-pct-2'].map((id) => document.getElementById(id)?.textContent?.trim() || '');
   return {
     bodyBg: bodyS.backgroundColor,
     h1Color: h1S.color,
+    h1EmColor: h1EmS.color,
     h1Font: h1S.fontFamily,
     bodyFont: bodyS.fontFamily,
     skipHref: skip?.getAttribute('href'),
     skipIsFirst: document.body.firstElementChild === skip,
     topBarH: topBar.height,
-    heroFunnelSvg,
-    roadmapLinks,
+    navActLinks,
+    seatsCount,
+    filledInit,
+    plenarioTabs,
+    noRoadmap: document.querySelectorAll('.roadmap').length === 0,
+    noSilhouettes: document.querySelectorAll('.hero-silhouettes-bg').length === 0,
     stepDotsGroups,
     covRows,
     readouts,
@@ -83,25 +91,84 @@ const shellCheck = await page.evaluate(() => {
   };
 });
 
-  if (
-    shellCheck.bodyBg !== 'rgb(251, 248, 241)'
-    || shellCheck.h1Color !== 'rgb(248, 223, 79)'
-    || !shellCheck.h1Font.includes('Newsreader')
-    || !shellCheck.bodyFont.includes('Inter')
-    || shellCheck.skipHref !== '#main-content'
-    || !shellCheck.skipIsFirst
-    || shellCheck.topBarH > 72
-    || !shellCheck.heroFunnelSvg
-    || shellCheck.roadmapLinks !== 5
-    || shellCheck.stepDotsGroups !== 9
-    || shellCheck.covRows !== 3
-    || shellCheck.readouts.some((v) => !v.endsWith('%'))
-    || shellCheck.heroVals.some((v) => !v.endsWith('%'))
-    || !shellCheck.dataStatus?.includes('Dados TSE')
-    || shellCheck.overflowX
-  ) {
-    throw new Error(`Shell/UX check falhou: ${JSON.stringify(shellCheck)}`);
+if (
+  shellCheck.bodyBg !== 'rgb(251, 248, 241)'
+  || shellCheck.h1Color !== 'rgb(248, 250, 249)'
+  || shellCheck.h1EmColor !== 'rgb(236, 214, 76)'
+  || !shellCheck.h1Font.includes('Fraunces')
+  || !shellCheck.bodyFont.includes('Inter')
+  || shellCheck.skipHref !== '#main-content'
+  || !shellCheck.skipIsFirst
+  || shellCheck.topBarH > 72
+  || shellCheck.navActLinks.join(',') !== '#ato-01,#ato-02,#ato-03,#ato-04,#ato-05'
+  || shellCheck.seatsCount !== 100
+  || shellCheck.filledInit !== 34
+  || shellCheck.plenarioTabs !== 3
+  || !shellCheck.noRoadmap
+  || !shellCheck.noSilhouettes
+  || shellCheck.stepDotsGroups !== 9
+  || shellCheck.covRows !== 3
+  || shellCheck.readouts.some((v) => !v.endsWith('%'))
+  || shellCheck.heroVals.some((v) => !v.endsWith('%'))
+  || shellCheck.dataStatus !== 'Fonte: TSE'
+  || shellCheck.overflowX
+) {
+  throw new Error(`Shell/UX check falhou: ${JSON.stringify(shellCheck)}`);
+}
+
+// 0b. Interatividade do Plenário (3 etapas + pausa manual + badge de queda) e Modal de Metodologia
+await page.click('#plenario-tab-2');
+const plenarioStage2 = await page.evaluate(() => ({
+  kpi: document.getElementById('hemicycle-kpi-val')?.textContent?.trim(),
+  filled: document.querySelectorAll('#hemicycle-seats circle.hemicycle-seat.is-filled').length,
+  dropVisible: document.getElementById('plenario-drop-badge')?.classList.contains('is-visible'),
+  dropText: document.getElementById('plenario-drop-badge')?.textContent?.trim(),
+  playing: document.getElementById('plenario-play-btn')?.getAttribute('aria-pressed'),
+}));
+if (
+  plenarioStage2.kpi !== '17,9%'
+  || plenarioStage2.filled !== 18
+  || !plenarioStage2.dropVisible
+  || !plenarioStage2.dropText?.includes('16,3')
+  || plenarioStage2.playing !== 'false'
+) {
+  throw new Error(`Plenário etapa 3 inválida: ${JSON.stringify(plenarioStage2)}`);
+}
+await page.click('#plenario-play-btn');
+const resumedPlaying = await page.$eval('#plenario-play-btn', (el) => el.getAttribute('aria-pressed'));
+if (resumedPlaying !== 'true') throw new Error('Botão Play deveria retomar ciclo automático');
+await page.click('#plenario-tab-0');
+
+const hemicycleCollisionCount = await page.evaluate(() => {
+  const svg = document.getElementById('hemicycle-svg').getBoundingClientRect();
+  const seats = [...document.querySelectorAll('#hemicycle-seats circle')].map((c) => c.getBoundingClientRect());
+  const texts = [...document.querySelectorAll('#hemicycle-svg text')].map((t) => t.getBoundingClientRect());
+  let hits = 0;
+  for (const t of texts) {
+    if (t.left < svg.left - 1 || t.right > svg.right + 1 || t.top < svg.top - 1 || t.bottom > svg.bottom + 1) hits += 1;
+    for (const s of seats) {
+      if (t.left < s.right && t.right > s.left && t.top < s.bottom && t.bottom > s.top) {
+        hits += 1;
+        break;
+      }
+    }
   }
+  return hits;
+});
+if (hemicycleCollisionCount !== 0) throw new Error(`Hemiciclo com ${hemicycleCollisionCount} colisões/clippings de texto`);
+
+await page.click('#btn-fonte-tse');
+const modalOpened1 = await page.$eval('#methodology-modal', (el) => el.open);
+if (!modalOpened1) throw new Error('Botão Fonte: TSE deveria abrir o modal de metodologia');
+await page.keyboard.press('Escape');
+const modalClosedEsc = await page.$eval('#methodology-modal', (el) => !el.open);
+if (!modalClosedEsc) throw new Error('Escape deveria fechar o modal de metodologia');
+await page.click('#btn-hero-metodologia');
+const modalOpened2 = await page.$eval('#methodology-modal', (el) => el.open);
+if (!modalOpened2) throw new Error('Botão Metodologia -> deveria abrir o modal');
+await page.click('#btn-close-methodology');
+const modalClosedBtn = await page.$eval('#methodology-modal', (el) => !el.open);
+if (!modalClosedBtn) throw new Error('Botão X deveria fechar o modal');
 
 // Helper de hover unificado
 async function assertUnifiedHover(targetSelector, containerSelector, wrapIndex = 0) {
@@ -486,7 +553,13 @@ await page.waitForFunction((prev) => document.getElementById('readout-cand').tex
 await page.click('#btn-reset-filters');
 await page.waitForFunction((prev) => document.getElementById('readout-cand').textContent === prev, {}, cand22);
 
-// 8. Mobile 390x844 sem overflow horizontal e sem clipping nos gráficos
+// 8. Breakpoints 1440px, 768px e Mobile 390x844 sem overflow horizontal e sem clipping nos gráficos
+for (const vp of [{ width: 1440, height: 900 }, { width: 768, height: 1024 }]) {
+  await page.setViewport(vp);
+  await new Promise((r) => setTimeout(r, 120));
+  const vpOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+  if (vpOverflow) throw new Error(`Overflow horizontal em ${vp.width}x${vp.height}`);
+}
 await page.setViewport({ width: 390, height: 844 });
 await new Promise((r) => setTimeout(r, 250));
 const mobileCheck = await page.evaluate(() => ({

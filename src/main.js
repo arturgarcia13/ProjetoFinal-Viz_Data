@@ -14,7 +14,7 @@ import {
   computeThresholdBandComparison,
   countSignals,
 } from './indicators.js';
-import { renderHeroFunnel } from './charts/heroFunnel.js';
+import { initHeroPlenario, updateHeroPlenario } from './charts/heroPlenario.js';
 import { tweenPctText } from './charts/motion.js';
 import { computeH1EightBins, renderH1Histogram } from './charts/h1Histogram.js';
 import { renderH2Dumbbell } from './charts/h2Dumbbell.js';
@@ -283,14 +283,17 @@ function update() {
   const femAlerts = femApto.filter((c) => countSignals(c, state.threshold).total >= 2).length;
   const pctAlerts = femApto.length > 0 ? femAlerts / femApto.length : 0;
 
-  // Hero & Boca da Taça Readouts (com interpolação tabular suave)
-  tweenPctText(document.getElementById('hero-val-cand'), statsH5.pctCandF);
-  tweenPctText(document.getElementById('hero-val-verba'), statsH3.pctPubF);
-  tweenPctText(document.getElementById('hero-val-eleitas'), statsH5.pctEleitasF);
-  renderHeroFunnel(document.getElementById('hero-funnel-holder'), {
+  // Hero (Plenário 100 Cadeiras) & Boca da Taça Readouts
+  const extraBin = state.h1BinFilter ? ` · H1 ${state.h1BinFilter.range}` : '';
+  const isDefaultHero = state.year === 2022 && state.cargo === 'all' && !state.uf && !state.party && !state.h1BinFilter;
+  const heroBadgeText = isDefaultHero
+    ? 'Eleições 2022 · 27 UFs'
+    : `Eleições ${state.year} · ${state.uf || '27 UFs'}${state.cargo !== 'all' ? ` · ${CARGO_LABEL[state.cargo]}` : ''}${state.party ? ` · ${state.party}` : ''}${extraBin}`;
+  updateHeroPlenario({
     cand: statsH5.pctCandF * 100,
     verba: statsH3.pctPubF * 100,
     eleitas: statsH5.pctEleitasF * 100,
+    badgeText: heroBadgeText,
   });
 
   tweenPctText(document.getElementById('readout-cand'), statsH5.pctCandF);
@@ -299,9 +302,8 @@ function update() {
   tweenPctText(document.getElementById('readout-eleitas'), statsH5.pctEleitasF);
   tweenPctText(document.getElementById('readout-alertas'), pctAlerts);
 
-  const extraBin = state.h1BinFilter ? ` · H1 ${state.h1BinFilter.range}` : '';
   const recorteLabel = `${state.year} · ${CARGO_LABEL[state.cargo]} · ${state.uf ? UF_NAMES[state.uf] : 'Brasil (27 UFs)'}${state.party ? ` · ${state.party}` : ''}${extraBin}`;
-  setText('hero-recorte-pill', recorteLabel);
+  setText('methodology-recorte-val', recorteLabel);
   document.querySelectorAll('.active-recorte-text').forEach((el) => { el.textContent = recorteLabel; });
   setText('scope-summary', `${recorteLabel} — ${statsRows.length.toLocaleString('pt-BR')} candidaturas no recorte selecionado.`);
   syncRecorteChip(recorteLabel);
@@ -810,15 +812,42 @@ function bindEvents() {
     update();
   });
 
-  // Scrollspy & barra de progresso da haste da taça
+  // Modal de Metodologia (Fonte: TSE e Metodologia →)
+  const methodDialog = document.getElementById('methodology-modal');
+  if (methodDialog) {
+    const openModal = () => {
+      if (typeof methodDialog.showModal === 'function') {
+        if (!methodDialog.open) methodDialog.showModal();
+      } else {
+        methodDialog.setAttribute('open', '');
+      }
+    };
+    document.getElementById('btn-fonte-tse')?.addEventListener('click', openModal);
+    document.getElementById('btn-hero-metodologia')?.addEventListener('click', openModal);
+    document.getElementById('btn-close-methodology')?.addEventListener('click', () => methodDialog.close());
+    document.getElementById('btn-goto-annex')?.addEventListener('click', () => {
+      methodDialog.close();
+      const annexDetails = document.querySelector('#metodologia details');
+      if (annexDetails) annexDetails.open = true;
+    });
+
+    // Fallback de light-dismiss para navegadores sem suporte nativo a <dialog closedby="any">
+    if (!('closedBy' in HTMLDialogElement.prototype)) {
+      const outside = (e) => {
+        const r = methodDialog.getBoundingClientRect();
+        return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+      };
+      let pressedOutside = false;
+      methodDialog.addEventListener('pointerdown', (e) => { pressedOutside = outside(e); });
+      methodDialog.addEventListener('pointerup', (e) => {
+        if (pressedOutside && outside(e)) methodDialog.close();
+      });
+    }
+  }
+
+  // Scrollspy & barra de progresso da página
   const sectionIds = ['topo', 'ato-01', 'ato-02', 'ato-03', 'ato-04', 'ato-05', 'sintese', 'boca-da-taca'];
   const secs = sectionIds.map((id) => document.getElementById(id)).filter(Boolean);
-  const ACT_LABELS = [
-    'Introdução', 'Ato 1 de 5 · No papel', 'Ato 2 de 5 · No dinheiro',
-    'Ato 3 de 5 · Na urna', 'Ato 4 de 5 · Sinais e limiar', 'Ato 5 de 5 · Onde a Cota Vira Voto',
-    'Síntese', 'Sua vez: explore',
-  ];
-  const actNow = document.getElementById('act-now');
   const progressEl = document.getElementById('story-progress-bar');
   const jumpBtn = document.querySelector('.btn-jump-filters');
   let ticking = false;
@@ -831,17 +860,15 @@ function bindEvents() {
     secs.forEach((el, i) => {
       if (el.getBoundingClientRect().top <= vh * 0.35) cur = i;
     });
-    if (actNow) actNow.textContent = ACT_LABELS[cur] || '';
     const curId = secs[cur]?.id;
     document.querySelectorAll('.act-pill').forEach((p) => {
       const isAct = p.dataset.act === curId;
       p.classList.toggle('active', isAct);
       p.setAttribute('aria-current', isAct ? 'true' : 'false');
     });
-    const sinteseEl = document.getElementById('sintese');
-    if (progressEl && sinteseEl) {
-      const end = y + sinteseEl.getBoundingClientRect().bottom - vh;
-      const ratio = Math.max(0, Math.min(1, y / Math.max(1, end)));
+    if (progressEl) {
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - vh);
+      const ratio = Math.max(0, Math.min(1, y / maxScroll));
       progressEl.style.transform = `scaleX(${ratio})`;
     }
     if (jumpBtn) jumpBtn.classList.toggle('is-ready', cur >= 6);
@@ -865,10 +892,11 @@ function bindEvents() {
 
 async function init() {
   syncBarHeightVar();
+  initHeroPlenario();
   APP_DATA = await loadAppData();
 
   document.getElementById('data-status-dot')?.classList.add('is-live');
-  setText('data-status-label', 'Dados TSE (4/4 JSONs)');
+  setText('data-status-label', 'Fonte: TSE');
 
   populateSelects();
   renderCoverageTable(APP_DATA.coverage);

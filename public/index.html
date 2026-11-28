@@ -59,24 +59,28 @@
 <body>
   <a class="skip-link" href="#main-content">Pular para o conteúdo principal</a>
 
-  <!-- Barra de Navegação Editorial Discreta -->
+  <!-- Barra de Navegação Editorial Fixa -->
   <header class="top-editorial-bar">
-    <div class="brand-tag"><span class="brand-dot" aria-hidden="true"></span><span>Da Cota à Cadeira</span></div>
-    <span class="act-now" id="act-now" aria-live="polite">Introdução</span>
-    <nav class="act-pills" aria-label="Navegação por atos">
-      <a href="#ato-01" class="act-pill" data-act="ato-01">1 · No papel</a>
-      <a href="#ato-02" class="act-pill" data-act="ato-02">2 · No dinheiro</a>
-      <a href="#ato-03" class="act-pill" data-act="ato-03">3 · Na urna</a>
-      <a href="#ato-04" class="act-pill" data-act="ato-04">4 · Sinais de alerta</a>
-      <a href="#ato-05" class="act-pill" data-act="ato-05">5 · No território</a>
-    </nav>
-    <div class="top-actions">
-      <button type="button" class="recorte-chip" id="btn-recorte-chip" hidden title="Os títulos e passos da história descrevem o recorte nacional de 2022. Clique para voltar."></button>
-      <div class="data-status-pill" id="data-status-pill" title="Base oficial auditada do Portal de Dados Abertos do TSE (2018, 2022 e 2026)">
-        <span class="status-dot" id="data-status-dot" aria-hidden="true"></span>
-        <span id="data-status-label">Carregando dados…</span>
+    <div class="top-bar-inner">
+      <a href="#topo" class="brand-tag">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span>Da Cota à Cadeira</span>
+      </a>
+      <nav class="act-pills" aria-label="Navegação por atos">
+        <a href="#ato-01" class="act-pill" data-act="ato-01">01 · Papel</a>
+        <a href="#ato-02" class="act-pill" data-act="ato-02">02 · Dinheiro</a>
+        <a href="#ato-03" class="act-pill" data-act="ato-03">03 · Urna</a>
+        <a href="#ato-04" class="act-pill" data-act="ato-04">04 · Alertas</a>
+        <a href="#ato-05" class="act-pill" data-act="ato-05">05 · Território</a>
+      </nav>
+      <div class="top-actions">
+        <button type="button" class="recorte-chip" id="btn-recorte-chip" hidden title="Os títulos e passos da história descrevem o recorte nacional de 2022. Clique para voltar."></button>
+        <button type="button" class="fonte-tse-btn" id="btn-fonte-tse" aria-haspopup="dialog" title="Abrir modal de metodologia e fontes oficiais do TSE">
+          <span class="status-dot" id="data-status-dot" aria-hidden="true"></span>
+          <span id="data-status-label">Fonte: TSE</span>
+        </button>
+        <a href="#boca-da-taca" class="btn-jump-filters">Explorar dados</a>
       </div>
-      <a href="#sintese" class="btn-jump-filters">Pular para explorar</a>
     </div>
     <div class="story-progress" aria-hidden="true"><i id="story-progress-bar"></i></div>
   </header>
@@ -86,65 +90,112 @@
   </div>
 
   <!-- =======================================================================
-       MOMENTO 1: CLÍMAX VISUAL DE ABERTURA (HERO — BOCA SUPERIOR DA TAÇA)
+       MOMENTO 1: CLÍMAX VISUAL DE ABERTURA (HERO — PLENÁRIO DE 100 CADEIRAS)
        ======================================================================= -->
-  <section class="hero-section" id="topo" tabindex="-1">
-    <svg class="hero-silhouettes-bg" viewBox="0 0 520 720" preserveAspectRatio="xMinYMid slice" aria-hidden="true">
-      <path d="M0,0 L395,0 C406,18 400,32 390,42 C425,74 445,126 440,185 C436,225 432,252 448,282 C464,312 496,348 498,368 C500,384 475,392 470,404 C466,414 490,428 488,444 C486,458 474,468 476,480 C482,504 478,522 462,534 C456,568 456,608 424,625 C392,642 332,616 306,616 C288,616 276,668 265,720 L0,720 Z" fill="#FC7CE5" />
-      <path d="M0,0 L315,0 C338,65 344,145 338,218 L286,214 C280,235 282,258 296,282 C314,312 346,344 348,364 C350,380 324,390 318,402 C314,412 336,428 334,444 C332,458 320,468 322,480 C328,504 322,522 308,534 C302,568 302,605 274,620 C246,635 186,618 162,622 C144,625 134,672 124,720 L0,720 Z" fill="#FA532E" />
-      <path d="M0,0 L125,0 C176,42 204,104 206,184 C208,225 204,250 220,278 C238,308 268,342 270,362 C272,378 246,388 240,400 C236,410 258,426 256,442 C254,456 242,466 244,478 C250,502 244,520 230,532 C224,566 224,606 194,622 C164,638 104,616 78,618 C62,620 52,668 42,720 L0,720 Z" fill="#F8DF4F" />
-    </svg>
-
+  <section class="hero-section editorial-grid-bg" id="topo" tabindex="-1">
     <div class="hero-inner">
-      <svg class="hero-sparkle" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-        <path d="M20 2 C21.5 12 21.5 28 20 38 C18.5 28 18.5 12 20 2 Z" fill="#FFFFFF" />
-        <path d="M4 20 C12 18.5 28 18.5 36 20 C28 21.5 12 21.5 4 20 Z" fill="#FFFFFF" />
-        <path d="M9 9 L15 15 M31 9 L25 15 M9 31 L15 25 M31 31 L25 25" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" />
-      </svg>
-
-      <div class="hero-kicker">Eleições 2018–2026 · microdados do TSE</div>
-      <h1 class="hero-title" id="hero-main-title">Da Cota à Cadeira: Por que a cota de 30% leva mulheres ao papel, mas não ao poder?</h1>
-      <p class="hero-lead">
-        A lei brasileira exige que pelo menos 30% das candidaturas de cada chapa sejam femininas.
-        A partir dos microdados oficiais do TSE (2018–2026), rastreamos as cinco etapas da disputa para mostrar
-        onde a cota funciona, onde o dinheiro vaza e onde a fraude se reinventa.
-      </p>
-
-      <div class="hero-funnel-card">
-        <div class="hero-funnel-header">
-          <span><strong>O Afunilamento da Representação</strong> · Síntese dinâmica da base TSE</span>
-          <span class="hero-badge-recorte" id="hero-recorte-pill">2022 · Federal + Estadual · Brasil (27 UFs)</span>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <div class="hero-kicker">
+            <span class="hero-kicker-dot" aria-hidden="true"></span>
+            <span>ESPECIAL DE DADOS · TSE 2018–2026</span>
+          </div>
+          <h1 class="hero-title" id="hero-main-title">
+            Por que a cota de 30% leva mulheres ao papel, mas <em>não ao poder?</em>
+          </h1>
+          <p class="hero-lead">
+            Microdados oficiais revelam como a presença feminina encolhe quase pela metade entre o registro na urna e a posse no plenário.
+          </p>
+          <div class="hero-actions">
+            <a href="#ato-01" class="hero-cta-primary">
+              <span>Iniciar leitura guiada</span>
+              <svg class="hero-cta-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 3v10m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </a>
+            <button type="button" class="hero-cta-secondary" id="btn-hero-metodologia" aria-haspopup="dialog">
+              Metodologia →
+            </button>
+          </div>
+          <p class="hero-microsig">
+            Leitura em 5 atos · 4 min · Inclui explorador por estado e partido
+          </p>
         </div>
 
-        <div class="hero-metrics-grid tabular">
-          <div class="hero-metric">
-            <div class="hero-metric-label">1. Candidaturas Aptas</div>
-            <div class="hero-metric-num" id="hero-val-cand">—</div>
-            <div class="hero-metric-desc" id="hero-desc-cand">Cumprimento protocolar logo acima do piso legal de 30%</div>
-          </div>
-          <div class="hero-metric is-verba">
-            <div class="hero-metric-label">2. Fundo Público Recebido</div>
-            <div class="hero-metric-num" id="hero-val-verba">—</div>
-            <div class="hero-metric-desc" id="hero-desc-verba">Proporção do FEFC + FP destinada às mulheres</div>
-          </div>
-          <div class="hero-metric is-eleitas">
-            <div class="hero-metric-label">3. Cadeiras Eleitas</div>
-            <div class="hero-metric-num" id="hero-val-eleitas">—</div>
-            <div class="hero-metric-desc" id="hero-desc-eleitas">Queda de quase metade entre o registro e a posse</div>
+        <div class="hero-stage-col">
+          <div class="plenario-card" id="hero-plenario-card">
+            <div class="plenario-head">
+              <span class="plenario-kicker">RETRATO DO PLENÁRIO · 100 CADEIRAS</span>
+              <div class="plenario-head-right">
+                <span class="hero-badge-recorte" id="hero-recorte-pill">Eleições 2022 · 27 UFs</span>
+                <button type="button" class="plenario-play-btn" id="plenario-play-btn" aria-label="Pausar ciclo automático" aria-pressed="true" title="Pausar ciclo automático">
+                  <svg class="icon-pause" width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                    <rect x="2" y="1.5" width="2.8" height="9" rx="0.8" />
+                    <rect x="7.2" y="1.5" width="2.8" height="9" rx="0.8" />
+                  </svg>
+                  <svg class="icon-play" width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" hidden>
+                    <path d="M2.5 1.75v8.5l7.5-4.25-7.5-4.25z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="plenario-svg-wrap">
+              <svg id="hemicycle-svg" viewBox="0 0 520 285" role="img" aria-label="Plenário dinâmico de 100 cadeiras: Candidaturas aptas, 34,2%, 34 de 100 cadeiras ocupadas por mulheres.">
+                <path class="hemicycle-bg-arc" d="M 52 252 A 208 208 0 0 1 468 252" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+                <g id="hemicycle-seats"></g>
+                <g id="hemicycle-threshold"></g>
+                <g id="hemicycle-kpi" transform="translate(260, 212)" text-anchor="middle">
+                  <text id="hemicycle-kpi-val" y="16" fill="#ECD64C">34,2%</text>
+                  <text id="hemicycle-kpi-label" y="39" fill="#F8FAF9">Candidaturas aptas</text>
+                  <text id="hemicycle-kpi-sub" y="60" fill="#B8D8C9">34 de 100 cadeiras · Cumprimento protocolar no registro</text>
+                </g>
+              </svg>
+            </div>
+
+            <div class="plenario-legend-bar">
+              <div class="plenario-legend-items">
+                <span class="plenario-legend-item">
+                  <i class="plenario-dot" id="plenario-women-dot" style="background: #ECD64C;"></i>
+                  <span id="plenario-women-label">Mulheres (34)</span>
+                </span>
+                <span class="plenario-legend-item">
+                  <i class="plenario-dot is-men"></i>
+                  <span id="plenario-men-label">Homens (66)</span>
+                </span>
+              </div>
+              <span class="plenario-drop-badge" id="plenario-drop-badge" aria-hidden="true">−16,3 p.p. na urna</span>
+            </div>
+
+            <div class="plenario-tabs" role="tablist" aria-label="Etapas do afunilamento da representação">
+              <button type="button" class="plenario-tab is-active" role="tab" id="plenario-tab-0" aria-selected="true" tabindex="0" data-stage="0">
+                <span class="plenario-tab-top">
+                  <span class="plenario-tab-name">01 · Papel</span>
+                  <span class="plenario-tab-pct" id="plenario-pct-0" style="color: #ECD64C;">34,2%</span>
+                </span>
+                <span class="plenario-tab-desc">Candidaturas aptas</span>
+                <span class="plenario-tab-bar" aria-hidden="true"><i style="background: #ECD64C;"></i></span>
+              </button>
+              <button type="button" class="plenario-tab" role="tab" id="plenario-tab-1" aria-selected="false" tabindex="-1" data-stage="1">
+                <span class="plenario-tab-top">
+                  <span class="plenario-tab-name">02 · Dinheiro</span>
+                  <span class="plenario-tab-pct" id="plenario-pct-1" style="color: #E872D0;">34,4%</span>
+                </span>
+                <span class="plenario-tab-desc">Fundo público (FEFC + FP)</span>
+                <span class="plenario-tab-bar" aria-hidden="true"><i style="background: #E872D0;"></i></span>
+              </button>
+              <button type="button" class="plenario-tab" role="tab" id="plenario-tab-2" aria-selected="false" tabindex="-1" data-stage="2">
+                <span class="plenario-tab-top">
+                  <span class="plenario-tab-name">03 · Cadeira</span>
+                  <span class="plenario-tab-pct" id="plenario-pct-2" style="color: #EE6A4B;">17,9%</span>
+                </span>
+                <span class="plenario-tab-desc">Cadeiras eleitas</span>
+                <span class="plenario-tab-bar" aria-hidden="true"><i style="background: #EE6A4B;"></i></span>
+              </button>
+            </div>
           </div>
         </div>
-
-        <div id="hero-funnel-holder" class="hero-funnel-holder"></div>
       </div>
-
-      <ol class="roadmap" aria-label="Roteiro em cinco atos">
-        <li><a href="#ato-01"><b>1 · No papel</b>Quantas mulheres entram nas chapas?</a></li>
-        <li><a href="#ato-02"><b>2 · No dinheiro</b>Quanto do fundo público chega a elas?</a></li>
-        <li><a href="#ato-03"><b>3 · Na urna</b>Quantos votos recebem?</a></li>
-        <li><a href="#ato-04"><b>4 · Sinais de alerta</b>Quantas candidaturas são só formais?</a></li>
-        <li><a href="#ato-05"><b>5 · No território</b>Onde a perda é maior?</a></li>
-      </ol>
-      <p class="roadmap-hint">Leitura guiada em cinco atos: role a página, uma etapa por vez. No fim, você explora o seu estado ou partido.</p>
     </div>
   </section>
 
@@ -884,6 +935,41 @@
       </div>
     </details>
   </section>
+
+  <!-- Modal de Metodologia (Fonte: TSE / Metodologia →) -->
+  <dialog id="methodology-modal" class="methodology-dialog" closedby="any" aria-labelledby="methodology-modal-title">
+    <div class="methodology-dialog-card">
+      <div class="methodology-dialog-head">
+        <span class="methodology-dialog-kicker">METODOLOGIA &amp; FONTES OFICIAIS</span>
+        <button type="button" class="methodology-close-btn" id="btn-close-methodology" aria-label="Fechar modal">✕</button>
+      </div>
+      <h1 id="methodology-modal-title" class="methodology-dialog-title">Como calculamos o afunilamento do TSE</h1>
+      <p class="methodology-dialog-lead">
+        Todos os percentuais da capa e dos 5 atos cruzam os microdados públicos do Tribunal Superior Eleitoral (TSE) por chave única anonimizada de candidatura.
+      </p>
+      <ul class="methodology-list">
+        <li><strong>Candidaturas aptas:</strong> registros deferidos em <code>consulta_cand</code> (Deputado Federal e Estadual nas 27 UFs; chapas <code>n ≥ 4</code> nos gráficos por chapa).</li>
+        <li><strong>Fundo público (FEFC + FP):</strong> soma dos repasses públicos em <code>prestacao_de_contas</code> destinados a candidatas mulheres sobre o total distribuído.</li>
+        <li><strong>Cadeiras eleitas:</strong> totalização nominal de eleitas e eleitos por média e quociente em <code>votacao_candidato_munzona</code>.</li>
+      </ul>
+      <div class="methodology-meta-box">
+        <div>
+          <span class="methodology-meta-label">Recorte padrão da capa</span>
+          <strong class="methodology-meta-val" id="methodology-recorte-val">2022 · Federal + Estadual · 27 UFs</strong>
+        </div>
+        <div>
+          <span class="methodology-meta-label">Série auditada</span>
+          <strong class="methodology-meta-val">2018 · 2022 · 2026</strong>
+        </div>
+      </div>
+      <div class="methodology-dialog-foot">
+        <a href="#metodologia" class="methodology-annex-link" id="btn-goto-annex">Ver tabela completa de cobertura ↓</a>
+        <form method="dialog">
+          <button type="submit" class="methodology-ok-btn" autofocus>Entendi</button>
+        </form>
+      </div>
+    </div>
+  </dialog>
 
   <script src="dist/app.js"></script>
 </body>

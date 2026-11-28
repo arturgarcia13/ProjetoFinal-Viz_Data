@@ -18,9 +18,9 @@
 
 ## Evidências objetivas
 
-- `npm run build:vercel` → `dist/app.js 305.9kb`, `site/` com `21` arquivos (`11.53 MB`).
-- `E2E_ROOT=site node tests/e2e.mjs` → `E2E OK` (`seatsCount: 100`, `filledInit: 34`, `heroVals: ['34,2%', '34,4%', '17,9%']`, `hemicycleCollisionCount: 0`, `overflowX: false` em `1440×900`, `1280×820`, `768×1024`, `390×844`, `errors: []`).
-- `./init.sh` → `18 passed in 30.27s`.
+- `npm run build:vercel` → `dist/app.js 306.3kb`, `site/` com `21` arquivos (`11.53 MB`).
+- `E2E_ROOT=site node tests/e2e.mjs` → `E2E OK` (`seatsCount: 100`, `filledInit: 34`, `heroVals: ['34,2%', '34,4%', '17,9%']`, `hemicycleCollisionCount: 0` com linha `30%` livre de todas as 100 cadeiras e pílula alinhada à extremidade da linha, `overflowX: false` em `1440×900`, `1280×820`, `768×1024`, `390×844`, `errors: []`).
+- `./init.sh` → `18 passed in 24.64s`.
 - Revisão adversarial independente (`research`, `8b7f8cab`) → `Veredicto: APROVADO`.
 
 ## Riscos residuais

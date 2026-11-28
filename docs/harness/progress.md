@@ -280,7 +280,7 @@
   - Implementado modal nativo `<dialog id="methodology-modal" closedby="any">` (com fallback `pointerdown/pointerup` no backdrop) acionado por `Fonte: TSE` e `Metodologia →`; atualizados [docs/guia_dos_graficos.md](../guia_dos_graficos.md) e [tests/e2e.mjs](../../tests/e2e.mjs) (incluindo checagem de colisão zero no hemiciclo e viewports `1440×900`, `1280×820`, `768×1024`, `390×844`).
   - Revisão adversarial independente em contexto frio (`research`, `8b7f8cab`) emitiu **`Veredicto: APROVADO`**.
   - **Recibo:** [2026-11-28-nova-capa-plenario.md](receipts/2026-11-28-nova-capa-plenario.md).
-  - **Evidência:** `npm run build:vercel` (`dist/app.js 305.9kb`, `site/` 21 arquivos / `11.53 MB`), `E2E_ROOT=site node tests/e2e.mjs` (`E2E OK`, `seatsCount: 100`, `filledInit: 34`, `hemicycleCollisionCount: 0`, `errors: []`, `overflowX: false`) e `./init.sh` (`18 passed in 30.27s`).
+  - **Evidência:** `npm run build:vercel` (`dist/app.js 306.3kb`, `site/` 21 arquivos / `11.53 MB`), `E2E_ROOT=site node tests/e2e.mjs` (`E2E OK`, `seatsCount: 100`, `filledInit: 34`, `hemicycleCollisionCount: 0` incluindo distância `≥7px` da linha `30%` a todas as cadeiras e alinhamento exato da pílula à linha, `errors: []`, `overflowX: false`) e `./init.sh` (`18 passed in 24.64s`).
 
 ## 4. Open Risks & Questions
 - Em 2026, `votacao_munzona_2026` no repositório é de `19/10/2026` (`232` candidaturas `APTO` ausentes recebem `0` votos por ausência de linha, explicitado no Plano de Dados e na interface). Se uma nova extração de `votacao_2026` for baixada posteriormente, basta rodar `.venv/bin/python -m etl.build_dataset && npm run build`.

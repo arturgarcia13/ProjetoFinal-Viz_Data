@@ -223,12 +223,28 @@ export function initHeroPlenario() {
   });
   seatsGroup.replaceChildren(frag);
 
-  // Linha radial do Piso Legal (30%) em t = 0.30, raio 84..214
-  const thresholdAngle = (Math.PI - PAD_ANGLE) - 0.30 * (Math.PI - 2 * PAD_ANGLE);
-  const x1 = CX + 84 * Math.cos(thresholdAngle);
-  const y1 = CY - 84 * Math.sin(thresholdAngle);
-  const x2 = CX + 214 * Math.cos(thresholdAngle);
-  const y2 = CY - 214 * Math.sin(thresholdAngle);
+  // Linha divisória do Piso Legal (30% = exatamente entre as 30 primeiras cadeiras e a 31ª)
+  const pInner = (() => {
+    const tMid = (3 + 0.5) / (ROWS[0].count - 1);
+    const a = (Math.PI - PAD_ANGLE) - tMid * (Math.PI - 2 * PAD_ANGLE);
+    return { x: CX + ROWS[0].radius * Math.cos(a), y: CY - ROWS[0].radius * Math.sin(a) };
+  })();
+  const pOuter = (() => {
+    const lastIdx = ROWS.length - 1;
+    const tMid = (lastIdx + 3 + 0.5) / (ROWS[lastIdx].count - 1);
+    const a = (Math.PI - PAD_ANGLE) - tMid * (Math.PI - 2 * PAD_ANGLE);
+    return { x: CX + ROWS[lastIdx].radius * Math.cos(a), y: CY - ROWS[lastIdx].radius * Math.sin(a) };
+  })();
+  const vx = pOuter.x - pInner.x;
+  const vy = pOuter.y - pInner.y;
+  const vLen = Math.hypot(vx, vy);
+  const ux = vx / vLen;
+  const uy = vy / vLen;
+
+  const x1 = pInner.x - 14 * ux;
+  const y1 = pInner.y - 14 * uy;
+  const x2 = pOuter.x + 48 * ux;
+  const y2 = pOuter.y + 48 * uy;
 
   const line = document.createElementNS(SVG_NS, 'line');
   line.setAttribute('x1', x1.toFixed(2));
@@ -238,23 +254,28 @@ export function initHeroPlenario() {
   line.setAttribute('stroke', '#ECD64C');
   line.setAttribute('stroke-width', '1.5');
   line.setAttribute('stroke-dasharray', '4 4');
-  line.setAttribute('opacity', '0.88');
+  line.setAttribute('opacity', '0.9');
+
+  const pillW = 112;
+  const pillH = 22;
+  const pillX = x2 - pillW / 2;
+  const pillY = y2 - pillH;
 
   const pillGroup = document.createElementNS(SVG_NS, 'g');
   pillGroup.setAttribute('class', 'hemicycle-threshold-pill');
   const pillRect = document.createElementNS(SVG_NS, 'rect');
-  pillRect.setAttribute('x', '18');
-  pillRect.setAttribute('y', '42');
-  pillRect.setAttribute('width', '118');
-  pillRect.setAttribute('height', '22');
+  pillRect.setAttribute('x', pillX.toFixed(2));
+  pillRect.setAttribute('y', pillY.toFixed(2));
+  pillRect.setAttribute('width', String(pillW));
+  pillRect.setAttribute('height', String(pillH));
   pillRect.setAttribute('rx', '11');
   pillRect.setAttribute('fill', '#033927');
-  pillRect.setAttribute('stroke', 'rgba(236, 214, 76, 0.55)');
+  pillRect.setAttribute('stroke', 'rgba(236, 214, 76, 0.65)');
   pillRect.setAttribute('stroke-width', '1');
 
   const pillText = document.createElementNS(SVG_NS, 'text');
-  pillText.setAttribute('x', '77');
-  pillText.setAttribute('y', '56.5');
+  pillText.setAttribute('x', x2.toFixed(2));
+  pillText.setAttribute('y', (pillY + 14.5).toFixed(2));
   pillText.setAttribute('text-anchor', 'middle');
   pillText.setAttribute('fill', '#ECD64C');
   pillText.textContent = 'Piso legal · 30%';

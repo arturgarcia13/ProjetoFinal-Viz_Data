@@ -141,18 +141,38 @@ await page.click('#plenario-tab-0');
 
 const hemicycleCollisionCount = await page.evaluate(() => {
   const svg = document.getElementById('hemicycle-svg').getBoundingClientRect();
-  const seats = [...document.querySelectorAll('#hemicycle-seats circle')].map((c) => c.getBoundingClientRect());
+  const seats = [...document.querySelectorAll('#hemicycle-seats circle')].map((c) => ({
+    cx: Number(c.getAttribute('cx')),
+    cy: Number(c.getAttribute('cy')),
+    r: c.getBoundingClientRect(),
+  }));
   const texts = [...document.querySelectorAll('#hemicycle-svg text')].map((t) => t.getBoundingClientRect());
   let hits = 0;
   for (const t of texts) {
     if (t.left < svg.left - 1 || t.right > svg.right + 1 || t.top < svg.top - 1 || t.bottom > svg.bottom + 1) hits += 1;
     for (const s of seats) {
-      if (t.left < s.right && t.right > s.left && t.top < s.bottom && t.bottom > s.top) {
+      if (t.left < s.r.right && t.right > s.r.left && t.top < s.r.bottom && t.bottom > s.r.top) {
         hits += 1;
         break;
       }
     }
   }
+  const line = document.querySelector('#hemicycle-threshold line');
+  const lx1 = Number(line.getAttribute('x1'));
+  const ly1 = Number(line.getAttribute('y1'));
+  const lx2 = Number(line.getAttribute('x2'));
+  const ly2 = Number(line.getAttribute('y2'));
+  const lLen = Math.hypot(lx2 - lx1, ly2 - ly1);
+  for (const s of seats) {
+    const tProj = ((s.cx - lx1) * (lx2 - lx1) + (s.cy - ly1) * (ly2 - ly1)) / (lLen * lLen);
+    const px = lx1 + Math.max(0, Math.min(1, tProj)) * (lx2 - lx1);
+    const py = ly1 + Math.max(0, Math.min(1, tProj)) * (ly2 - ly1);
+    if (Math.hypot(s.cx - px, s.cy - py) < 7.0) hits += 1;
+  }
+  const pill = document.querySelector('#hemicycle-threshold rect');
+  const pillCenterX = Number(pill.getAttribute('x')) + Number(pill.getAttribute('width')) / 2;
+  const pillBottomY = Number(pill.getAttribute('y')) + Number(pill.getAttribute('height'));
+  if (Math.abs(pillCenterX - lx2) > 1 || Math.abs(pillBottomY - ly2) > 1) hits += 1;
   return hits;
 });
 if (hemicycleCollisionCount !== 0) throw new Error(`Hemiciclo com ${hemicycleCollisionCount} colisões/clippings de texto`);

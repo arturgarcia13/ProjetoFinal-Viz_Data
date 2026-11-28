@@ -1,60 +1,4 @@
 @font-face {
-  font-family: 'Playfair Display';
-  src: url('assets/fonts/playfair-display-latin-600-normal.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Playfair Display';
-  src: url('assets/fonts/playfair-display-latin-600-italic.woff2') format('woff2');
-  font-weight: 600;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Playfair Display';
-  src: url('assets/fonts/playfair-display-latin-700-normal.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Montserrat';
-  src: url('assets/fonts/montserrat-latin-400-normal.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Montserrat';
-  src: url('assets/fonts/montserrat-latin-500-normal.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Montserrat';
-  src: url('assets/fonts/montserrat-latin-600-normal.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Montserrat';
-  src: url('assets/fonts/montserrat-latin-700-normal.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Red Hat Mono';
-  src: url('assets/fonts/red-hat-mono-latin-500-normal.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
   font-family: 'Fraunces';
   src: url('assets/fonts/fraunces-latin-500-normal.woff2') format('woff2');
   font-weight: 500;
@@ -93,27 +37,6 @@
   font-family: 'JetBrains Mono';
   src: url('assets/fonts/jetbrains-mono-latin-600-normal.woff2') format('woff2');
   font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Newsreader';
-  src: url('assets/fonts/newsreader-latin-400-normal.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Newsreader';
-  src: url('assets/fonts/newsreader-latin-600-normal.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Newsreader';
-  src: url('assets/fonts/newsreader-latin-700-normal.woff2') format('woff2');
-  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -187,10 +110,7 @@
   --text-muted: #647A71;
   --text-on-dark: #FBF8F1;
 
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-cover-sans: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-cover-mono: 'Red Hat Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-serif: 'Newsreader', Georgia, serif;
+  --font-display: 'Fraunces', Georgia, serif;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
@@ -252,7 +172,7 @@ body {
 }
 
 code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.82em;
   background: rgba(0, 125, 91, 0.08);
   color: var(--color-emerald);
@@ -313,7 +233,7 @@ code {
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--outline-subtle);
   color: var(--ink-light);
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
 }
 
 .top-bar-inner {
@@ -337,7 +257,7 @@ code {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 1rem;
   letter-spacing: -0.015em;
@@ -436,7 +356,7 @@ code {
   border: 0;
   border-radius: 9999px;
   padding: 0.34rem 0.75rem;
-  font: 700 0.72rem var(--font-cover-sans);
+  font: 700 0.72rem var(--font-sans);
   cursor: pointer;
 }
 
@@ -449,7 +369,7 @@ code {
   color: var(--ink-muted);
   padding: 0.45rem 0.75rem;
   border-radius: 9999px;
-  font-family: var(--font-cover-mono);
+  font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 500;
   cursor: pointer;
@@ -487,7 +407,7 @@ code {
   color: var(--ink-light);
   padding: 0.58rem 1.15rem;
   border-radius: 9999px;
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -596,7 +516,7 @@ code {
   display: flex;
   flex-direction: column;
   color: var(--ink-light);
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   border-bottom: 1px solid var(--outline-subtle);
   position: relative;
 }
@@ -652,7 +572,7 @@ code {
   align-items: center;
   gap: 0.5rem;
   align-self: flex-start;
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.4px;
@@ -709,7 +629,7 @@ code {
 }
 
 .hero-lead {
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-size: 18px;
   line-height: 28px;
   font-weight: 400;
@@ -733,7 +653,7 @@ code {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.4px;
@@ -754,7 +674,7 @@ code {
   gap: 0.5rem;
   background: var(--cota-yellow);
   color: #142620;
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 14px;
   letter-spacing: 0.1px;
@@ -781,7 +701,7 @@ code {
   background: var(--emerald-deep);
   border: 1px solid var(--outline-subtle);
   color: var(--ink-light);
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.1px;
@@ -817,7 +737,7 @@ code {
 }
 
 .plenario-kicker {
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.4px;
@@ -839,7 +759,7 @@ code {
   color: #142620;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-weight: 500;
   font-size: 12px;
   letter-spacing: 0.4px;
@@ -908,7 +828,7 @@ code {
 }
 
 .hemicycle-threshold-pill text {
-  font-family: var(--font-cover-mono);
+  font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 500;
 }
@@ -921,14 +841,14 @@ code {
 }
 
 #hemicycle-kpi-label {
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 700;
 }
 
 .plenario-subtitle {
   margin: 0;
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-size: 15px;
   line-height: 24px;
   color: var(--ink-muted);
@@ -956,7 +876,7 @@ code {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.4px;
@@ -990,7 +910,7 @@ code {
   background: rgba(250, 83, 46, 0.20);
   color: var(--cadeira-coral);
   border: 1px solid rgba(250, 83, 46, 0.45);
-  font-family: var(--font-cover-mono);
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
   opacity: 0;
@@ -1056,7 +976,7 @@ code {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.4px;
@@ -1084,7 +1004,7 @@ code {
 .plenario-tab-desc {
   display: block;
   margin-top: 0.15rem;
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-size: 11.5px;
   line-height: 16px;
   color: var(--ink-muted);
@@ -1132,7 +1052,7 @@ code {
   align-items: center;
   gap: 0.2rem;
   text-decoration: none;
-  font-family: var(--font-cover-sans);
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.4px;
@@ -1224,7 +1144,7 @@ dialog.methodology-dialog::backdrop {
 }
 
 .methodology-dialog-title {
-  font-family: var(--font-fraunces);
+  font-family: var(--font-display);
   font-size: 1.45rem;
   line-height: 1.2;
   margin: 0 0 0.75rem;
@@ -1394,7 +1314,7 @@ dialog.methodology-dialog::backdrop {
 }
 
 .act-heading {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: clamp(1.75rem, 3vw, 2.45rem);
   line-height: 1.15;
   margin: 0 0 0.75rem;
@@ -1403,7 +1323,7 @@ dialog.methodology-dialog::backdrop {
 }
 
 .act-transition-lead {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 1.16rem;
   line-height: 1.6;
   color: var(--text-secondary);
@@ -1466,7 +1386,7 @@ dialog.methodology-dialog::backdrop {
 }
 
 .step-card h3 {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 1.24rem;
   line-height: 1.28;
   margin: 0 0 0.55rem;
@@ -1575,7 +1495,7 @@ dialog.methodology-dialog::backdrop {
 }
 
 .chart-conclusive-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: clamp(1.15rem, 1.7vw, 1.48rem);
   line-height: 1.26;
   font-weight: 700;
@@ -2292,13 +2212,13 @@ dialog.methodology-dialog::backdrop {
 }
 
 .recap h2 {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: clamp(1.6rem, 2.6vw, 2.2rem);
   margin: 0 0 0.4rem;
 }
 
 .recap-lead {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 1.15rem;
   color: var(--text-secondary);
   margin: 0 0 1.2rem;
@@ -2355,7 +2275,7 @@ dialog.methodology-dialog::backdrop {
 }
 
 .boca-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: clamp(1.85rem, 3.2vw, 2.6rem);
   margin: 0 0 0.65rem;
   line-height: 1.15;
@@ -2420,7 +2340,7 @@ dialog.methodology-dialog::backdrop {
 }
 
 .readout-box strong {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 1.85rem;
   color: var(--color-highlight);
   display: block;
@@ -2490,7 +2410,7 @@ dialog.methodology-dialog::backdrop {
 }
 
 .annex-details summary {
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--text-secondary);

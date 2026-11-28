@@ -97,8 +97,8 @@ if (
   shellCheck.bodyBg !== 'rgb(251, 248, 241)'
   || shellCheck.h1Color !== 'rgb(251, 248, 241)'
   || shellCheck.h1SpanColor !== 'rgb(248, 223, 79)'
-  || !shellCheck.h1Font.includes('Playfair Display')
-  || !shellCheck.heroBodyFont.includes('Montserrat')
+  || !shellCheck.h1Font.includes('Fraunces')
+  || !shellCheck.heroBodyFont.includes('Inter')
   || !shellCheck.bodyFont.includes('Inter')
   || shellCheck.skipHref !== '#main-content'
   || !shellCheck.skipIsFirst

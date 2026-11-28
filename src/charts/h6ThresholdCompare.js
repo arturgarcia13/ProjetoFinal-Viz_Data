@@ -4,7 +4,7 @@ import { animDelay, animDur, drawPath, MOTION, shouldAnimate } from './motion.js
 import { bindTooltipEvents, buildTooltipCard, createChartTooltip, fmtCompactBrl, fmtInt, fmtPct, fmtSignedPP } from './tooltip.js';
 
 /**
- * Gráfico 8 (Ato 4B) — Slopegraph Comparativo 30%–33% vs. > 33% (excluindo < 30%) em 4 dimensões:
+ * Gráfico 6 (Ato 3 · #sec-limiar) — Slopegraph Comparativo 30%–33% vs. > 33% (excluindo < 30%) em 4 dimensões:
  * 1. Mediana de Investimento (F)
  * 2. Proporcionalidade Pública (F)
  * 3. Distribuição (Conc. Top 10%)

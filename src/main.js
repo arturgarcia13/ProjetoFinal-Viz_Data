@@ -558,7 +558,7 @@ function update() {
   });
   R.h8();
 
-  // Gráfico 8 (Slopegraph Comparativo 30%–33% vs. >33%, excluindo <30%)
+  // Gráfico 6 (Slopegraph Comparativo 30%–33% vs. >33%, excluindo <30%)
   const limiarRows = getScopedRows({ year: state.limiarYear, ignoreParty: state.limiarUnit === 'party' });
   const limiarData = computeThresholdBandComparison(limiarRows, { unit: state.limiarUnit });
   renderVerdictPill('verdict-limiar', limiarData.verdict);
@@ -950,6 +950,9 @@ async function init() {
     }
   }, {
     onEnterBlock: (key) => {
+      if (key === 'h4' && stepOf('h4') === 0 && R.h4) {
+        R.h4(0, -1);
+      }
       if (key === 'limiar' && stepOf('limiar') === 0 && R.limiar) {
         R.limiar(0, -1);
       }

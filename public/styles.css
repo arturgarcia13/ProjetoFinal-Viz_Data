@@ -2595,6 +2595,11 @@ dialog.methodology-dialog::backdrop {
     opacity: 1;
     transform: translateY(0);
   }
+
+  .h4-link,
+  .h4-node {
+    transition: fill-opacity 180ms cubic-bezier(0.2, 0, 0, 1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

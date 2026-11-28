@@ -40,7 +40,7 @@ export function decodeAnalyticalBase(raw) {
   });
 
   // Pré-computa as métricas legais da chapa completa (Federação/Partido × UF × Cargo × Ano)
-  // para que filtros por partido federado (ex.: PC do B, PSDB) não fragmentem a chapa em H1/Gráfico 8.
+  // para que filtros por partido federado (ex.: PC do B, PSDB) não fragmentem a chapa em H1/Gráfico 6.
   const slateMap = new Map();
   for (const c of candidates) {
     if (c.g !== 'F' && c.g !== 'M') continue;

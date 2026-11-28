@@ -248,7 +248,7 @@ async function checkSvgGeometry(svgSelector, { textSelector = 'text', checkBound
   }, svgSelector, textSelector, checkBounds);
 }
 
-// 1. Verifica todos os gráficos renderizados (9 blocos: H1..H6, H8/Gráfico 7, Limiar/Gráfico 8, Ato 5; H7 removido)
+// 1. Verifica todos os gráficos renderizados (9 blocos: H1..H5, Limiar/Gráfico 6, H6/Gráfico 7, H8/Gráfico 8, Ato 5; H7 removido)
 if (await page.$('#sec-h7')) {
   throw new Error('H7 deveria ter sido removido do DOM');
 }
@@ -402,10 +402,22 @@ const h4Check = await page.evaluate(() => ({
   links01: document.querySelectorAll('#canvas-h4 .h4-link-01').length,
   links12: document.querySelectorAll('#canvas-h4 .h4-link-12').length,
   hubs: document.querySelectorAll('#canvas-h4 .h4-hub').length,
+  hasSvgRef: Boolean(window.__h4SvgRef = document.querySelector('#canvas-h4 svg.h4-sankey-svg')),
 }));
-if (h4Check.nodes !== 10 || h4Check.links01 !== 8 || h4Check.links12 < 12 || h4Check.hubs !== 0) {
+if (h4Check.nodes !== 10 || h4Check.links01 !== 8 || h4Check.links12 < 12 || h4Check.hubs !== 0 || !h4Check.hasSvgRef) {
   throw new Error(`H4 Sankey 1000v inválido: ${JSON.stringify(h4Check)}`);
 }
+const h4Dots = await page.$$('#sec-h4 .step-dot');
+await h4Dots[0].click(); // Passo 0: Coluna 3 oculta no mesmo SVG
+const h4Step0 = await page.evaluate(() => ({
+  sameSvg: window.__h4SvgRef === document.querySelector('#canvas-h4 svg.h4-sankey-svg'),
+  col3Hidden: document.querySelector('#canvas-h4 .h4-col3-links')?.getAttribute('aria-hidden') === 'true',
+  col3Tabindex: document.querySelector('#canvas-h4 .h4-link-12')?.getAttribute('tabindex'),
+}));
+if (!h4Step0.sameSvg || !h4Step0.col3Hidden || h4Step0.col3Tabindex !== '-1') {
+  throw new Error(`H4 Passo 1 (step 0) deveria preservar <svg> e ocultar Coluna 3: ${JSON.stringify(h4Step0)}`);
+}
+await h4Dots[1].click(); // Volta ao Passo 2 (step 1)
 await assertUnifiedHover('#canvas-h4 .h4-link-12[data-source="f_gt"][data-target="direct"]', '#canvas-h4', 0);
 await assertUnifiedHover('#canvas-h4 .h4-link-12[data-source="m_gt"][data-target="direct"]', '#canvas-h4', 0);
 await assertUnifiedHover('#canvas-h4 .h4-node[data-node-id="party"]', '#canvas-h4', 0);
@@ -459,14 +471,19 @@ await assertUnifiedHover('#canvas-h6 .h6-dot', '#canvas-h6', 0);
 await page.click('[data-h6-year="2022"]');
 await page.click('[data-h6-year="2026"]');
 
-// Ato 3 deve conter H5 + Limiar (Gráfico 8 Slopegraph); Ato 4 deve conter H6 + H8 (Gráfico 7)
+// Ato 3 deve conter H5 + Limiar (Gráfico 6 Slopegraph); Ato 4 deve conter H6 (Gráfico 7) + H8 (Gráfico 8)
 const actsOrderOk = await page.evaluate(() => {
   const ato3 = [...document.querySelectorAll('#ato-03 .scrolly-block')].map((el) => el.id).join(',');
   const ato4 = [...document.querySelectorAll('#ato-04 .scrolly-block')].map((el) => el.id).join(',');
-  return { ato3, ato4 };
+  const pills = [...document.querySelectorAll('.scrolly-block .chart-code-pill')].map((el) => el.textContent.trim());
+  return { ato3, ato4, pills };
 });
-if (actsOrderOk.ato3 !== 'sec-h5,sec-limiar' || actsOrderOk.ato4 !== 'sec-h6,sec-h8') {
-  throw new Error(`Ordem esperada: Ato 3 (sec-h5,sec-limiar) e Ato 4 (sec-h6,sec-h8), obteve ${JSON.stringify(actsOrderOk)}`);
+if (
+  actsOrderOk.ato3 !== 'sec-h5,sec-limiar'
+  || actsOrderOk.ato4 !== 'sec-h6,sec-h8'
+  || actsOrderOk.pills.slice(0, 8).join(',') !== 'Gráfico 1,Gráfico 2,Gráfico 3,Gráfico 4,Gráfico 5,Gráfico 6,Gráfico 7,Gráfico 8'
+) {
+  throw new Error(`Ordem esperada: Ato 3 (sec-h5,sec-limiar) e Ato 4 (sec-h6,sec-h8) com numeração 1..8, obteve ${JSON.stringify(actsOrderOk)}`);
 }
 const h8Annotations = await page.$$eval('#canvas-h8 svg .direct-annotation', (els) => els.length);
 if (h8Annotations !== 0) throw new Error(`H8 não deveria ter textos internos, obteve ${h8Annotations}`);
@@ -491,7 +508,7 @@ const slopeStep1 = await page.evaluate(() => ({
   dots: document.querySelectorAll('#canvas-limiar .limiar-slope-dot').length,
 }));
 if (slopeStep1.totalFrames !== 4 || slopeStep1.loadedPanels.join(',') !== 'mediana,proporcionalidade' || slopeStep1.lines !== 2 || slopeStep1.dots !== 4) {
-  throw new Error(`Gráfico 8 Passo 1 deveria mostrar os 4 cards com dados apenas nos 2 primeiros: ${JSON.stringify(slopeStep1)}`);
+  throw new Error(`Gráfico 6 Passo 1 deveria mostrar os 4 cards com dados apenas nos 2 primeiros: ${JSON.stringify(slopeStep1)}`);
 }
 
 await limiarDots[1].click(); // Passo 2: carrega Distribuição
@@ -502,7 +519,7 @@ const slopeStep2 = await page.evaluate(() => ({
   dots: document.querySelectorAll('#canvas-limiar .limiar-slope-dot').length,
 }));
 if (slopeStep2.totalFrames !== 4 || slopeStep2.loadedPanels.join(',') !== 'mediana,proporcionalidade,distribuicao' || slopeStep2.lines !== 3 || slopeStep2.dots !== 6) {
-  throw new Error(`Gráfico 8 Passo 2 deveria carregar Distribuição apenas aqui: ${JSON.stringify(slopeStep2)}`);
+  throw new Error(`Gráfico 6 Passo 2 deveria carregar Distribuição apenas aqui: ${JSON.stringify(slopeStep2)}`);
 }
 
 await limiarDots[2].click(); // Passo 3: carrega Eleitas (todos os 4)
@@ -512,7 +529,7 @@ const slopeCheck = await page.evaluate(() => ({
   dots: document.querySelectorAll('#canvas-limiar .limiar-slope-dot').length,
 }));
 if (slopeCheck.panels !== 4 || slopeCheck.lines !== 4 || slopeCheck.dots !== 8) {
-  throw new Error(`Gráfico 8 (Slopegraph) inválido: ${JSON.stringify(slopeCheck)}`);
+  throw new Error(`Gráfico 6 (Slopegraph) inválido: ${JSON.stringify(slopeCheck)}`);
 }
 await assertUnifiedHover('#canvas-limiar .limiar-panel', '#canvas-limiar', 0);
 await page.click('[data-limiar-unit="party"]');

@@ -815,7 +815,7 @@ code {
   transform-origin: center;
   opacity: 1;
   transform: scale(0.92);
-  transition: fill 280ms ease-out, transform 340ms cubic-bezier(0.22, 1, 0.36, 1), opacity 280ms ease-out;
+  transition: fill 200ms ease-out, transform 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease-out;
 }
 
 .hemicycle-seat.is-entering {
@@ -825,6 +825,18 @@ code {
 
 .hemicycle-seat.is-filled {
   transform: scale(1.08);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes hemicycleSeatPop {
+    0% { transform: scale(0.84); }
+    55% { transform: scale(1.24); }
+    100% { transform: scale(1.08); }
+  }
+
+  .hemicycle-seat.is-filled.is-pop {
+    animation: hemicycleSeatPop 260ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
 }
 
 .hemicycle-threshold-pill text {
@@ -1034,7 +1046,7 @@ code {
 
 .plenario-tab.is-active.is-playing .plenario-tab-bar i {
   width: 100%;
-  animation: stepFill 3.6s linear forwards;
+  animation: stepFill 4.4s linear forwards;
 }
 
 .hero-scroll-cue {

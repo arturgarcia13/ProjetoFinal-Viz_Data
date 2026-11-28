@@ -1,10 +1,10 @@
-import { shouldAnimate, tweenPctText } from './motion.js';
+import { shouldAnimate } from './motion.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 const CX = 230;
 const CY = 212;
-const CYCLE_MS = 3600;
+const CYCLE_MS = 4400;
 
 const RINGS = [
   { count: 14, radius: 88 },
@@ -76,18 +76,32 @@ const controllerState = {
   isEntering: false,
   timerId: null,
   entranceTimerId: null,
+  seqRafId: null,
+  displayedPct: 0,
   seatEls: [],
+  seatState: [],
   stages: STAGE_META.map((s) => ({ ...s })),
 };
+
+function cancelSeatSequence() {
+  if (controllerState.seqRafId !== null) {
+    cancelAnimationFrame(controllerState.seqRafId);
+    controllerState.seqRafId = null;
+  }
+}
 
 function clearEntranceState() {
   if (controllerState.entranceTimerId !== null) {
     clearTimeout(controllerState.entranceTimerId);
     controllerState.entranceTimerId = null;
   }
+  cancelSeatSequence();
   if (controllerState.isEntering) {
     controllerState.isEntering = false;
-    controllerState.seatEls.forEach((c) => c.classList.remove('is-entering'));
+    controllerState.seatEls.forEach((c) => {
+      c.style.transitionDelay = '0ms';
+      c.classList.remove('is-entering');
+    });
   }
 }
 
@@ -120,32 +134,127 @@ function syncPlayButtonUI() {
   if (playIcon) playIcon.hidden = playing;
 }
 
-function renderActiveStage({ tweenKpi = false } = {}) {
+function applySeat(seatIdx, filled, color, { pop = false } = {}) {
+  const c = controllerState.seatEls[seatIdx];
+  if (!c) return;
+  const fillCol = filled ? color : '#0B5741';
+  const prev = controllerState.seatState[seatIdx];
+  const changed = !prev || prev.filled !== filled || prev.color !== fillCol;
+  controllerState.seatState[seatIdx] = { filled, color: fillCol };
+
+  c.setAttribute('fill', fillCol);
+  c.classList.toggle('is-filled', filled);
+  c.classList.toggle('is-empty', !filled);
+  if (pop && changed) {
+    c.classList.add('is-pop');
+  } else if (!pop) {
+    c.classList.remove('is-pop');
+  }
+}
+
+function updateLiveCounters(filledCount, pctValue) {
+  const womenLabel = document.getElementById('plenario-women-label');
+  const menLabel = document.getElementById('plenario-men-label');
+  const kpiVal = document.getElementById('hemicycle-kpi-val');
+  if (womenLabel) womenLabel.textContent = `Mulheres (${filledCount})`;
+  if (menLabel) menLabel.textContent = `Homens (${100 - filledCount})`;
+  if (kpiVal) kpiVal.textContent = fmtPct(pctValue);
+  controllerState.displayedPct = pctValue;
+}
+
+function buildSequentialOps(targetCount, targetColor) {
+  const currentFilled = controllerState.seatState.reduce((acc, s) => acc + (s.filled ? 1 : 0), 0);
+  const ops = [];
+
+  if (targetCount < currentFilled) {
+    for (let i = currentFilled - 1; i >= targetCount; i -= 1) {
+      ops.push({ idx: i, filled: false, color: '#0B5741', delayMs: (currentFilled - 1 - i) * 22 });
+    }
+    for (let i = 0; i < targetCount; i += 1) {
+      const cur = controllerState.seatState[i];
+      if (!cur?.filled || cur.color !== targetColor) {
+        ops.push({ idx: i, filled: true, color: targetColor, delayMs: 80 + i * 18 });
+      }
+    }
+  } else {
+    let step = 0;
+    for (let i = 0; i < targetCount; i += 1) {
+      const cur = controllerState.seatState[i];
+      if (!cur?.filled || cur.color !== targetColor) {
+        const gap = cur?.filled ? 17 : 22;
+        ops.push({ idx: i, filled: true, color: targetColor, delayMs: step });
+        step += gap;
+      }
+    }
+    for (let i = 99; i >= targetCount; i -= 1) {
+      if (controllerState.seatState[i]?.filled) {
+        ops.push({ idx: i, filled: false, color: '#0B5741', delayMs: 0 });
+      }
+    }
+  }
+
+  return ops;
+}
+
+function runSequentialSeatTransition(targetCount, targetColor, targetPct) {
+  cancelSeatSequence();
+  controllerState.seatEls.forEach((c) => {
+    c.style.transitionDelay = '0ms';
+    c.classList.remove('is-pop');
+  });
+
+  const ops = buildSequentialOps(targetCount, targetColor);
+  if (ops.length === 0) {
+    updateLiveCounters(targetCount, targetPct);
+    return;
+  }
+
+  ops.sort((a, b) => a.delayMs - b.delayMs);
+  const totalDur = Math.max(1, ops[ops.length - 1].delayMs);
+  const startPct = controllerState.displayedPct;
+  let cursor = 0;
+  let startTime = null;
+
+  const tick = (now) => {
+    if (startTime === null) startTime = now;
+    const elapsed = now - startTime;
+
+    while (cursor < ops.length && ops[cursor].delayMs <= elapsed) {
+      const op = ops[cursor];
+      applySeat(op.idx, op.filled, op.color, { pop: true });
+      cursor += 1;
+    }
+
+    const filledNow = controllerState.seatState.reduce((acc, s) => acc + (s.filled ? 1 : 0), 0);
+    const t = Math.min(1, elapsed / totalDur);
+    const easedT = 1 - ((1 - t) * (1 - t));
+    const pctNow = startPct + (targetPct - startPct) * easedT;
+    updateLiveCounters(filledNow, pctNow);
+
+    if (cursor < ops.length || t < 1) {
+      controllerState.seqRafId = requestAnimationFrame(tick);
+    } else {
+      controllerState.seqRafId = null;
+      updateLiveCounters(targetCount, targetPct);
+    }
+  };
+
+  controllerState.seqRafId = requestAnimationFrame(tick);
+}
+
+function syncStageMetaUI({ preserveKpi = false } = {}) {
   const idx = controllerState.activeStage;
   const stage = controllerState.stages[idx];
   const filledSeats = Math.max(0, Math.min(100, Math.round(stage.pct)));
-  const menSeats = 100 - filledSeats;
-
-  if (!controllerState.isEntering) {
-    controllerState.seatEls.forEach((circle, seatIdx) => {
-      const isFilled = seatIdx < filledSeats;
-      circle.setAttribute('fill', isFilled ? stage.color : '#0B5741');
-      circle.classList.toggle('is-filled', isFilled);
-      circle.classList.toggle('is-empty', !isFilled);
-    });
-  }
 
   const kpiVal = document.getElementById('hemicycle-kpi-val');
   const kpiLabel = document.getElementById('hemicycle-kpi-label');
   const subtitleEl = document.getElementById('funnel-subtitle');
   if (kpiVal) {
     kpiVal.setAttribute('fill', stage.color);
-    if (controllerState.isEntering) {
-      kpiVal.textContent = '0,0%';
-    } else if (tweenKpi) {
-      tweenPctText(kpiVal, stage.pct / 100, { duration: 640 });
-    } else {
+    if (!preserveKpi) {
       kpiVal.textContent = fmtPct(stage.pct);
+      controllerState.displayedPct = stage.pct;
     }
   }
   if (kpiLabel) kpiLabel.textContent = stage.title;
@@ -162,11 +271,7 @@ function renderActiveStage({ tweenKpi = false } = {}) {
   }
 
   const womenDot = document.getElementById('plenario-women-dot');
-  const womenLabel = document.getElementById('plenario-women-label');
-  const menLabel = document.getElementById('plenario-men-label');
   if (womenDot) womenDot.style.backgroundColor = stage.color;
-  if (womenLabel) womenLabel.textContent = `Mulheres (${filledSeats})`;
-  if (menLabel) menLabel.textContent = `Homens (${menSeats})`;
 
   const dropBadge = document.getElementById('plenario-drop-badge');
   if (dropBadge) {
@@ -198,10 +303,34 @@ function renderActiveStage({ tweenKpi = false } = {}) {
   });
 }
 
+function renderActiveStage({ animateSeats = false } = {}) {
+  const idx = controllerState.activeStage;
+  const stage = controllerState.stages[idx];
+  const filledSeats = Math.max(0, Math.min(100, Math.round(stage.pct)));
+
+  if (controllerState.isEntering) {
+    syncStageMetaUI({ preserveKpi: true });
+    updateLiveCounters(0, 0);
+    return;
+  }
+
+  syncStageMetaUI({ preserveKpi: animateSeats && shouldAnimate() });
+
+  if (animateSeats && shouldAnimate()) {
+    runSequentialSeatTransition(filledSeats, stage.color, stage.pct);
+  } else {
+    cancelSeatSequence();
+    controllerState.seatEls.forEach((_, seatIdx) => {
+      applySeat(seatIdx, seatIdx < filledSeats, stage.color, { pop: false });
+    });
+    updateLiveCounters(filledSeats, stage.pct);
+  }
+}
+
 export function setActiveStage(idx, { restartTimer = false } = {}) {
   const clamped = Math.max(0, Math.min(controllerState.stages.length - 1, idx));
   controllerState.activeStage = clamped;
-  renderActiveStage();
+  renderActiveStage({ animateSeats: shouldAnimate() });
   if (restartTimer && controllerState.isPlaying && !controllerState.reducedMotion) {
     scheduleNextCycle();
   }
@@ -210,7 +339,7 @@ export function setActiveStage(idx, { restartTimer = false } = {}) {
 export function setPlenarioPlaying(playing) {
   controllerState.isPlaying = Boolean(playing) && !controllerState.reducedMotion;
   syncPlayButtonUI();
-  renderActiveStage();
+  renderActiveStage({ animateSeats: false });
   if (controllerState.isPlaying) {
     scheduleNextCycle();
   } else {
@@ -234,6 +363,7 @@ export function initHeroPlenario() {
 
   const seats = buildSeatsGeometry();
   const frag = document.createDocumentFragment();
+  controllerState.seatState = seats.map(() => ({ filled: false, color: '#0B5741' }));
   controllerState.seatEls = seats.map((seat, idx) => {
     const c = document.createElementNS(SVG_NS, 'circle');
     c.setAttribute('cx', seat.x.toFixed(2));
@@ -241,7 +371,7 @@ export function initHeroPlenario() {
     c.setAttribute('r', '5.4');
     c.setAttribute('fill', '#0B5741');
     c.setAttribute('class', animate ? 'hemicycle-seat is-empty is-entering' : 'hemicycle-seat is-empty');
-    c.style.transitionDelay = animate ? `${idx * 6}ms` : '0ms';
+    c.style.transitionDelay = animate ? `${idx * 2}ms` : '0ms';
     frag.appendChild(c);
     return c;
   });
@@ -347,7 +477,7 @@ export function initHeroPlenario() {
   });
 
   syncPlayButtonUI();
-  renderActiveStage();
+  renderActiveStage({ animateSeats: false });
   if (animate) {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -356,8 +486,9 @@ export function initHeroPlenario() {
         controllerState.entranceTimerId = window.setTimeout(() => {
           controllerState.entranceTimerId = null;
           controllerState.isEntering = false;
-          renderActiveStage({ tweenKpi: true });
-        }, 260);
+          controllerState.seatEls.forEach((c) => { c.style.transitionDelay = '0ms'; });
+          renderActiveStage({ animateSeats: true });
+        }, 230);
       });
     });
   }
@@ -368,6 +499,7 @@ export function initHeroPlenario() {
 
 export function updateHeroPlenario({ cand, verba, eleitas, badgeText } = {}) {
   if (!controllerState.initialized) initHeroPlenario();
+  const prevActive = controllerState.stages[controllerState.activeStage].pct;
   if (Number.isFinite(cand)) controllerState.stages[0].pct = cand;
   if (Number.isFinite(verba)) controllerState.stages[1].pct = verba;
   if (Number.isFinite(eleitas)) controllerState.stages[2].pct = eleitas;
@@ -376,5 +508,12 @@ export function updateHeroPlenario({ cand, verba, eleitas, badgeText } = {}) {
     const pill = document.getElementById('hero-recorte-pill');
     if (pill) pill.textContent = badgeText;
   }
-  renderActiveStage();
+
+  const nextActive = controllerState.stages[controllerState.activeStage].pct;
+  const changed = Math.abs(nextActive - prevActive) >= 0.05;
+  if ((controllerState.isEntering || controllerState.seqRafId !== null) && !changed) {
+    syncStageMetaUI({ preserveKpi: true });
+    return;
+  }
+  renderActiveStage({ animateSeats: changed });
 }

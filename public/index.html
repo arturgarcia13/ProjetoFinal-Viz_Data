@@ -534,7 +534,7 @@
         <p class="act-transition-lead">
           Quando o recurso público não se converte em estrutura própria de campanha, o impacto aparece na votação.
           Ao abrir as urnas, vemos que o afunilamento acontece antes mesmo da divisão das sobras:
-          as mulheres estão nas chapas, mas <span class="hl-gold">os votos se concentram nos homens</span>.
+          as mulheres estão nas chapas, mas <span class="hl-gold">os votos se concentram nos homens</span> — e comparar chapas e partidos em <strong>30%–33%</strong> contra <strong>&gt;33%</strong> revela o custo eleitoral do piso mínimo.
         </p>
       </div>
 
@@ -585,20 +585,76 @@
           <div class="svg-holder" id="canvas-h5"></div>
         </div>
       </section>
+
+      <!-- GRÁFICO 8 (COMPARATIVO 30%–33% vs. > 33% EM SLOPEGRAPH, EXCLUINDO < 30%) -->
+      <section class="scrolly-block" id="sec-limiar" data-chart="limiar">
+        <div class="scrolly-steps">
+          <article class="step-card is-active" data-step="0">
+            <span class="step-tag">Passo 1 de 3 · Orçamento e Proporcionalidade</span>
+            <h3>30%–33% vs. acima de 33%</h3>
+            <p>
+              Excluindo unidades abaixo de 30% (que já descumprem a cota), o <strong>slopegraph</strong> compara quem estaciona entre <span class="hl-gold">30% e 33%</span> com quem supera <span class="hl-emerald">33%</span> na <strong>mediana de investimento</strong> e na <strong>proporcionalidade do fundo público</strong>.
+            </p>
+          </article>
+
+          <article class="step-card" data-step="1">
+            <span class="step-tag">Passo 2 de 3 · Distribuição do Recurso</span>
+            <h3>Distribuição suave ou concentrada?</h3>
+            <p>
+              Medimos quanto do fundo público feminino vai para as <strong>10% mais financiadas</strong> frente aos <strong>90% restantes</strong>, avaliando a inclinação entre as duas faixas.
+            </p>
+          </article>
+
+          <article class="step-card" data-step="2">
+            <span class="step-tag">Passo 3 de 3 · Resultado na Urna</span>
+            <h3>Impacto direto nas eleitas</h3>
+            <p>
+              <span id="limiar-dyn-text">Compare a proporção de mulheres eleitas entre as duas faixas</span> e alterne entre a visão <strong>Por Chapa</strong> e <strong>Por Partido</strong> para avaliar o recorte.
+            </p>
+            <div class="diag-slot" id="verdict-limiar"><span class="diag-pill diag-vaza">Diagnóstico: Teto 30%–33% limita retorno</span></div>
+          </article>
+        </div>
+
+        <div class="scrolly-stage">
+          <div class="chart-meta-row">
+            <span class="chart-code-pill">Gráfico 8</span>
+            <span class="chart-recorte-label" id="recorte-limiar-label">2022 · Por Chapa (exclui &lt;30%)</span>
+          </div>
+          <h3 class="chart-conclusive-title" id="title-limiar">
+            Unidades acima de 33% registram maior mediana feminina, maior fatia do fundo público e mais mulheres eleitas
+          </h3>
+          <div class="chart-controls-bar">
+            <div class="inline-legend">
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#F8DF4F;border:1.5px solid #C98A00"></i> Faixa 30%–33%</span>
+              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#007D5B"></i> Acima de 33% (&gt;33%)</span>
+            </div>
+            <div class="controls-cluster">
+              <div class="segmented-group" id="controls-limiar-unit">
+                <button type="button" class="segmented-btn active" data-limiar-unit="chapa">Por Chapa</button>
+                <button type="button" class="segmented-btn" data-limiar-unit="party">Por Partido</button>
+              </div>
+              <div class="segmented-group" id="controls-limiar-year">
+                <button type="button" class="segmented-btn active" data-limiar-year="2022">2022</button>
+                <button type="button" class="segmented-btn" data-limiar-year="2026">2026</button>
+              </div>
+            </div>
+          </div>
+          <div class="svg-holder" id="canvas-limiar"></div>
+        </div>
+      </section>
     </section>
 
     <!-- ===================================================================
-         ATO 04 · H6 (CONSOLIDADO), COMPARATIVO 30–33% VS >33% E SÉRIES EM REVISÃO
+         ATO 04 · H6 (CONSOLIDADO) E H8 (ADAPTAÇÃO TÁTICA 2018 → 2026)
          =================================================================== -->
     <section class="act-section" id="ato-04" tabindex="-1">
       <div class="act-divider act-divider-flex">
         <div>
-          <span class="act-eyebrow">Ato 4 de 5 · Sinais de alerta e Limiar 30%–33%</span>
-          <h2 class="act-heading">Sinais inconclusivos na contabilidade — e o peso real do teto de 30%–33%</h2>
+          <span class="act-eyebrow">Ato 4 de 5 · Sinais de alerta</span>
+          <h2 class="act-heading">Sinais inconclusivos na contabilidade e adaptação tática</h2>
           <p class="act-transition-lead">
             Aplicando os critérios objetivos observáveis da <span class="hl-gold">Súmula nº 73 do TSE</span> sob a mesma régua para homens e mulheres,
             os indicadores isolados mostram diferenças inexpressivas entre gêneros — registrando o caráter <strong>inconclusivo</strong> dessa frente sem comprovação documental robusta.
-            Em contrapartida, comparar chapas e partidos que estacionam em <strong>30%–33%</strong> contra os que superam <strong>33%</strong> revela o custo orçamentário e eleitoral do piso mínimo.
           </p>
         </div>
 
@@ -713,63 +769,6 @@
             </div>
           </div>
           <div class="svg-holder" id="canvas-h8"></div>
-        </div>
-      </section>
-
-      <!-- GRÁFICO 8 (COMPARATIVO 30%–33% vs. > 33% EM SLOPEGRAPH, EXCLUINDO < 30%) -->
-      <section class="scrolly-block" id="sec-limiar" data-chart="limiar">
-        <div class="scrolly-steps">
-          <article class="step-card is-active" data-step="0">
-            <span class="step-tag">Passo 1 de 3 · Orçamento e Proporcionalidade</span>
-            <h3>30%–33% vs. acima de 33%</h3>
-            <p>
-              Excluindo unidades abaixo de 30% (que já descumprem a cota), o <strong>slopegraph</strong> compara quem estaciona entre <span class="hl-gold">30% e 33%</span> com quem supera <span class="hl-emerald">33%</span> na <strong>mediana de investimento</strong> e na <strong>proporcionalidade do fundo público</strong>.
-            </p>
-          </article>
-
-          <article class="step-card" data-step="1">
-            <span class="step-tag">Passo 2 de 3 · Distribuição do Recurso</span>
-            <h3>Distribuição suave ou concentrada?</h3>
-            <p>
-              Medimos quanto do fundo público feminino vai para as <strong>10% mais financiadas</strong> frente aos <strong>90% restantes</strong>, avaliando a inclinação entre as duas faixas.
-            </p>
-          </article>
-
-          <article class="step-card" data-step="2">
-            <span class="step-tag">Passo 3 de 3 · Resultado na Urna</span>
-            <h3>Impacto direto nas eleitas</h3>
-            <p>
-              <span id="limiar-dyn-text">Compare a proporção de mulheres eleitas entre as duas faixas</span> e alterne entre a visão <strong>Por Chapa</strong> e <strong>Por Partido</strong> para avaliar o recorte.
-            </p>
-            <div class="diag-slot" id="verdict-limiar"><span class="diag-pill diag-vaza">Diagnóstico: Teto 30%–33% limita retorno</span></div>
-          </article>
-        </div>
-
-        <div class="scrolly-stage">
-          <div class="chart-meta-row">
-            <span class="chart-code-pill">Gráfico 8</span>
-            <span class="chart-recorte-label" id="recorte-limiar-label">2022 · Por Chapa (exclui &lt;30%)</span>
-          </div>
-          <h3 class="chart-conclusive-title" id="title-limiar">
-            Unidades acima de 33% registram maior mediana feminina, maior fatia do fundo público e mais mulheres eleitas
-          </h3>
-          <div class="chart-controls-bar">
-            <div class="inline-legend">
-              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#F8DF4F;border:1.5px solid #C98A00"></i> Faixa 30%–33%</span>
-              <span class="legend-item"><i class="legend-swatch is-circle" style="background:#007D5B"></i> Acima de 33% (&gt;33%)</span>
-            </div>
-            <div class="controls-cluster">
-              <div class="segmented-group" id="controls-limiar-unit">
-                <button type="button" class="segmented-btn active" data-limiar-unit="chapa">Por Chapa</button>
-                <button type="button" class="segmented-btn" data-limiar-unit="party">Por Partido</button>
-              </div>
-              <div class="segmented-group" id="controls-limiar-year">
-                <button type="button" class="segmented-btn active" data-limiar-year="2022">2022</button>
-                <button type="button" class="segmented-btn" data-limiar-year="2026">2026</button>
-              </div>
-            </div>
-          </div>
-          <div class="svg-holder" id="canvas-limiar"></div>
         </div>
       </section>
     </section>
@@ -890,8 +889,8 @@
     <p class="recap-lead">A cota garante o registro. O que falta vem depois: dinheiro, voto e cadeira.</p>
     <a href="#ato-01"><b>1 · No papel</b><span id="recap-1">A maioria das chapas para entre 30% e 33%: o piso virou teto.</span></a>
     <a href="#ato-02"><b>2 · No dinheiro</b><span id="recap-2">O fundo público existe, mas o repasse e o recurso privado favorecem os homens na maioria das siglas.</span></a>
-    <a href="#ato-03"><b>3 · Na urna</b><span id="recap-3">A queda aparece já nos votos nominais, antes da distribuição das sobras.</span></a>
-    <a href="#ato-04"><b>4 · Sinais e limiar</b><span id="recap-4">Sinais contábeis isolados são inconclusivos entre gêneros; já o teto de 30%–33% limita orçamento e eleitas frente a &gt;33%.</span></a>
+    <a href="#ato-03"><b>3 · Na urna</b><span id="recap-3">A queda aparece já nos votos nominais, e o teto de 30%–33% limita orçamento e eleitas frente a &gt;33%.</span></a>
+    <a href="#ato-04"><b>4 · Sinais de alerta</b><span id="recap-4">Sinais contábeis isolados são inconclusivos entre gêneros, com migração de contas zeradas para lotes padronizados.</span></a>
     <a href="#ato-05"><b>5 · No território</b><span id="recap-5">Os estados onde a cota vira voto tendem a acumular condições estruturais em caixa, FEFC e abertura além do mínimo legal.</span></a>
   </section>
 

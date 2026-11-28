@@ -394,10 +394,8 @@ function update() {
       if (recEl) recEl.textContent = 'Todos os Partidos · Composição da Receita (2022 vs. 2026)';
       if (legEl) {
         legEl.innerHTML = `
-          <span class="legend-item"><i class="legend-swatch" style="background:#007D5B"></i> 2022 · Fundo Público</span>
-          <span class="legend-item"><i class="legend-swatch" style="background:#F8DF4F;border:1px solid #C98A00"></i> 2022 · Privado</span>
-          <span class="legend-item"><i class="legend-swatch" style="background:#0284C7"></i> 2026 · Fundo Público</span>
-          <span class="legend-item"><i class="legend-swatch" style="background:#FA532E"></i> 2026 · Privado</span>
+          <span class="legend-item"><i class="legend-swatch" style="background:#007D5B"></i> Fundo Público (FEFC/FP)</span>
+          <span class="legend-item"><i class="legend-swatch" style="background:#F8DF4F;border:1px solid #C98A00"></i> Recursos Privados / Próprios</span>
         `;
       }
     } else if (stepIdx === 2) {
@@ -708,6 +706,7 @@ function bindEvents() {
       state.limiarUnit = btn.dataset.limiarUnit;
       document.querySelectorAll('[data-limiar-unit]').forEach((b) => b.classList.toggle('active', b === btn));
       update();
+      if (R.limiar) R.limiar(stepOf('limiar'), -1);
     });
   });
 
@@ -716,6 +715,7 @@ function bindEvents() {
       state.limiarYear = Number(btn.dataset.limiarYear);
       document.querySelectorAll('[data-limiar-year]').forEach((b) => b.classList.toggle('active', b === btn));
       update();
+      if (R.limiar) R.limiar(stepOf('limiar'), -1);
     });
   });
 
@@ -949,6 +949,11 @@ async function init() {
       }
     }
   }, {
+    onEnterBlock: (key) => {
+      if (key === 'limiar' && stepOf('limiar') === 0 && R.limiar) {
+        R.limiar(0, -1);
+      }
+    },
     onExitBlock: (key) => {
       if (key === 'h1') {
         clearTimeout(h1AutoTimer);

@@ -288,14 +288,26 @@ await page.waitForFunction(() => !document.getElementById('btn-recorte-chip').hi
 await page.click('#btn-recorte-chip');
 await page.waitForFunction(() => document.getElementById('btn-recorte-chip').hidden);
 
-// 3. H2 (4 passos): Passo 4 (composição 2022 vs 2026), Passo 3 (composição 2022 apenas) e Passo 2 (dumbbell limpo sem pontilhados/anotações)
+// 3. H2 (4 passos): Passo 4 (composição 2022 vs 2026 em 2 cores e sem rótulos dentro das barras), Passo 3 (composição 2022 apenas) e Passo 2 (dumbbell limpo sem pontilhados/anotações)
 const h2Comp4 = await page.evaluate(() => ({
   rows: document.querySelectorAll('#canvas-h2 .h2-row').length,
   y22: document.querySelectorAll('#canvas-h2 .h2b-yr-2022').length,
   y26: document.querySelectorAll('#canvas-h2 .h2b-yr-2026').length,
+  legendItems: document.querySelectorAll('#legend-h2 .legend-item').length,
+  barColors: [...new Set([...document.querySelectorAll('#canvas-h2 .h2b-src-bar rect')].map((el) => el.getAttribute('fill')?.toUpperCase()))],
+  innerBarLabels: [...document.querySelectorAll('#canvas-h2 .h2b-src-bar text')].filter((el) => !el.classList.contains('h2b-year-tag')).length,
 }));
-if (h2Comp4.rows !== 0 || h2Comp4.y22 !== 2 || h2Comp4.y26 !== 2) {
-  throw new Error(`H2 Passo 4 deveria exibir apenas composição 2022+2026, obteve ${JSON.stringify(h2Comp4)}`);
+if (
+  h2Comp4.rows !== 0
+  || h2Comp4.y22 !== 2
+  || h2Comp4.y26 !== 2
+  || h2Comp4.legendItems !== 2
+  || h2Comp4.barColors.length !== 2
+  || !h2Comp4.barColors.includes('#007D5B')
+  || !h2Comp4.barColors.includes('#F8DF4F')
+  || h2Comp4.innerBarLabels !== 0
+) {
+  throw new Error(`H2 Passo 4 deveria exibir apenas composição 2022+2026 com 2 cores e sem rótulos internos, obteve ${JSON.stringify(h2Comp4)}`);
 }
 await assertUnifiedHover('#canvas-h2 .h2b-src-bar', '#canvas-h2', 0);
 
@@ -447,12 +459,15 @@ await assertUnifiedHover('#canvas-h6 .h6-dot', '#canvas-h6', 0);
 await page.click('[data-h6-year="2022"]');
 await page.click('[data-h6-year="2026"]');
 
-// H8 (Gráfico 7, logo após H6, sem direct-annotation, transição 2018->2026 no mesmo SVG) + Limiar (Gráfico 8 Slopegraph)
-const ato4OrderOk = await page.evaluate(() => {
-  const ids = [...document.querySelectorAll('#ato-04 .scrolly-block')].map((el) => el.id);
-  return ids.join(',') === 'sec-h6,sec-h8,sec-limiar';
+// Ato 3 deve conter H5 + Limiar (Gráfico 8 Slopegraph); Ato 4 deve conter H6 + H8 (Gráfico 7)
+const actsOrderOk = await page.evaluate(() => {
+  const ato3 = [...document.querySelectorAll('#ato-03 .scrolly-block')].map((el) => el.id).join(',');
+  const ato4 = [...document.querySelectorAll('#ato-04 .scrolly-block')].map((el) => el.id).join(',');
+  return { ato3, ato4 };
 });
-if (!ato4OrderOk) throw new Error('Ordem esperada no Ato 4 é sec-h6 -> sec-h8 -> sec-limiar');
+if (actsOrderOk.ato3 !== 'sec-h5,sec-limiar' || actsOrderOk.ato4 !== 'sec-h6,sec-h8') {
+  throw new Error(`Ordem esperada: Ato 3 (sec-h5,sec-limiar) e Ato 4 (sec-h6,sec-h8), obteve ${JSON.stringify(actsOrderOk)}`);
+}
 const h8Annotations = await page.$$eval('#canvas-h8 svg .direct-annotation', (els) => els.length);
 if (h8Annotations !== 0) throw new Error(`H8 não deveria ter textos internos, obteve ${h8Annotations}`);
 const h8Dots = await page.$$('#sec-h8 .step-dot');

@@ -11,18 +11,16 @@ const H2_COLORS = {
   y2026Recuou: '#FA532E',
   y2026Avancou: '#0284C7',
   y2026Paridade: '#007D5B',
-  pub2022: '#007D5B',
-  priv2022: '#F8DF4F',
-  priv2022Stroke: '#C98A00',
-  pub2026: '#0284C7',
-  priv2026: '#FA532E',
+  pub: '#007D5B',
+  priv: '#F8DF4F',
+  privStroke: '#C98A00',
 };
 
 /**
  * H2 — Gráfico 2:
  * - Passos 0 e 1: Dumbbell da Razão da Mediana (Mulheres ÷ Homens, 2022 → 2026) nos 10 maiores partidos.
  * - Passo 2: Apenas Composição da Receita (2022 · Todos os partidos).
- * - Passo 3: Composição da Receita comparando 2022 vs. 2026 (barras separadas por ano com cores dedicadas).
+ * - Passo 3: Composição da Receita comparando 2022 vs. 2026 (mesmas duas cores: Fundo Público vs. Privado).
  */
 export function renderH2Dumbbell(
   container,
@@ -327,19 +325,29 @@ function renderCompositionChart(container, h2b22, h2b26, { step, prevStep, width
   const pub26F = (h2b26?.pubShareF ?? 0) * 100;
   const pub26M = (h2b26?.pubShareM ?? 0) * 100;
 
+  const makeBar = (year, pub) => ({
+    year,
+    pub,
+    priv: Math.max(0, 100 - pub),
+    pubCol: H2_COLORS.pub,
+    privCol: H2_COLORS.priv,
+    privStroke: H2_COLORS.privStroke,
+    tagCol: year === 2022 ? H2_COLORS.y2022 : SEMANTIC_PALETTE.ink,
+  });
+
   const groups = [
     {
       label: 'Mulheres',
       bars: [
-        { year: 2022, pub: pub22F, priv: Math.max(0, 100 - pub22F), pubCol: H2_COLORS.pub2022, privCol: H2_COLORS.priv2022, privStroke: H2_COLORS.priv2022Stroke, tagCol: H2_COLORS.y2022 },
-        ...(show2026 ? [{ year: 2026, pub: pub26F, priv: Math.max(0, 100 - pub26F), pubCol: H2_COLORS.pub2026, privCol: H2_COLORS.priv2026, privStroke: H2_COLORS.priv2026, tagCol: H2_COLORS.pub2026 }] : []),
+        makeBar(2022, pub22F),
+        ...(show2026 ? [makeBar(2026, pub26F)] : []),
       ],
     },
     {
       label: 'Homens',
       bars: [
-        { year: 2022, pub: pub22M, priv: Math.max(0, 100 - pub22M), pubCol: H2_COLORS.pub2022, privCol: H2_COLORS.priv2022, privStroke: H2_COLORS.priv2022Stroke, tagCol: H2_COLORS.y2022 },
-        ...(show2026 ? [{ year: 2026, pub: pub26M, priv: Math.max(0, 100 - pub26M), pubCol: H2_COLORS.pub2026, privCol: H2_COLORS.priv2026, privStroke: H2_COLORS.priv2026, tagCol: H2_COLORS.pub2026 }] : []),
+        makeBar(2022, pub22M),
+        ...(show2026 ? [makeBar(2026, pub26M)] : []),
       ],
     },
   ];
@@ -407,8 +415,9 @@ function renderCompositionChart(container, h2b22, h2b26, { step, prevStep, width
         .attr('tabindex', 0)
         .style('cursor', 'pointer');
 
-      // Etiqueta fixa do ano (2022 sempre na cor #4B636E, 2026 na cor dedicada #0284C7)
+      // Etiqueta do ano à esquerda da barra
       barRow.append('text')
+        .attr('class', 'h2b-year-tag')
         .attr('x', -10)
         .attr('y', yPos + barH / 2 + 4)
         .attr('text-anchor', 'end')
@@ -422,6 +431,7 @@ function renderCompositionChart(container, h2b22, h2b26, { step, prevStep, width
       const privW = Math.max(0, xSrc(b.priv) - 2);
 
       const pubRect = barRow.append('rect')
+        .attr('class', 'h2b-rect-pub')
         .attr('x', 0)
         .attr('y', yPos)
         .attr('width', isNew2026 ? 0 : pubW)
@@ -430,6 +440,7 @@ function renderCompositionChart(container, h2b22, h2b26, { step, prevStep, width
         .attr('fill', b.pubCol);
 
       const privRect = barRow.append('rect')
+        .attr('class', 'h2b-rect-priv')
         .attr('x', isNew2026 ? 2 : privStart)
         .attr('y', yPos)
         .attr('width', isNew2026 ? 0 : privW)
@@ -444,31 +455,6 @@ function renderCompositionChart(container, h2b22, h2b26, { step, prevStep, width
         privRect.transition().duration(dur).delay(delay + 120).ease(MOTION.easeOut)
           .attr('x', privStart)
           .attr('width', privW);
-      }
-
-      if (pubW > 42) {
-        const pubLbl = barRow.append('text')
-          .attr('x', 10)
-          .attr('y', yPos + barH / 2 + 4)
-          .attr('fill', '#FFFFFF')
-          .style('font-size', isCompact ? '9.5px' : '10.5px')
-          .style('font-weight', '700')
-          .style('opacity', isNew2026 ? 0 : 1)
-          .text(pubW > 138 ? `Fundo Público: ${fmtPct(b.pub)}` : fmtPct(b.pub));
-        if (isNew2026) pubLbl.transition().duration(260).delay(delay + 260).style('opacity', 1);
-      }
-
-      if (privW > 38) {
-        const privLblColor = b.year === 2022 ? '#142620' : '#FFFFFF';
-        const privLbl = barRow.append('text')
-          .attr('x', privStart + 8)
-          .attr('y', yPos + barH / 2 + 4)
-          .attr('fill', privLblColor)
-          .style('font-size', isCompact ? '9.5px' : '10.5px')
-          .style('font-weight', '700')
-          .style('opacity', isNew2026 ? 0 : 1)
-          .text(privW > 110 ? `Privado: ${fmtPct(b.priv)}` : fmtPct(b.priv));
-        if (isNew2026) privLbl.transition().duration(260).delay(delay + 300).style('opacity', 1);
       }
 
       bindTooltipEvents(barRow.node(), tipCtrl, () => buildTooltipCard({

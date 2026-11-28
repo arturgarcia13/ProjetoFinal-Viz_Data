@@ -14,7 +14,7 @@ export function isStaticMode() {
   return reduced || new URLSearchParams(window.location.search).get('steps') === 'full';
 }
 
-export function initScrolly(onStep, { onExitBlock = null } = {}) {
+export function initScrolly(onStep, { onExitBlock = null, onEnterBlock = null } = {}) {
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const mobileMQ = window.matchMedia('(max-width: 960px)');
   const blocks = [...document.querySelectorAll('.scrolly-block')];
@@ -89,9 +89,11 @@ export function initScrolly(onStep, { onExitBlock = null } = {}) {
 
   let observer = null;
   let exitObserver = null;
+  let enterObserver = null;
   function buildObserver() {
     if (observer) observer.disconnect();
     if (exitObserver) exitObserver.disconnect();
+    if (enterObserver) enterObserver.disconnect();
     observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -109,6 +111,27 @@ export function initScrolly(onStep, { onExitBlock = null } = {}) {
       { rootMargin: mobileMQ.matches ? '-62% 0px -22% 0px' : '-40% 0px -40% 0px' },
     );
     document.querySelectorAll('.scrolly-block .step-card').forEach((c) => observer.observe(c));
+
+    if (onEnterBlock && typeof IntersectionObserver !== 'undefined') {
+      const inside = new Set();
+      enterObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            const key = entry.target.dataset.chart;
+            if (entry.isIntersecting) {
+              if (!inside.has(key)) {
+                inside.add(key);
+                onEnterBlock(key);
+              }
+            } else {
+              inside.delete(key);
+            }
+          });
+        },
+        { threshold: 0.15 },
+      );
+      blocks.forEach((b) => enterObserver.observe(b));
+    }
 
     if (onExitBlock && typeof IntersectionObserver !== 'undefined') {
       const seen = new Set();

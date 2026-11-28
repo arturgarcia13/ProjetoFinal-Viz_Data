@@ -112,6 +112,7 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
     const isLoaded = step >= p.minStep;
     const wasLoaded = prevStep >= p.minStep;
     const enteringNow = animate && isLoaded && !wasLoaded;
+    const staggerMs = Math.max(0, idx - firstNewIdx) * 90;
 
     const card = svg.append('g')
       .attr('class', 'limiar-panel')
@@ -209,7 +210,7 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
       .style('font-weight', '700')
       .text(p.deltaText);
     if (enteringNow) {
-      badgeG.transition().duration(dur).ease(MOTION.easeOut).style('opacity', 1);
+      badgeG.transition().duration(dur).delay(animDelay(staggerMs + 340)).ease(MOTION.easeOut).style('opacity', 1);
     }
 
     const minV = Math.min(p.floorVal, p.aboveVal);
@@ -232,27 +233,36 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
       .attr('stroke-linecap', 'round');
 
     if (enteringNow) {
-      drawPath(slopeLine, { duration: 480, delay: animDelay(Math.max(0, idx - firstNewIdx) * 75) });
+      drawPath(slopeLine, { duration: 480, delay: animDelay(staggerMs + 110) });
     }
 
     // Ponto e rótulo da esquerda (30%–33%)
-    card.append('circle')
+    const dotL = card.append('circle')
       .attr('class', 'limiar-slope-dot')
       .attr('cx', xL)
       .attr('cy', yL)
-      .attr('r', 5.2)
+      .attr('r', enteringNow ? 0 : 5.2)
       .attr('fill', SEMANTIC_PALETTE.highlight)
       .attr('stroke', SEMANTIC_PALETTE.highlightInk)
       .attr('stroke-width', 1.8);
 
-    card.append('text')
+    if (enteringNow) {
+      dotL.transition().duration(240).delay(animDelay(staggerMs)).ease(MOTION.easeOut).attr('r', 5.2);
+    }
+
+    const leftLbl = card.append('text')
       .attr('x', xL - 9)
       .attr('y', yL + 4)
       .attr('text-anchor', 'end')
       .attr('fill', '#7A5200')
       .style('font-size', '10.8px')
       .style('font-weight', '700')
+      .style('opacity', enteringNow ? 0 : 1)
       .text(p.fmt(p.floorVal));
+
+    if (enteringNow) {
+      leftLbl.transition().duration(240).delay(animDelay(staggerMs + 60)).ease(MOTION.easeOut).style('opacity', 1);
+    }
 
     // Ponto e rótulo da direita (> 33%)
     const dotR = card.append('circle')
@@ -265,17 +275,22 @@ export function renderThresholdCompare(container, compData, { step = 2, prevStep
       .attr('stroke-width', 1.6);
 
     if (enteringNow) {
-      dotR.transition().duration(300).delay(animDelay(Math.max(0, idx - firstNewIdx) * 75 + 260)).ease(MOTION.easeOut).attr('r', 5.6);
+      dotR.transition().duration(280).delay(animDelay(staggerMs + 340)).ease(MOTION.easeOut).attr('r', 5.6);
     }
 
-    card.append('text')
+    const rightLbl = card.append('text')
       .attr('x', xR + 9)
       .attr('y', yR + 4)
       .attr('text-anchor', 'start')
       .attr('fill', slopeColor)
       .style('font-size', '10.8px')
       .style('font-weight', '700')
+      .style('opacity', enteringNow ? 0 : 1)
       .text(p.fmt(p.aboveVal));
+
+    if (enteringNow) {
+      rightLbl.transition().duration(240).delay(animDelay(staggerMs + 380)).ease(MOTION.easeOut).style('opacity', 1);
+    }
 
     bindTooltipEvents(card.node(), tipCtrl, () => buildTooltipCard({
       title: `${p.title} (${year} · ${unitLabel})`,

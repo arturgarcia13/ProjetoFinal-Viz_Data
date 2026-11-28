@@ -1,3 +1,5 @@
+import { shouldAnimate, tweenPctText } from './motion.js';
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 const CX = 230;
@@ -71,10 +73,23 @@ const controllerState = {
   activeStage: 0,
   isPlaying: true,
   reducedMotion: false,
+  isEntering: false,
   timerId: null,
+  entranceTimerId: null,
   seatEls: [],
   stages: STAGE_META.map((s) => ({ ...s })),
 };
+
+function clearEntranceState() {
+  if (controllerState.entranceTimerId !== null) {
+    clearTimeout(controllerState.entranceTimerId);
+    controllerState.entranceTimerId = null;
+  }
+  if (controllerState.isEntering) {
+    controllerState.isEntering = false;
+    controllerState.seatEls.forEach((c) => c.classList.remove('is-entering'));
+  }
+}
 
 function clearCycleTimer() {
   if (controllerState.timerId !== null) {
@@ -105,25 +120,33 @@ function syncPlayButtonUI() {
   if (playIcon) playIcon.hidden = playing;
 }
 
-function renderActiveStage() {
+function renderActiveStage({ tweenKpi = false } = {}) {
   const idx = controllerState.activeStage;
   const stage = controllerState.stages[idx];
   const filledSeats = Math.max(0, Math.min(100, Math.round(stage.pct)));
   const menSeats = 100 - filledSeats;
 
-  controllerState.seatEls.forEach((circle, seatIdx) => {
-    const isFilled = seatIdx < filledSeats;
-    circle.setAttribute('fill', isFilled ? stage.color : '#0B5741');
-    circle.classList.toggle('is-filled', isFilled);
-    circle.classList.toggle('is-empty', !isFilled);
-  });
+  if (!controllerState.isEntering) {
+    controllerState.seatEls.forEach((circle, seatIdx) => {
+      const isFilled = seatIdx < filledSeats;
+      circle.setAttribute('fill', isFilled ? stage.color : '#0B5741');
+      circle.classList.toggle('is-filled', isFilled);
+      circle.classList.toggle('is-empty', !isFilled);
+    });
+  }
 
   const kpiVal = document.getElementById('hemicycle-kpi-val');
   const kpiLabel = document.getElementById('hemicycle-kpi-label');
   const subtitleEl = document.getElementById('funnel-subtitle');
   if (kpiVal) {
-    kpiVal.textContent = fmtPct(stage.pct);
     kpiVal.setAttribute('fill', stage.color);
+    if (controllerState.isEntering) {
+      kpiVal.textContent = '0,0%';
+    } else if (tweenKpi) {
+      tweenPctText(kpiVal, stage.pct / 100, { duration: 640 });
+    } else {
+      kpiVal.textContent = fmtPct(stage.pct);
+    }
   }
   if (kpiLabel) kpiLabel.textContent = stage.title;
   if (subtitleEl) {
@@ -206,6 +229,9 @@ export function initHeroPlenario() {
   controllerState.reducedMotion = Boolean(reducedMQ?.matches);
   controllerState.isPlaying = !controllerState.reducedMotion;
 
+  const animate = shouldAnimate();
+  controllerState.isEntering = animate;
+
   const seats = buildSeatsGeometry();
   const frag = document.createDocumentFragment();
   controllerState.seatEls = seats.map((seat, idx) => {
@@ -214,8 +240,8 @@ export function initHeroPlenario() {
     c.setAttribute('cy', seat.y.toFixed(2));
     c.setAttribute('r', '5.4');
     c.setAttribute('fill', '#0B5741');
-    c.setAttribute('class', 'hemicycle-seat is-empty');
-    c.style.transitionDelay = `${(idx * 5) % 180}ms`;
+    c.setAttribute('class', animate ? 'hemicycle-seat is-empty is-entering' : 'hemicycle-seat is-empty');
+    c.style.transitionDelay = animate ? `${idx * 6}ms` : '0ms';
     frag.appendChild(c);
     return c;
   });
@@ -281,6 +307,7 @@ export function initHeroPlenario() {
   const tabs = [...document.querySelectorAll('.plenario-tab')];
   tabs.forEach((tab, idx) => {
     tab.addEventListener('click', () => {
+      clearEntranceState();
       controllerState.isPlaying = false;
       clearCycleTimer();
       syncPlayButtonUI();
@@ -295,6 +322,7 @@ export function initHeroPlenario() {
       else if (e.key === 'End') nextIdx = tabs.length - 1;
       if (nextIdx !== null) {
         e.preventDefault();
+        clearEntranceState();
         controllerState.isPlaying = false;
         clearCycleTimer();
         syncPlayButtonUI();
@@ -306,18 +334,33 @@ export function initHeroPlenario() {
 
   document.getElementById('plenario-play-btn')?.addEventListener('click', () => {
     if (controllerState.reducedMotion) return;
+    clearEntranceState();
     setPlenarioPlaying(!controllerState.isPlaying);
   });
 
   reducedMQ?.addEventListener('change', (e) => {
     controllerState.reducedMotion = e.matches;
     if (e.matches) {
+      clearEntranceState();
       setPlenarioPlaying(false);
     }
   });
 
   syncPlayButtonUI();
   renderActiveStage();
+  if (animate) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!controllerState.isEntering) return;
+        controllerState.seatEls.forEach((c) => c.classList.remove('is-entering'));
+        controllerState.entranceTimerId = window.setTimeout(() => {
+          controllerState.entranceTimerId = null;
+          controllerState.isEntering = false;
+          renderActiveStage({ tweenKpi: true });
+        }, 260);
+      });
+    });
+  }
   if (controllerState.isPlaying) {
     scheduleNextCycle();
   }

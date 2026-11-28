@@ -1,16 +1,15 @@
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-const CX = 260;
-const CY = 252;
-const PAD_ANGLE = 0.04;
-const CYCLE_MS = 4500;
+const CX = 230;
+const CY = 212;
+const CYCLE_MS = 3600;
 
-const ROWS = [
-  { count: 12, radius: 100 },
-  { count: 16, radius: 124 },
-  { count: 20, radius: 148 },
-  { count: 24, radius: 172 },
-  { count: 28, radius: 196 },
+const RINGS = [
+  { count: 14, radius: 88 },
+  { count: 17, radius: 110 },
+  { count: 20, radius: 132 },
+  { count: 23, radius: 154 },
+  { count: 26, radius: 176 },
 ];
 
 const STAGE_META = [
@@ -19,23 +18,23 @@ const STAGE_META = [
     shortLabel: '01 · Papel',
     title: 'Candidaturas aptas',
     subtitle: 'Cumprimento protocolar no registro',
-    color: '#ECD64C',
+    color: '#F8DF4F',
     pct: 34.2,
   },
   {
     id: 1,
     shortLabel: '02 · Dinheiro',
     title: 'Fundo público recebido',
-    subtitle: 'Fatia do FEFC + FP para mulheres',
-    color: '#E872D0',
+    subtitle: 'Proporção do FEFC + FP às mulheres',
+    color: '#FC7CE5',
     pct: 34.4,
   },
   {
     id: 2,
     shortLabel: '03 · Cadeira',
     title: 'Cadeiras eleitas',
-    subtitle: 'Presença efetiva após a apuração',
-    color: '#EE6A4B',
+    subtitle: 'Queda de quase metade até a posse',
+    color: '#FA532E',
     pct: 17.9,
   },
 ];
@@ -52,15 +51,14 @@ function fmtSignedPP(diff) {
 
 function buildSeatsGeometry() {
   const seats = [];
-  ROWS.forEach((row, rowIdx) => {
-    for (let i = 0; i < row.count; i += 1) {
-      const t = i / (row.count - 1);
-      const angle = (Math.PI - PAD_ANGLE) - t * (Math.PI - 2 * PAD_ANGLE);
+  RINGS.forEach((ring, rowIdx) => {
+    for (let i = 0; i < ring.count; i += 1) {
+      const angle = Math.PI - (i / (ring.count - 1)) * Math.PI;
       seats.push({
         rowIdx,
         angle,
-        x: CX + row.radius * Math.cos(angle),
-        y: CY - row.radius * Math.sin(angle),
+        x: CX + ring.radius * Math.cos(angle),
+        y: CY - ring.radius * Math.sin(angle),
       });
     }
   });
@@ -99,8 +97,8 @@ function syncPlayButtonUI() {
   if (!btn) return;
   const playing = controllerState.isPlaying;
   btn.setAttribute('aria-pressed', playing ? 'true' : 'false');
-  btn.setAttribute('aria-label', playing ? 'Pausar ciclo automático' : 'Retomar ciclo automático');
-  btn.setAttribute('title', playing ? 'Pausar ciclo automático' : 'Retomar ciclo automático');
+  btn.setAttribute('aria-label', playing ? 'Pausar animação do plenário' : 'Retomar animação do plenário');
+  btn.setAttribute('title', playing ? 'Pausar animação do plenário' : 'Retomar animação do plenário');
   const pauseIcon = btn.querySelector('.icon-pause');
   const playIcon = btn.querySelector('.icon-play');
   if (pauseIcon) pauseIcon.hidden = !playing;
@@ -115,28 +113,28 @@ function renderActiveStage() {
 
   controllerState.seatEls.forEach((circle, seatIdx) => {
     const isFilled = seatIdx < filledSeats;
-    circle.setAttribute('fill', isFilled ? stage.color : '#135740');
+    circle.setAttribute('fill', isFilled ? stage.color : '#0B5741');
     circle.classList.toggle('is-filled', isFilled);
     circle.classList.toggle('is-empty', !isFilled);
   });
 
   const kpiVal = document.getElementById('hemicycle-kpi-val');
   const kpiLabel = document.getElementById('hemicycle-kpi-label');
-  const kpiSub = document.getElementById('hemicycle-kpi-sub');
+  const subtitleEl = document.getElementById('funnel-subtitle');
   if (kpiVal) {
     kpiVal.textContent = fmtPct(stage.pct);
     kpiVal.setAttribute('fill', stage.color);
   }
   if (kpiLabel) kpiLabel.textContent = stage.title;
-  if (kpiSub) {
-    kpiSub.textContent = `${filledSeats} de 100 cadeiras · ${stage.subtitle}`;
+  if (subtitleEl) {
+    subtitleEl.textContent = `${filledSeats} de 100 cadeiras · ${stage.subtitle}`;
   }
 
   const svg = document.getElementById('hemicycle-svg');
   if (svg) {
     svg.setAttribute(
       'aria-label',
-      `Plenário dinâmico de 100 cadeiras: ${stage.title}, ${fmtPct(stage.pct)}, ${filledSeats} de 100 cadeiras ocupadas por mulheres.`,
+      `Retrato do plenário com 100 cadeiras: ${stage.title}, ${fmtPct(stage.pct)}, ${filledSeats} de 100 cadeiras ocupadas por mulheres.`,
     );
   }
 
@@ -214,10 +212,10 @@ export function initHeroPlenario() {
     const c = document.createElementNS(SVG_NS, 'circle');
     c.setAttribute('cx', seat.x.toFixed(2));
     c.setAttribute('cy', seat.y.toFixed(2));
-    c.setAttribute('r', '5.6');
-    c.setAttribute('fill', '#135740');
+    c.setAttribute('r', '5.4');
+    c.setAttribute('fill', '#0B5741');
     c.setAttribute('class', 'hemicycle-seat is-empty');
-    c.style.transitionDelay = `${(idx % 12) * 14}ms`;
+    c.style.transitionDelay = `${(idx * 5) % 180}ms`;
     frag.appendChild(c);
     return c;
   });
@@ -225,15 +223,13 @@ export function initHeroPlenario() {
 
   // Linha divisória do Piso Legal (30% = exatamente entre as 30 primeiras cadeiras e a 31ª)
   const pInner = (() => {
-    const tMid = (3 + 0.5) / (ROWS[0].count - 1);
-    const a = (Math.PI - PAD_ANGLE) - tMid * (Math.PI - 2 * PAD_ANGLE);
-    return { x: CX + ROWS[0].radius * Math.cos(a), y: CY - ROWS[0].radius * Math.sin(a) };
+    const a = Math.PI - ((3 + 0.5) / (RINGS[0].count - 1)) * Math.PI;
+    return { x: CX + RINGS[0].radius * Math.cos(a), y: CY - RINGS[0].radius * Math.sin(a) };
   })();
   const pOuter = (() => {
-    const lastIdx = ROWS.length - 1;
-    const tMid = (lastIdx + 3 + 0.5) / (ROWS[lastIdx].count - 1);
-    const a = (Math.PI - PAD_ANGLE) - tMid * (Math.PI - 2 * PAD_ANGLE);
-    return { x: CX + ROWS[lastIdx].radius * Math.cos(a), y: CY - ROWS[lastIdx].radius * Math.sin(a) };
+    const lastIdx = RINGS.length - 1;
+    const a = Math.PI - ((lastIdx + 3 + 0.5) / (RINGS[lastIdx].count - 1)) * Math.PI;
+    return { x: CX + RINGS[lastIdx].radius * Math.cos(a), y: CY - RINGS[lastIdx].radius * Math.sin(a) };
   })();
   const vx = pOuter.x - pInner.x;
   const vy = pOuter.y - pInner.y;
@@ -241,20 +237,19 @@ export function initHeroPlenario() {
   const ux = vx / vLen;
   const uy = vy / vLen;
 
-  const x1 = pInner.x - 14 * ux;
-  const y1 = pInner.y - 14 * uy;
-  const x2 = pOuter.x + 48 * ux;
-  const y2 = pOuter.y + 48 * uy;
+  const x1 = pInner.x - 12 * ux;
+  const y1 = pInner.y - 12 * uy;
+  const x2 = pOuter.x + 44 * ux;
+  const y2 = pOuter.y + 44 * uy;
 
   const line = document.createElementNS(SVG_NS, 'line');
   line.setAttribute('x1', x1.toFixed(2));
   line.setAttribute('y1', y1.toFixed(2));
   line.setAttribute('x2', x2.toFixed(2));
   line.setAttribute('y2', y2.toFixed(2));
-  line.setAttribute('stroke', '#ECD64C');
-  line.setAttribute('stroke-width', '1.5');
-  line.setAttribute('stroke-dasharray', '4 4');
-  line.setAttribute('opacity', '0.9');
+  line.setAttribute('stroke', '#F8DF4F');
+  line.setAttribute('stroke-width', '1.4');
+  line.setAttribute('stroke-dasharray', '4 3');
 
   const pillW = 112;
   const pillH = 22;
@@ -269,15 +264,15 @@ export function initHeroPlenario() {
   pillRect.setAttribute('width', String(pillW));
   pillRect.setAttribute('height', String(pillH));
   pillRect.setAttribute('rx', '11');
-  pillRect.setAttribute('fill', '#033927');
-  pillRect.setAttribute('stroke', 'rgba(236, 214, 76, 0.65)');
+  pillRect.setAttribute('fill', '#004D38');
+  pillRect.setAttribute('stroke', '#F8DF4F');
   pillRect.setAttribute('stroke-width', '1');
 
   const pillText = document.createElementNS(SVG_NS, 'text');
   pillText.setAttribute('x', x2.toFixed(2));
   pillText.setAttribute('y', (pillY + 14.5).toFixed(2));
   pillText.setAttribute('text-anchor', 'middle');
-  pillText.setAttribute('fill', '#ECD64C');
+  pillText.setAttribute('fill', '#F8DF4F');
   pillText.textContent = 'Piso legal · 30%';
 
   pillGroup.append(pillRect, pillText);
@@ -286,7 +281,6 @@ export function initHeroPlenario() {
   const tabs = [...document.querySelectorAll('.plenario-tab')];
   tabs.forEach((tab, idx) => {
     tab.addEventListener('click', () => {
-      // Interação manual pausa o ciclo automático para leitura sem pressa
       controllerState.isPlaying = false;
       clearCycleTimer();
       syncPlayButtonUI();

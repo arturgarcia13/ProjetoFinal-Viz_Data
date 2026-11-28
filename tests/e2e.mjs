@@ -56,7 +56,7 @@ await page.evaluate(() => document.fonts.ready);
 const shellCheck = await page.evaluate(() => {
   const bodyS = getComputedStyle(document.body);
   const h1S = getComputedStyle(document.querySelector('h1'));
-  const h1EmS = getComputedStyle(document.querySelector('h1 em'));
+  const h1SpanS = getComputedStyle(document.querySelector('h1 .hero-hl-30'));
   const skip = document.querySelector('a.skip-link');
   const topBar = document.querySelector('.top-editorial-bar').getBoundingClientRect();
   const navActLinks = [...document.querySelectorAll('.act-pills a')].map((a) => a.getAttribute('href'));
@@ -70,8 +70,9 @@ const shellCheck = await page.evaluate(() => {
   return {
     bodyBg: bodyS.backgroundColor,
     h1Color: h1S.color,
-    h1EmColor: h1EmS.color,
+    h1SpanColor: h1SpanS.color,
     h1Font: h1S.fontFamily,
+    heroBodyFont: getComputedStyle(document.querySelector('.hero-lead')).fontFamily,
     bodyFont: bodyS.fontFamily,
     skipHref: skip?.getAttribute('href'),
     skipIsFirst: document.body.firstElementChild === skip,
@@ -80,6 +81,7 @@ const shellCheck = await page.evaluate(() => {
     seatsCount,
     filledInit,
     plenarioTabs,
+    scopeItems: document.querySelectorAll('.hero-scope-item').length,
     noRoadmap: document.querySelectorAll('.roadmap').length === 0,
     noSilhouettes: document.querySelectorAll('.hero-silhouettes-bg').length === 0,
     stepDotsGroups,
@@ -93,9 +95,10 @@ const shellCheck = await page.evaluate(() => {
 
 if (
   shellCheck.bodyBg !== 'rgb(251, 248, 241)'
-  || shellCheck.h1Color !== 'rgb(248, 250, 249)'
-  || shellCheck.h1EmColor !== 'rgb(236, 214, 76)'
-  || !shellCheck.h1Font.includes('Fraunces')
+  || shellCheck.h1Color !== 'rgb(251, 248, 241)'
+  || shellCheck.h1SpanColor !== 'rgb(248, 223, 79)'
+  || !shellCheck.h1Font.includes('Playfair Display')
+  || !shellCheck.heroBodyFont.includes('Montserrat')
   || !shellCheck.bodyFont.includes('Inter')
   || shellCheck.skipHref !== '#main-content'
   || !shellCheck.skipIsFirst
@@ -104,6 +107,7 @@ if (
   || shellCheck.seatsCount !== 100
   || shellCheck.filledInit !== 34
   || shellCheck.plenarioTabs !== 3
+  || shellCheck.scopeItems !== 3
   || !shellCheck.noRoadmap
   || !shellCheck.noSilhouettes
   || shellCheck.stepDotsGroups !== 9
@@ -183,12 +187,6 @@ if (!modalOpened1) throw new Error('Botão Fonte: TSE deveria abrir o modal de m
 await page.keyboard.press('Escape');
 const modalClosedEsc = await page.$eval('#methodology-modal', (el) => !el.open);
 if (!modalClosedEsc) throw new Error('Escape deveria fechar o modal de metodologia');
-await page.click('#btn-hero-metodologia');
-const modalOpened2 = await page.$eval('#methodology-modal', (el) => el.open);
-if (!modalOpened2) throw new Error('Botão Metodologia -> deveria abrir o modal');
-await page.click('#btn-close-methodology');
-const modalClosedBtn = await page.$eval('#methodology-modal', (el) => !el.open);
-if (!modalClosedBtn) throw new Error('Botão X deveria fechar o modal');
 
 // Helper de hover unificado
 async function assertUnifiedHover(targetSelector, containerSelector, wrapIndex = 0) {
@@ -582,10 +580,16 @@ for (const vp of [{ width: 1440, height: 900 }, { width: 768, height: 1024 }]) {
 }
 await page.setViewport({ width: 390, height: 844 });
 await new Promise((r) => setTimeout(r, 250));
-const mobileCheck = await page.evaluate(() => ({
-  overflowX: document.documentElement.scrollWidth > window.innerWidth,
-  h5Count: document.querySelectorAll('#canvas-h5 .h5-party-label').length,
-}));
+const mobileCheck = await page.evaluate(() => {
+  const navClip = [...document.querySelectorAll('.top-bar-inner a, .top-bar-inner button')]
+    .filter((el) => getComputedStyle(el).display !== 'none' && !el.hidden)
+    .some((el) => el.getBoundingClientRect().right > window.innerWidth + 1);
+  return {
+    overflowX: document.documentElement.scrollWidth > window.innerWidth,
+    navClip,
+    h5Count: document.querySelectorAll('#canvas-h5 .h5-party-label').length,
+  };
+});
 const mobIssues = {};
 for (const sel of ['#canvas-h1 svg', '#canvas-h2 svg', '#canvas-h3 svg', '#canvas-h4 svg', '#canvas-h6 svg', '#canvas-h8 svg', '#canvas-limiar svg', '#canvas-h9-map svg']) {
   const g = await checkSvgGeometry(sel, {
@@ -594,7 +598,7 @@ for (const sel of ['#canvas-h1 svg', '#canvas-h2 svg', '#canvas-h3 svg', '#canva
   });
   if (g.missing || g.clipped.length > 0) mobIssues[sel] = g;
 }
-if (mobileCheck.overflowX || mobileCheck.h5Count < 8 || Object.keys(mobIssues).length > 0) {
+if (mobileCheck.overflowX || mobileCheck.navClip || mobileCheck.h5Count < 8 || Object.keys(mobIssues).length > 0) {
   throw new Error(`Falha layout mobile 390px: ${JSON.stringify({ mobileCheck, mobIssues })}`);
 }
 

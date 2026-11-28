@@ -63,23 +63,44 @@
   <header class="top-editorial-bar">
     <div class="top-bar-inner">
       <a href="#topo" class="brand-tag">
-        <span class="brand-dot" aria-hidden="true"></span>
+        <span class="status-dot" id="data-status-dot" role="status" aria-label="Base TSE carregada"></span>
         <span>Da Cota à Cadeira</span>
       </a>
-      <nav class="act-pills" aria-label="Navegação por atos">
-        <a href="#ato-01" class="act-pill" data-act="ato-01">01 · Papel</a>
-        <a href="#ato-02" class="act-pill" data-act="ato-02">02 · Dinheiro</a>
-        <a href="#ato-03" class="act-pill" data-act="ato-03">03 · Urna</a>
-        <a href="#ato-04" class="act-pill" data-act="ato-04">04 · Alertas</a>
-        <a href="#ato-05" class="act-pill" data-act="ato-05">05 · Território</a>
+      <nav class="act-pills" aria-label="Atalhos dos cinco atos">
+        <a href="#ato-01" class="act-pill" data-act="ato-01">
+          <span class="act-pill-dot is-yellow" aria-hidden="true"></span>
+          <span>1 · No papel</span>
+        </a>
+        <a href="#ato-02" class="act-pill" data-act="ato-02">
+          <span class="act-pill-dot is-pink" aria-hidden="true"></span>
+          <span>2 · No dinheiro</span>
+        </a>
+        <a href="#ato-03" class="act-pill" data-act="ato-03">
+          <span class="act-pill-dot is-coral" aria-hidden="true"></span>
+          <span>3 · Na urna</span>
+        </a>
+        <a href="#ato-04" class="act-pill" data-act="ato-04">
+          <span class="act-pill-dot is-yellow" aria-hidden="true"></span>
+          <span>4 · Sinais de alerta</span>
+        </a>
+        <a href="#ato-05" class="act-pill" data-act="ato-05">
+          <span class="act-pill-dot is-pink" aria-hidden="true"></span>
+          <span>5 · No território</span>
+        </a>
       </nav>
       <div class="top-actions">
         <button type="button" class="recorte-chip" id="btn-recorte-chip" hidden title="Os títulos e passos da história descrevem o recorte nacional de 2022. Clique para voltar."></button>
         <button type="button" class="fonte-tse-btn" id="btn-fonte-tse" aria-haspopup="dialog" title="Abrir modal de metodologia e fontes oficiais do TSE">
-          <span class="status-dot" id="data-status-dot" aria-hidden="true"></span>
+          <span class="status-dot-sm" aria-hidden="true"></span>
           <span id="data-status-label">Fonte: TSE</span>
         </button>
-        <a href="#boca-da-taca" class="btn-jump-filters">Explorar dados</a>
+        <a href="#boca-da-taca" class="btn-jump-filters">
+          <span>Pular para explorar</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+          </svg>
+        </a>
       </div>
     </div>
     <div class="story-progress" aria-hidden="true"><i id="story-progress-bar"></i></div>
@@ -92,71 +113,103 @@
   <!-- =======================================================================
        MOMENTO 1: CLÍMAX VISUAL DE ABERTURA (HERO — PLENÁRIO DE 100 CADEIRAS)
        ======================================================================= -->
-  <section class="hero-section editorial-grid-bg" id="topo" tabindex="-1">
+  <section class="hero-section editorial-grid" id="topo" tabindex="-1">
     <div class="hero-inner">
       <div class="hero-grid">
         <div class="hero-copy">
-          <div class="hero-kicker">
+          <div class="hero-kicker" role="status">
             <span class="hero-kicker-dot" aria-hidden="true"></span>
-            <span>ESPECIAL DE DADOS · TSE 2018–2026</span>
+            <span>MULHERES NA POLÍTICA · 27 UFs</span>
           </div>
           <h1 class="hero-title" id="hero-main-title">
-            Por que a cota de 30% leva mulheres ao papel, mas <em>não ao poder?</em>
+            Por que a cota de <span class="hero-hl-30">30%</span> leva mulheres ao papel, mas <span class="hero-hl-power">não ao poder</span>?
           </h1>
           <p class="hero-lead">
-            Microdados oficiais revelam como a presença feminina encolhe quase pela metade entre o registro na urna e a posse no plenário.
+            A lei garante a reserva mínima nas chapas. A partir dos microdados oficiais do TSE, rastreamos cinco etapas da disputa para mostrar onde a cota funciona, onde o dinheiro vaza e onde a cadeira se fecha.
           </p>
+
+          <div class="hero-scope-strip">
+            <div class="hero-scope-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F8DF4F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="9 11 12 14 22 4" />
+              </svg>
+              <span>VOTOS NOMINAIS</span>
+            </div>
+            <div class="hero-scope-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FC7CE5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 21h18" />
+                <path d="M5 21V10" />
+                <path d="M10 21V10" />
+                <path d="M14 21V10" />
+                <path d="M19 21V10" />
+                <polygon points="12 3 2 8 22 8 12 3" />
+              </svg>
+              <span>CÂMARA &amp; ASSEMBLEIAS</span>
+            </div>
+            <div class="hero-scope-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FA532E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m14 13-7.5 7.5c-.83.83-2.17.83-3 0a2.12 2.12 0 0 1 0-3L11 10" />
+                <path d="m16 16 6-6" />
+                <path d="m8 8 6-6" />
+                <path d="m9 7 8 8" />
+                <path d="m21 11-8-8" />
+              </svg>
+              <span>LEI DAS COTAS · 30%</span>
+            </div>
+          </div>
+
           <div class="hero-actions">
             <a href="#ato-01" class="hero-cta-primary">
               <span>Iniciar leitura guiada</span>
-              <svg class="hero-cta-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M8 3v10m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <svg class="hero-cta-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <polyline points="19 12 12 19 5 12" />
               </svg>
             </a>
-            <button type="button" class="hero-cta-secondary" id="btn-hero-metodologia" aria-haspopup="dialog">
-              Metodologia →
-            </button>
+            <a href="#boca-da-taca" class="hero-cta-secondary">
+              <span>Explorar meu estado</span>
+            </a>
           </div>
-          <p class="hero-microsig">
-            Leitura em 5 atos · 4 min · Inclui explorador por estado e partido
-          </p>
         </div>
 
         <div class="hero-stage-col">
-          <div class="plenario-card" id="hero-plenario-card">
-            <div class="plenario-head">
+          <article class="plenario-card" id="hero-plenario-card">
+            <header class="plenario-head">
               <span class="plenario-kicker">RETRATO DO PLENÁRIO · 100 CADEIRAS</span>
               <div class="plenario-head-right">
                 <span class="hero-badge-recorte" id="hero-recorte-pill">Eleições 2022 · 27 UFs</span>
-                <button type="button" class="plenario-play-btn" id="plenario-play-btn" aria-label="Pausar ciclo automático" aria-pressed="true" title="Pausar ciclo automático">
-                  <svg class="icon-pause" width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-                    <rect x="2" y="1.5" width="2.8" height="9" rx="0.8" />
-                    <rect x="7.2" y="1.5" width="2.8" height="9" rx="0.8" />
+                <button type="button" class="plenario-play-btn" id="plenario-play-btn" aria-label="Pausar animação do plenário" aria-pressed="true" title="Pausar animação do plenário">
+                  <svg class="icon-pause" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <rect x="6" y="4" width="4" height="16" rx="1" />
+                    <rect x="14" y="4" width="4" height="16" rx="1" />
                   </svg>
-                  <svg class="icon-play" width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true" hidden>
-                    <path d="M2.5 1.75v8.5l7.5-4.25-7.5-4.25z" />
+                  <svg class="icon-play" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden>
+                    <polygon points="6 4 20 12 6 20 6 4" />
                   </svg>
                 </button>
               </div>
-            </div>
+            </header>
 
             <div class="plenario-svg-wrap">
-              <svg id="hemicycle-svg" viewBox="0 0 520 285" role="img" aria-label="Plenário dinâmico de 100 cadeiras: Candidaturas aptas, 34,2%, 34 de 100 cadeiras ocupadas por mulheres.">
-                <path class="hemicycle-bg-arc" d="M 52 252 A 208 208 0 0 1 468 252" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+              <svg id="hemicycle-svg" viewBox="0 0 460 228" role="img" aria-label="Retrato do plenário com 100 cadeiras comparando 34,2% Aptas, 34,4% Fundo e 17,9% Eleitas">
+                <path class="hemicycle-bg-arc" d="M 38 212 A 192 192 0 0 1 422 212" fill="none" stroke="rgba(251, 248, 241, 0.12)" stroke-width="1" />
                 <g id="hemicycle-seats"></g>
                 <g id="hemicycle-threshold"></g>
-                <g id="hemicycle-kpi" transform="translate(260, 212)" text-anchor="middle">
-                  <text id="hemicycle-kpi-val" y="16" fill="#ECD64C">34,2%</text>
-                  <text id="hemicycle-kpi-label" y="39" fill="#F8FAF9">Candidaturas aptas</text>
-                  <text id="hemicycle-kpi-sub" y="60" fill="#B8D8C9">34 de 100 cadeiras · Cumprimento protocolar no registro</text>
+                <g id="hemicycle-kpi" text-anchor="middle">
+                  <text id="hemicycle-kpi-val" x="230" y="196" fill="#F8DF4F">34,2%</text>
+                  <text id="hemicycle-kpi-label" x="230" y="216" fill="#FBF8F1">Candidaturas aptas</text>
                 </g>
               </svg>
+              <p class="plenario-subtitle" id="funnel-subtitle">
+                34 de 100 cadeiras · Cumprimento protocolar no registro
+              </p>
             </div>
 
             <div class="plenario-legend-bar">
               <div class="plenario-legend-items">
                 <span class="plenario-legend-item">
-                  <i class="plenario-dot" id="plenario-women-dot" style="background: #ECD64C;"></i>
+                  <i class="plenario-dot" id="plenario-women-dot" style="background: #F8DF4F;"></i>
                   <span id="plenario-women-label">Mulheres (34)</span>
                 </span>
                 <span class="plenario-legend-item">
@@ -167,35 +220,54 @@
               <span class="plenario-drop-badge" id="plenario-drop-badge" aria-hidden="true">−16,3 p.p. na urna</span>
             </div>
 
-            <div class="plenario-tabs" role="tablist" aria-label="Etapas do afunilamento da representação">
+            <div class="plenario-tabs" role="tablist" aria-label="Resumo das três etapas">
               <button type="button" class="plenario-tab is-active" role="tab" id="plenario-tab-0" aria-selected="true" tabindex="0" data-stage="0">
                 <span class="plenario-tab-top">
-                  <span class="plenario-tab-name">01 · Papel</span>
-                  <span class="plenario-tab-pct" id="plenario-pct-0" style="color: #ECD64C;">34,2%</span>
+                  <span class="plenario-tab-name">
+                    <i class="plenario-tab-dot" style="background: #F8DF4F;"></i>
+                    <span>01 · Papel</span>
+                  </span>
+                  <span class="plenario-tab-pct" id="plenario-pct-0" style="color: #F8DF4F;">34,2%</span>
                 </span>
                 <span class="plenario-tab-desc">Candidaturas aptas</span>
-                <span class="plenario-tab-bar" aria-hidden="true"><i style="background: #ECD64C;"></i></span>
+                <span class="plenario-tab-bar" aria-hidden="true"><i style="background: #F8DF4F;"></i></span>
               </button>
               <button type="button" class="plenario-tab" role="tab" id="plenario-tab-1" aria-selected="false" tabindex="-1" data-stage="1">
                 <span class="plenario-tab-top">
-                  <span class="plenario-tab-name">02 · Dinheiro</span>
-                  <span class="plenario-tab-pct" id="plenario-pct-1" style="color: #E872D0;">34,4%</span>
+                  <span class="plenario-tab-name">
+                    <i class="plenario-tab-dot" style="background: #FC7CE5;"></i>
+                    <span>02 · Dinheiro</span>
+                  </span>
+                  <span class="plenario-tab-pct" id="plenario-pct-1" style="color: #FC7CE5;">34,4%</span>
                 </span>
                 <span class="plenario-tab-desc">Fundo público (FEFC + FP)</span>
-                <span class="plenario-tab-bar" aria-hidden="true"><i style="background: #E872D0;"></i></span>
+                <span class="plenario-tab-bar" aria-hidden="true"><i style="background: #FC7CE5;"></i></span>
               </button>
               <button type="button" class="plenario-tab" role="tab" id="plenario-tab-2" aria-selected="false" tabindex="-1" data-stage="2">
                 <span class="plenario-tab-top">
-                  <span class="plenario-tab-name">03 · Cadeira</span>
-                  <span class="plenario-tab-pct" id="plenario-pct-2" style="color: #EE6A4B;">17,9%</span>
+                  <span class="plenario-tab-name">
+                    <i class="plenario-tab-dot" style="background: #FA532E;"></i>
+                    <span>03 · Cadeira</span>
+                  </span>
+                  <span class="plenario-tab-pct" id="plenario-pct-2" style="color: #FA532E;">17,9%</span>
                 </span>
                 <span class="plenario-tab-desc">Cadeiras eleitas</span>
-                <span class="plenario-tab-bar" aria-hidden="true"><i style="background: #EE6A4B;"></i></span>
+                <span class="plenario-tab-bar" aria-hidden="true"><i style="background: #FA532E;"></i></span>
               </button>
             </div>
-          </div>
+          </article>
         </div>
       </div>
+
+      <footer class="hero-scroll-cue">
+        <a href="#ato-01" class="hero-scroll-link">
+          <span>ROLE PARA INICIAR O ATO 1 · NO PAPEL</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F8DF4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="7 7 12 12 17 7" />
+            <polyline points="7 13 12 18 17 13" />
+          </svg>
+        </a>
+      </footer>
     </div>
   </section>
 
